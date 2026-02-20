@@ -1,0 +1,1 @@
+{"id": null, "title": "Circuit Breakers", "tags": ["spring-saas-core", "resilience4j"], "panels": [{"title": "Breaker state", "type": "stat", "targets": [{"expr": "resilience4j_circuitbreaker_state{name=~\".+\"}", "legendFormat": "{{name}}"}]}], "schemaVersion": 16, "version": 1}

@@ -1,0 +1,1 @@
+{"id": null, "title": "Outbox", "tags": ["spring-saas-core"], "panels": [{"title": "Outbox lag", "type": "graph", "targets": [{"expr": "outbox_lag_seconds", "legendFormat": "lag"}]}], "schemaVersion": 16, "version": 1}

@@ -1,0 +1,1 @@
+{"id": null, "title": "Rate limit", "tags": ["spring-saas-core"], "panels": [{"title": "Blocks", "type": "stat", "targets": [{"expr": "rate_limit_blocks_total", "legendFormat": "blocks"}]}], "schemaVersion": 16, "version": 1}
