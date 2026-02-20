@@ -1,0 +1,96 @@
+erDiagram
+    tenants ||--o{ users : has
+    tenants ||--o{ roles : has
+    tenants ||--o{ abac_policies : has
+    tenants ||--o{ feature_flags : has
+    tenants ||--o{ outbox_events : has
+    roles ||--o{ role_permissions : has
+    roles ||--o{ user_roles : has
+    users ||--o{ user_roles : has
+    permissions ||--o{ role_permissions : has
+    tenants {
+        uuid id PK
+        string name
+        string status
+        string plan
+        string primary_region
+        string shard_key
+        timestamp created_at
+    }
+    users {
+        uuid id PK
+        uuid tenant_id FK
+        string email
+        string password_hash
+        string status
+        timestamp created_at
+    }
+    roles {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+    }
+    permissions {
+        string code PK
+        string description
+    }
+    user_roles {
+        uuid id PK
+        uuid user_id FK
+        uuid role_id FK
+    }
+    role_permissions {
+        uuid id PK
+        uuid role_id FK
+        string permission_code FK
+    }
+    abac_policies {
+        uuid id PK
+        uuid tenant_id FK
+        string permission_code
+        string effect
+        int priority
+        boolean enabled
+        text conditions_json
+    }
+    feature_flags {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        boolean enabled
+        int rollout_percentage
+        text targeting_json
+    }
+    audit_log {
+        uuid id PK
+        uuid tenant_id
+        string subject
+        string jti
+        string action
+        string resource
+        string decision
+        string correlation_id
+        string trace_id
+        timestamp created_at
+    }
+    outbox_events {
+        uuid id PK
+        uuid tenant_id
+        string region_origin
+        string aggregate_type
+        string aggregate_id
+        string type
+        text payload_json
+        string status
+        int retries
+        timestamp created_at
+        timestamp sent_at
+    }
+    idempotency_keys {
+        uuid id PK
+        uuid tenant_id
+        string idempotency_key
+        int response_status
+        text response_body
+        timestamp expires_at
+    }

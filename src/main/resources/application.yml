@@ -1,0 +1,123 @@
+spring:
+  application:
+    name: spring-saas-core
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:default}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: public
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 3s
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    connection-timeout: 5000
+
+server:
+  port: ${SERVER_PORT:8080}
+
+# Multi-region demo: region-a | region-b
+app:
+  region: ${APP_REGION:region-a}
+  jwt:
+    secret: ${JWT_SECRET:local-dev-secret-min-32-chars-for-hs256}
+    issuer: local-auth
+    expiration-seconds: 3600
+  datasource:
+    shard-a:
+      jdbc-url: ${SPRING_DATASOURCE_A_URL:jdbc:postgresql://localhost:5432/saascore_a}
+      username: ${SPRING_DATASOURCE_A_USER:saascore}
+      password: ${SPRING_DATASOURCE_A_PASSWORD:saascore}
+    shard-b:
+      jdbc-url: ${SPRING_DATASOURCE_B_URL:jdbc:postgresql://localhost:5433/saascore_b}
+      username: ${SPRING_DATASOURCE_B_USER:saascore}
+      password: ${SPRING_DATASOURCE_B_PASSWORD:saascore}
+  rate-limit:
+    free: 10
+    pro: 50
+    enterprise: 200
+  outbox:
+    batch-size: 50
+    lock-ttl-seconds: 60
+    retry-max: 5
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+
+# OTLP
+otel:
+  service:
+    name: spring-saas-core
+  traces:
+    exporter:
+      otlp:
+        endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
+
+# Resilience4j
+resilience4j:
+  circuitbreaker:
+    instances:
+      rabbitPublish:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+      redis:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+  bulkhead:
+    instances:
+      writeEndpoint:
+        maxConcurrentCalls: 20
+      outboxDispatcher:
+        maxConcurrentCalls: 5
+  retry:
+    instances:
+      rabbitPublish:
+        maxAttempts: 3
+        waitDuration: 500ms
+  timelimiter:
+    instances:
+      rabbitPublish:
+        timeoutDuration: 5s
+      redis:
+        timeoutDuration: 2s
+
+# Springdoc
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /docs
+
+logging:
+  level:
+    root: INFO
+    com.yourorg: DEBUG
+    org.springframework.security: INFO

@@ -1,0 +1,40 @@
+# Build
+target/
+build/
+out/
+*.jar
+*.war
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# Env (never commit secrets)
+.env
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+!*.sha256
+
+# Test
+*.log
+/test-output/
+
+# Temporary
+tmp/
+temp/
+*.tmp

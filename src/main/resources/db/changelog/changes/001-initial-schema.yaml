@@ -1,0 +1,289 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-tenants
+      author: saascore
+      changes:
+        - createTable:
+            tableName: tenants
+            columns:
+              - column: { name: id, type: uuid }
+              - column: { name: name, type: varchar(255) }
+              - column: { name: status, type: varchar(32) }
+              - column: { name: plan, type: varchar(32) }
+              - column: { name: primary_region, type: varchar(64) }
+              - column: { name: shard_key, type: varchar(64) }
+              - column: { name: created_at, type: timestamp(6) }
+        - addPrimaryKey:
+            tableName: tenants
+            columnNames: id
+        - createIndex:
+            indexName: idx_tenants_shard
+            tableName: tenants
+            columns: { name: shard_key }
+
+  - changeSet:
+      id: 002-tenant-shard
+      author: saascore
+      changes:
+        - createTable:
+            tableName: tenant_shard
+            columns:
+              - column: { name: id, type: uuid }
+              - column: { name: tenant_id, type: uuid }
+              - column: { name: shard_key, type: varchar(64) }
+              - column: { name: db_alias, type: varchar(32) }
+        - addPrimaryKey:
+            tableName: tenant_shard
+            columnNames: id
+        - createIndex:
+            indexName: idx_tenant_shard_tenant
+            tableName: tenant_shard
+            columns: { name: tenant_id }
+
+  - changeSet:
+      id: 003-permissions
+      author: saascore
+      changes:
+        - createTable:
+            tableName: permissions
+            columns:
+              - column: { name: code, type: varchar(128) }
+              - column: { name: description, type: varchar(512) }
+        - addPrimaryKey:
+            tableName: permissions
+            columnNames: code
+
+  - changeSet:
+      id: 004-roles
+      author: saascore
+      changes:
+        - createTable:
+            tableName: roles
+            columns:
+              - column: { name: id, type: uuid }
+              - column: { name: tenant_id, type: uuid }
+              - column: { name: name, type: varchar(128) }
+        - addPrimaryKey:
+            tableName: roles
+            columnNames: id
+        - createIndex:
+            indexName: idx_roles_tenant
+            tableName: roles
+            columns: { name: tenant_id }
+
+  - changeSet:
+      id: 005-role-permissions
+      author: saascore
+      changes:
+        - createTable:
+            tableName: role_permissions
+            columns:
+              - column: { name: id, type: uuid }
+              - column: { name: role_id, type: uuid }
+              - column: { name: permission_code, type: varchar(128) }
+        - addPrimaryKey:
+            tableName: role_permissions
+            columnNames: id
+        - createIndex:
+            indexName: idx_role_perm_role
+            tableName: role_permissions
+            columns: { name: role_id }
+
+  - changeSet:
+      id: 006-users
+      author: saascore
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column: { name: id, type: uuid }
+              - column: { name: tenant_id, type: uuid }
+              - column: { name: email, type: varchar(255) }
+              - column: { name: password_hash, type: varchar(255) }
+              - column: { name: status, type: varchar(32) }
+              - column: { name: created_at, type: timestamp(6) }
+        - addPrimaryKey:
+            tableName: users
+            columnNames: id
+        - createIndex:
+            indexName: idx_users_tenant
+            tableName: users
+            columns: { name: tenant_id }
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: tenant_id, email
+            constraintName: uk_users_tenant_email
+
+  - changeSet:
+      id: 007-user-roles
+      author: saascore
+      changes:
+        - createTable:
+            tableName: user_roles
+            columns:
+              - column: { name: id, type: uuid }
+              - column: { name: user_id, type: uuid }
+              - column: { name: role_id, type: uuid }
+        - addPrimaryKey:
+            tableName: user_roles
+            columnNames: id
+        - createIndex:
+            indexName: idx_user_roles_user
+            tableName: user_roles
+            columns: { name: user_id }
+        - addUniqueConstraint:
+            tableName: user_roles
+            columnNames: user_id, role_id
+            constraintName: uk_user_roles_user_role
+
+  - changeSet:
+      id: 008-abac-policies
+      author: saascore
+      changes:
+        - createTable:
+            tableName: abac_policies
+            columns:
+              - column: { name: id, type: uuid }
+              - column: { name: tenant_id, type: uuid }
+              - column: { name: permission_code, type: varchar(128) }
+              - column: { name: effect, type: varchar(16) }
+              - column: { name: priority, type: int }
+              - column: { name: enabled, type: boolean }
+              - column: { name: conditions_json, type: text }
+        - addPrimaryKey:
+            tableName: abac_policies
+            columnNames: id
+        - createIndex:
+            indexName: idx_abac_tenant_perm
+            tableName: abac_policies
+            columns: { name: tenant_id, permission_code }
+
+  - changeSet:
+      id: 009-feature-flags
+      author: saascore
+      changes:
+        - createTable:
+            tableName: feature_flags
+            columns:
+              - column: { name: id, type: uuid }
+              - column: { name: tenant_id, type: uuid }
+              - column: { name: name, type: varchar(128) }
+              - column: { name: enabled, type: boolean }
+              - column: { name: rollout_percentage, type: int }
+              - column: { name: targeting_json, type: text }
+              - column: { name: updated_at, type: timestamp(6) }
+        - addPrimaryKey:
+            tableName: feature_flags
+            columnNames: id
+        - createIndex:
+            indexName: idx_feature_flags_tenant_name
+            tableName: feature_flags
+            columns: { name: tenant_id, name }
+
+  - changeSet:
+      id: 010-audit-log
+      author: saascore
+      changes:
+        - createTable:
+            tableName: audit_log
+            columns:
+              - column: { name: id, type: uuid }
+              - column: { name: tenant_id, type: uuid }
+              - column: { name: subject, type: varchar(255) }
+              - column: { name: jti, type: varchar(255) }
+              - column: { name: action, type: varchar(64) }
+              - column: { name: resource, type: varchar(255) }
+              - column: { name: decision, type: varchar(32) }
+              - column: { name: reason, type: varchar(512) }
+              - column: { name: policy_id, type: uuid }
+              - column: { name: correlation_id, type: varchar(64) }
+              - column: { name: trace_id, type: varchar(64) }
+              - column: { name: created_at, type: timestamp(6) }
+              - column: { name: metadata_json, type: text }
+        - addPrimaryKey:
+            tableName: audit_log
+            columnNames: id
+        - createIndex:
+            indexName: idx_audit_tenant_created
+            tableName: audit_log
+            columns: { name: tenant_id, created_at }
+        - createIndex:
+            indexName: idx_audit_correlation
+            tableName: audit_log
+            columns: { name: correlation_id }
+
+  - changeSet:
+      id: 011-outbox-events
+      author: saascore
+      changes:
+        - createTable:
+            tableName: outbox_events
+            columns:
+              - column: { name: id, type: uuid }
+              - column: { name: tenant_id, type: uuid }
+              - column: { name: region_origin, type: varchar(64) }
+              - column: { name: aggregate_type, type: varchar(64) }
+              - column: { name: aggregate_id, type: varchar(255) }
+              - column: { name: type, type: varchar(128) }
+              - column: { name: payload_json, type: text }
+              - column: { name: status, type: varchar(32) }
+              - column: { name: retries, type: int }
+              - column: { name: locked_at, type: timestamp(6) }
+              - column: { name: locked_by, type: varchar(64) }
+              - column: { name: created_at, type: timestamp(6) }
+              - column: { name: sent_at, type: timestamp(6) }
+        - addPrimaryKey:
+            tableName: outbox_events
+            columnNames: id
+        - createIndex:
+            indexName: idx_outbox_status_created
+            tableName: outbox_events
+            columns: { name: status, created_at }
+        - createIndex:
+            indexName: idx_outbox_tenant
+            tableName: outbox_events
+            columns: { name: tenant_id }
+
+  - changeSet:
+      id: 012-idempotency-keys
+      author: saascore
+      changes:
+        - createTable:
+            tableName: idempotency_keys
+            columns:
+              - column: { name: id, type: uuid }
+              - column: { name: tenant_id, type: uuid }
+              - column: { name: idempotency_key, type: varchar(255) }
+              - column: { name: response_status, type: int }
+              - column: { name: response_body, type: text }
+              - column: { name: expires_at, type: timestamp(6) }
+        - addPrimaryKey:
+            tableName: idempotency_keys
+            columnNames: id
+        - createIndex:
+            indexName: idx_idempotency_tenant_key
+            tableName: idempotency_keys
+            columns: { name: tenant_id, idempotency_key }
+
+  - changeSet:
+      id: 013-chaos-config
+      author: saascore
+      changes:
+        - createTable:
+            tableName: chaos_config
+            columns:
+              - column: { name: id, type: uuid }
+              - column: { name: tenant_id, type: uuid }
+              - column: { name: latency_p50_ms, type: int }
+              - column: { name: latency_p95_ms, type: int }
+              - column: { name: error_rate_percent, type: int }
+              - column: { name: drop_consumer_percent, type: int }
+              - column: { name: expires_at, type: timestamp(6) }
+              - column: { name: created_by, type: varchar(255) }
+        - addPrimaryKey:
+            tableName: chaos_config
+            columnNames: id
+        - createIndex:
+            indexName: idx_chaos_tenant
+            tableName: chaos_config
+            columns: { name: tenant_id }
