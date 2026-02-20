@@ -1,0 +1,1 @@
+{"id": null, "title": "Auth & Audit", "tags": ["spring-saas-core"], "panels": [{"title": "Auth events", "type": "graph", "targets": [{"expr": "rate(http_server_requests_seconds_count{uri=~\".*auth.*\"}[5m])", "legendFormat": "auth"}]}], "schemaVersion": 16, "version": 1}

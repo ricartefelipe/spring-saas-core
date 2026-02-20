@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant Client
+    participant API
+    participant App
+    participant TX
+    participant DB
+    participant Outbox
+    participant Dispatcher
+    participant Rabbit
+    participant Consumer
+    participant ReplicaDB
+    Client->>API: POST /v1/tenants (JWT, X-Tenant-Id)
+    API->>App: create tenant
+    App->>TX: begin
+    TX->>DB: insert tenant
+    TX->>Outbox: insert outbox_event (PENDING)
+    TX->>TX: commit
+    App-->>API: Tenant
+    API-->>Client: 201
+    loop Dispatcher (scheduled)
+        Dispatcher->>Outbox: claim PENDING (lock)
+        Dispatcher->>Rabbit: publish (event_id, tenant_id, region_origin)
+        Dispatcher->>Outbox: mark SENT
+    end
+    Rabbit->>Consumer: message
+    Consumer->>ReplicaDB: apply (eventual)
+    Note over Client,ReplicaDB: Strong read from primary; eventual read from replica after delay
