@@ -1,7 +1,7 @@
 package com.yourorg.saascore.application.tenant;
 
-import com.yourorg.saascore.config.DataSourceRoutingConfig;
-import com.yourorg.saascore.config.TenantContext;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yourorg.saascore.domain.Tenant;
 import com.yourorg.saascore.adapters.out.persistence.TenantEntity;
 import com.yourorg.saascore.adapters.out.persistence.TenantJpaRepository;
@@ -9,6 +9,7 @@ import com.yourorg.saascore.adapters.out.persistence.OutboxEventEntity;
 import com.yourorg.saascore.adapters.out.persistence.OutboxEventJpaRepository;
 import com.yourorg.saascore.domain.OutboxEvent;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,14 +21,17 @@ public class TenantUseCase {
 
     private final TenantJpaRepository tenantRepo;
     private final OutboxEventJpaRepository outboxRepo;
+    private final ObjectMapper objectMapper;
     private final String appRegion;
 
     public TenantUseCase(
             TenantJpaRepository tenantRepo,
             OutboxEventJpaRepository outboxRepo,
+            ObjectMapper objectMapper,
             @Value("${app.region}") String appRegion) {
         this.tenantRepo = tenantRepo;
         this.outboxRepo = outboxRepo;
+        this.objectMapper = objectMapper;
         this.appRegion = appRegion;
     }
 
@@ -53,7 +57,7 @@ public class TenantUseCase {
                         "Tenant",
                         id.toString(),
                         "tenant.created",
-                        "{\"name\":\"" + name + "\"}",
+                        writeJson(Map.of("name", name)),
                         OutboxEvent.OutboxStatus.PENDING,
                         0,
                         null,
@@ -62,6 +66,14 @@ public class TenantUseCase {
                         null);
         outboxRepo.save(OutboxEventEntity.from(outbox));
         return tenant;
+    }
+
+    private String writeJson(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize JSON", e);
+        }
     }
 
     @Transactional(readOnly = true)
