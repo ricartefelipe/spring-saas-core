@@ -22,11 +22,17 @@ spring:
     host: ${SPRING_RABBITMQ_HOST:localhost}
     port: ${SPRING_RABBITMQ_PORT:5672}
     connection-timeout: 5000
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
 
 server:
   port: ${SERVER_PORT:8080}
 
-# Multi-region demo: region-a | region-b
 app:
   region: ${APP_REGION:region-a}
   jwt:
@@ -50,8 +56,10 @@ app:
     batch-size: 50
     lock-ttl-seconds: 60
     retry-max: 5
+    dispatch-interval-ms: 5000
+    kafka:
+      topic-prefix: saascore
 
-# Actuator
 management:
   endpoints:
     web:
@@ -69,7 +77,6 @@ management:
     sampling:
       probability: 1.0
 
-# OTLP
 otel:
   service:
     name: spring-saas-core
@@ -78,7 +85,6 @@ otel:
       otlp:
         endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
 
-# Resilience4j
 resilience4j:
   circuitbreaker:
     instances:
@@ -109,7 +115,6 @@ resilience4j:
       redis:
         timeoutDuration: 2s
 
-# Springdoc
 springdoc:
   api-docs:
     path: /v3/api-docs
