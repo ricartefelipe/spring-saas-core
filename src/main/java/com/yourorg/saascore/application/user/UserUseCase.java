@@ -1,9 +1,19 @@
 package com.yourorg.saascore.application.user;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yourorg.saascore.config.TenantContext;
 import com.yourorg.saascore.domain.User;
-import com.yourorg.saascore.adapters.out.persistence.*;
+import com.yourorg.saascore.adapters.out.persistence.IdempotencyKeyEntity;
+import com.yourorg.saascore.adapters.out.persistence.IdempotencyKeyJpaRepository;
+import com.yourorg.saascore.adapters.out.persistence.RoleEntity;
+import com.yourorg.saascore.adapters.out.persistence.RoleJpaRepository;
+import com.yourorg.saascore.adapters.out.persistence.UserEntity;
+import com.yourorg.saascore.adapters.out.persistence.UserJpaRepository;
+import com.yourorg.saascore.adapters.out.persistence.UserRoleEntity;
+import com.yourorg.saascore.adapters.out.persistence.UserRoleJpaRepository;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,18 +28,21 @@ public class UserUseCase {
     private final UserRoleJpaRepository userRoleRepo;
     private final IdempotencyKeyJpaRepository idempotencyRepo;
     private final PasswordEncoder passwordEncoder;
+    private final ObjectMapper objectMapper;
 
     public UserUseCase(
             UserJpaRepository userRepo,
             RoleJpaRepository roleRepo,
             UserRoleJpaRepository userRoleRepo,
             IdempotencyKeyJpaRepository idempotencyRepo,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            ObjectMapper objectMapper) {
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
         this.userRoleRepo = userRoleRepo;
         this.idempotencyRepo = idempotencyRepo;
         this.passwordEncoder = passwordEncoder;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -50,7 +63,7 @@ public class UserUseCase {
             if (u.isPresent()) {
                 User created = u.get().toDomain();
                 int status = 200;
-                String body = "{\"id\":\"" + created.getId() + "\",\"email\":\"" + created.getEmail() + "\"}";
+                String body = writeJson(Map.of("id", created.getId().toString(), "email", created.getEmail()));
                 if (idempotencyKey != null && !idempotencyKey.isBlank()) {
                     saveIdempotency(tenant, idempotencyKey, status, body);
                 }
@@ -62,11 +75,19 @@ public class UserUseCase {
         UserEntity e = UserEntity.from(user);
         userRepo.save(e);
         int status = 201;
-        String body = "{\"id\":\"" + id + "\",\"email\":\"" + email + "\"}";
+        String body = writeJson(Map.of("id", id.toString(), "email", email));
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
             saveIdempotency(tenant, idempotencyKey, status, body);
         }
         return new IdempotentResult(status, body, false);
+    }
+
+    private String writeJson(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize JSON", e);
+        }
     }
 
     private void saveIdempotency(UUID tenantId, String key, int status, String body) {
@@ -75,7 +96,7 @@ public class UserUseCase {
         ik.setIdempotencyKey(key);
         ik.setResponseStatus(status);
         ik.setResponseBody(body);
-        ik.setExpires_at(Instant.now().plusSeconds(86400));
+        ik.setExpiresAt(Instant.now().plusSeconds(86400));
         idempotencyRepo.save(ik);
     }
 

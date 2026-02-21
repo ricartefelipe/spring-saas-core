@@ -22,13 +22,13 @@ public class DataSourceRoutingConfig {
             @Value("${app.datasource.shard-a.jdbc-url}") String url,
             @Value("${app.datasource.shard-a.username}") String user,
             @Value("${app.datasource.shard-a.password}") String pass) {
-        HikariDataSource d = new HikariDataSource();
-        d.setJdbcUrl(url);
-        d.setUsername(user);
-        d.setPassword(pass);
-        d.setMaximumPoolSize(10);
-        d.setMinimumIdle(2);
-        return d;
+        HikariDataSource dataSource = new HikariDataSource();
+        dataSource.setJdbcUrl(url);
+        dataSource.setUsername(user);
+        dataSource.setPassword(pass);
+        dataSource.setMaximumPoolSize(10);
+        dataSource.setMinimumIdle(2);
+        return dataSource;
     }
 
     @Bean("shardBDataSource")
@@ -36,13 +36,13 @@ public class DataSourceRoutingConfig {
             @Value("${app.datasource.shard-b.jdbc-url}") String url,
             @Value("${app.datasource.shard-b.username}") String user,
             @Value("${app.datasource.shard-b.password}") String pass) {
-        HikariDataSource d = new HikariDataSource();
-        d.setJdbcUrl(url);
-        d.setUsername(user);
-        d.setPassword(pass);
-        d.setMaximumPoolSize(10);
-        d.setMinimumIdle(2);
-        return d;
+        HikariDataSource dataSource = new HikariDataSource();
+        dataSource.setJdbcUrl(url);
+        dataSource.setUsername(user);
+        dataSource.setPassword(pass);
+        dataSource.setMaximumPoolSize(10);
+        dataSource.setMinimumIdle(2);
+        return dataSource;
     }
 
     @Bean("routingDataSource")
