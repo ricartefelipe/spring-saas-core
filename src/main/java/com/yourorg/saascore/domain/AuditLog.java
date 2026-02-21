@@ -99,4 +99,16 @@ public class AuditLog {
     public String getMetadataJson() {
         return metadataJson;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AuditLog that)) return false;
+        return java.util.Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(id);
+    }
 }

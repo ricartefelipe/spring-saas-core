@@ -71,7 +71,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 if (tid != null && !"*".equals(tid)) {
                                     try {
                                         TenantContext.setTenantId(UUID.fromString(tid));
-                                    } catch (Exception ignored) {
+                                    } catch (IllegalArgumentException ignored) {
                                     }
                                 }
                                 TenantContext.setRegion(region);
@@ -84,7 +84,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 if (tenantHeader != null && tid != null && tid.equals(tenantHeader)) {
                                     try {
                                         TenantContext.setTenantId(UUID.fromString(tenantHeader));
-                                    } catch (Exception ignored) {
+                                    } catch (IllegalArgumentException ignored) {
                                     }
                                 }
                                 String consistency = request.getHeader("Consistency");
