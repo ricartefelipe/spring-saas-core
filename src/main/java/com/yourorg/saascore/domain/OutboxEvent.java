@@ -100,6 +100,18 @@ public class OutboxEvent {
         return sentAt;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof OutboxEvent that)) return false;
+        return java.util.Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(id);
+    }
+
     public enum OutboxStatus {
         PENDING,
         SENT,
