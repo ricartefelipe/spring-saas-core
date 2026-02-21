@@ -156,7 +156,9 @@ databaseChangeLog:
         - createIndex:
             indexName: idx_abac_tenant_perm
             tableName: abac_policies
-            columns: { name: tenant_id, permission_code }
+            columns:
+              - column: { name: tenant_id }
+              - column: { name: permission_code }
 
   - changeSet:
       id: 009-feature-flags
@@ -178,7 +180,9 @@ databaseChangeLog:
         - createIndex:
             indexName: idx_feature_flags_tenant_name
             tableName: feature_flags
-            columns: { name: tenant_id, name }
+            columns:
+              - column: { name: tenant_id }
+              - column: { name: name }
 
   - changeSet:
       id: 010-audit-log
@@ -206,7 +210,9 @@ databaseChangeLog:
         - createIndex:
             indexName: idx_audit_tenant_created
             tableName: audit_log
-            columns: { name: tenant_id, created_at }
+            columns:
+              - column: { name: tenant_id }
+              - column: { name: created_at }
         - createIndex:
             indexName: idx_audit_correlation
             tableName: audit_log
@@ -238,7 +244,9 @@ databaseChangeLog:
         - createIndex:
             indexName: idx_outbox_status_created
             tableName: outbox_events
-            columns: { name: status, created_at }
+            columns:
+              - column: { name: status }
+              - column: { name: created_at }
         - createIndex:
             indexName: idx_outbox_tenant
             tableName: outbox_events
@@ -263,7 +271,9 @@ databaseChangeLog:
         - createIndex:
             indexName: idx_idempotency_tenant_key
             tableName: idempotency_keys
-            columns: { name: tenant_id, idempotency_key }
+            columns:
+              - column: { name: tenant_id }
+              - column: { name: idempotency_key }
 
   - changeSet:
       id: 013-chaos-config
