@@ -4,12 +4,22 @@ import com.yourorg.saascore.application.abac.AbacContext;
 import com.yourorg.saascore.application.abac.AbacEvaluator;
 import com.yourorg.saascore.application.abac.AbacResult;
 import com.yourorg.saascore.config.TenantContext;
-import com.yourorg.saascore.adapters.out.persistence.*;
+import com.yourorg.saascore.adapters.out.persistence.AbacPolicyEntity;
+import com.yourorg.saascore.adapters.out.persistence.AbacPolicyJpaRepository;
+import com.yourorg.saascore.adapters.out.persistence.ChaosConfigEntity;
+import com.yourorg.saascore.adapters.out.persistence.ChaosConfigJpaRepository;
+import com.yourorg.saascore.adapters.out.persistence.FeatureFlagEntity;
+import com.yourorg.saascore.adapters.out.persistence.FeatureFlagJpaRepository;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/v1/admin")
@@ -109,8 +119,8 @@ public class AdminController {
         UUID tenantId = TenantContext.getTenantId().orElse(null);
         if (tenantId == null) return ResponseEntity.badRequest().build();
         body.setTenantId(tenantId);
-        if (body.getExpires_at() == null) {
-            body.setExpires_at(java.time.Instant.now().plusSeconds(3600));
+        if (body.getExpiresAt() == null) {
+            body.setExpiresAt(java.time.Instant.now().plusSeconds(3600));
         }
         return ResponseEntity.ok(chaosRepo.save(body));
     }

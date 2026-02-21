@@ -62,6 +62,18 @@ public class Tenant {
         return status == TenantStatus.ACTIVE;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Tenant that)) return false;
+        return java.util.Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(id);
+    }
+
     public enum TenantStatus {
         ACTIVE,
         SUSPENDED,

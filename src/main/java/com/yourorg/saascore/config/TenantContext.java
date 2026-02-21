@@ -7,6 +7,8 @@ public final class TenantContext {
 
     private static final ThreadLocal<Holder> HOLDER = ThreadLocal.withInitial(Holder::new);
 
+    private TenantContext() {}
+
     public static void setTenantId(UUID tenantId) {
         HOLDER.get().tenantId = tenantId;
     }

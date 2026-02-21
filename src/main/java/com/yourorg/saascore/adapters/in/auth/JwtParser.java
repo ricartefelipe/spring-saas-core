@@ -24,7 +24,7 @@ public class JwtParser {
                             .parseSignedClaims(token)
                             .getPayload();
             return Optional.of(c);
-        } catch (Exception e) {
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
             return Optional.empty();
         }
     }
