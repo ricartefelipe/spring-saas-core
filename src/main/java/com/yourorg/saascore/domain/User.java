@@ -55,6 +55,18 @@ public class User {
         return status == UserStatus.ACTIVE;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User that)) return false;
+        return java.util.Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(id);
+    }
+
     public enum UserStatus {
         ACTIVE,
         SUSPENDED,

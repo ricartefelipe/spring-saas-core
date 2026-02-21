@@ -64,8 +64,8 @@ public class AbacEvaluator {
 
     private boolean matchesPermission(AbacPolicyEntity pe, String permission) {
         if (permission == null) return false;
-        return permission.equals(pe.getPermissionCode())
-                || pe.getPermissionCode().equals("*");
+        String code = pe.getPermissionCode();
+        return permission.equals(code) || "*".equals(code);
     }
 
     private boolean evaluateConditions(String conditionsJson, AbacContext ctx) {
@@ -107,7 +107,7 @@ public class AbacEvaluator {
                 }
             }
             return true;
-        } catch (Exception e) {
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             log.warn("ABAC conditions parse error: {}", e.getMessage());
             return false;
         }

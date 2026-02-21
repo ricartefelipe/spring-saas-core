@@ -84,27 +84,26 @@ public class OutboxDispatcher {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markSent(UUID id) {
-        OutboxEventEntity e = outboxRepo.findById(id).orElse(null);
-        if (e != null) {
-            e.setStatus(OutboxEvent.OutboxStatus.SENT);
-            e.setSentAt(Instant.now());
-            e.setLockedAt(null);
-            e.setLockedBy(null);
-            outboxRepo.save(e);
-        }
+        outboxRepo.findById(id).ifPresent(entity -> {
+            entity.setStatus(OutboxEvent.OutboxStatus.SENT);
+            entity.setSentAt(Instant.now());
+            entity.setLockedAt(null);
+            entity.setLockedBy(null);
+            outboxRepo.save(entity);
+        });
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleFailure(UUID id) {
-        OutboxEventEntity e = outboxRepo.findById(id).orElse(null);
-        if (e == null) return;
-        e.setRetries(e.getRetries() + 1);
-        e.setLockedAt(null);
-        e.setLockedBy(null);
-        if (e.getRetries() >= retryMax) {
-            e.setStatus(OutboxEvent.OutboxStatus.FAILED);
-            log.warn("Outbox event marked FAILED after {} retries id={} type={}", retryMax, e.getId(), e.getType());
-        }
-        outboxRepo.save(e);
+        outboxRepo.findById(id).ifPresent(entity -> {
+            entity.setRetries(entity.getRetries() + 1);
+            entity.setLockedAt(null);
+            entity.setLockedBy(null);
+            if (entity.getRetries() >= retryMax) {
+                entity.setStatus(OutboxEvent.OutboxStatus.FAILED);
+                log.warn("Outbox event marked FAILED after {} retries id={} type={}", retryMax, entity.getId(), entity.getType());
+            }
+            outboxRepo.save(entity);
+        });
     }
 }
