@@ -6,7 +6,16 @@ import com.yourorg.saascore.config.TenantContext;
 import com.yourorg.saascore.domain.Role;
 import com.yourorg.saascore.domain.Tenant;
 import com.yourorg.saascore.domain.User;
-import com.yourorg.saascore.adapters.out.persistence.*;
+import com.yourorg.saascore.adapters.out.persistence.RoleEntity;
+import com.yourorg.saascore.adapters.out.persistence.RoleJpaRepository;
+import com.yourorg.saascore.adapters.out.persistence.RolePermissionEntity;
+import com.yourorg.saascore.adapters.out.persistence.RolePermissionJpaRepository;
+import com.yourorg.saascore.adapters.out.persistence.TenantEntity;
+import com.yourorg.saascore.adapters.out.persistence.TenantJpaRepository;
+import com.yourorg.saascore.adapters.out.persistence.UserEntity;
+import com.yourorg.saascore.adapters.out.persistence.UserJpaRepository;
+import com.yourorg.saascore.adapters.out.persistence.UserRoleEntity;
+import com.yourorg.saascore.adapters.out.persistence.UserRoleJpaRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthUseCase {
+
+    private static final String ADMIN_EMAIL = "admin@example.com";
 
     private final UserJpaRepository userRepo;
     private final TenantJpaRepository tenantRepo;
@@ -49,7 +60,7 @@ public class AuthUseCase {
             return Optional.empty();
         }
         UserEntity ue = shardUser.user();
-        if (!passwordEncoder.matches(password, ue.getPassword_hash())) {
+        if (!passwordEncoder.matches(password, ue.getPasswordHash())) {
             return Optional.empty();
         }
         TenantContext.setShardKey(shardUser.shardKey());
@@ -59,7 +70,7 @@ public class AuthUseCase {
             User user = ue.toDomain();
             List<String> roles = resolveRoles(ue.getId());
             List<String> perms = resolvePermissions(roles, ue.getTenantId());
-            if ("admin@example.com".equalsIgnoreCase(ue.getEmail())) {
+            if (ADMIN_EMAIL.equalsIgnoreCase(ue.getEmail())) {
                 tenant = null;
             }
             String token = tokenIssuer.issue(user, tenant, roles, perms);
