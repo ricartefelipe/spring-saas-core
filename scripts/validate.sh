@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Validação local: build, testes, smoke (requer Java 21 + Docker)
 set -e
 cd "$(dirname "$0")/.."
 echo "=== 1. Build e testes ==="

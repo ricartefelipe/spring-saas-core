@@ -1,6 +1,5 @@
 package com.yourorg.saascore.adapters.in.auth;
 
-import com.yourorg.saascore.application.auth.AuthResult;
 import com.yourorg.saascore.application.auth.AuthUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

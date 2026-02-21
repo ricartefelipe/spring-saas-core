@@ -1,6 +1,5 @@
 package com.yourorg.saascore.observability;
 
-import com.yourorg.saascore.application.ratelimit.RateLimitResult;
 import com.yourorg.saascore.application.ratelimit.RateLimitService;
 import com.yourorg.saascore.config.TenantContext;
 import jakarta.servlet.FilterChain;
@@ -49,7 +48,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String endpointGroup = request.getMethod().equals("GET") ? "read" : "write";
         String key = tenantKey + ":" + endpointGroup;
 
-        RateLimitResult result = rateLimitService.tryConsume(key, limit);
+        RateLimitService.RateLimitResult result = rateLimitService.tryConsume(key, limit);
         response.setHeader(HEADER_LIMIT, String.valueOf(result.limit()));
         response.setHeader(HEADER_REMAINING, String.valueOf(result.remaining()));
         if (result.retryAfterSeconds() > 0) {
