@@ -1,9 +1,9 @@
 @startuml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
-title System Context - spring-saas-core
+title System Context - spring-saas-core (Union Solutions)
 Person(admin, "Admin")
-Person(user, "Tenant User")
-System(saascore, "spring-saas-core", "Governance: tenants, users, RBAC/ABAC, flags, audit, outbox")
-Rel(admin, saascore, "Manage tenants, policies, chaos")
-Rel(user, saascore, "Auth, CRUD, scoped by tenant")
+Person(service, "Consumer Service", "node-b2b-orders / py-payments-ledger")
+System(saascore, "spring-saas-core", "SaaS Core: tenants, ABAC policies, feature flags, audit, outbox")
+Rel(admin, saascore, "Manage tenants, policies, flags")
+Rel(service, saascore, "Query tenant snapshot, policies, flags via JWT")
 @enduml
