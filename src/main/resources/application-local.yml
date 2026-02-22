@@ -1,0 +1,9 @@
+app:
+  dev:
+    token-endpoint-enabled: true
+  auth:
+    mode: hs256
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{correlationId:-}] [%X{tenantId:-}] - %msg%n"
