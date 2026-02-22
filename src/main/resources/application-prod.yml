@@ -1,0 +1,12 @@
+app:
+  dev:
+    token-endpoint-enabled: false
+  auth:
+    mode: ${AUTH_MODE:oidc}
+
+logging:
+  level:
+    root: WARN
+    com.union.solutions: INFO
+  pattern:
+    console: '{"timestamp":"%d{yyyy-MM-dd''T''HH:mm:ss.SSSZ}","level":"%level","logger":"%logger","thread":"%thread","correlationId":"%X{correlationId:-}","tenantId":"%X{tenantId:-}","message":"%msg"}%n'
