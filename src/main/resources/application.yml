@@ -2,63 +2,64 @@ spring:
   application:
     name: spring-saas-core
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:default}
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/saascore}
+    username: ${DB_USER:saascore}
+    password: ${DB_PASS:saascore}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
+    open-in-view: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         default_schema: public
+        jdbc.time_zone: UTC
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
   data:
     redis:
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
-      port: ${SPRING_DATA_REDIS_PORT:6379}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
       timeout: 3s
   rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST:localhost}
-    port: ${SPRING_RABBITMQ_PORT:5672}
-    connection-timeout: 5000
-  kafka:
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-      acks: all
-      retries: 3
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
 
 server:
   port: ${SERVER_PORT:8080}
+  shutdown: graceful
 
 app:
-  region: ${APP_REGION:region-a}
-  jwt:
-    secret: ${JWT_SECRET:local-dev-secret-min-32-chars-for-hs256}
-    issuer: local-auth
-    expiration-seconds: 3600
-  datasource:
-    shard-a:
-      jdbc-url: ${SPRING_DATASOURCE_A_URL:jdbc:postgresql://localhost:5432/saascore_a}
-      username: ${SPRING_DATASOURCE_A_USER:saascore}
-      password: ${SPRING_DATASOURCE_A_PASSWORD:saascore}
-    shard-b:
-      jdbc-url: ${SPRING_DATASOURCE_B_URL:jdbc:postgresql://localhost:5433/saascore_b}
-      username: ${SPRING_DATASOURCE_B_USER:saascore}
-      password: ${SPRING_DATASOURCE_B_PASSWORD:saascore}
-  rate-limit:
-    free: 10
-    pro: 50
-    enterprise: 200
+  auth:
+    mode: ${AUTH_MODE:hs256}
+    jwt:
+      issuer: ${JWT_ISSUER:spring-saas-core}
+      hs256-secret: ${JWT_HS256_SECRET:local-dev-secret-min-32-chars-for-hs256-signing}
+      expiration-seconds: 3600
+    oidc:
+      issuer-uri: ${OIDC_ISSUER_URI:}
+      jwk-set-uri: ${OIDC_JWK_SET_URI:}
   outbox:
+    publish-enabled: ${OUTBOX_PUBLISH_ENABLED:false}
     batch-size: 50
     lock-ttl-seconds: 60
     retry-max: 5
     dispatch-interval-ms: 5000
-    kafka:
-      topic-prefix: saascore
+  rate-limit:
+    free: 60
+    pro: 300
+    enterprise: 1000
+  dev:
+    token-endpoint-enabled: false
 
 management:
   endpoints:
@@ -68,52 +69,25 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+      group:
+        liveness:
+          include: livenessState
+          show-details: always
+        readiness:
+          include: readinessState,db
+          show-details: always
   health:
-    livenessState:
+    livenessstate:
       enabled: true
-    readinessState:
+    readinessstate:
       enabled: true
   tracing:
     sampling:
       probability: 1.0
-
-otel:
-  service:
-    name: spring-saas-core
-  traces:
-    exporter:
-      otlp:
-        endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      rabbitPublish:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        failureRateThreshold: 50
-        waitDurationInOpenState: 10s
-      redis:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        failureRateThreshold: 50
-  bulkhead:
-    instances:
-      writeEndpoint:
-        maxConcurrentCalls: 20
-      outboxDispatcher:
-        maxConcurrentCalls: 5
-  retry:
-    instances:
-      rabbitPublish:
-        maxAttempts: 3
-        waitDuration: 500ms
-  timelimiter:
-    instances:
-      rabbitPublish:
-        timeoutDuration: 5s
-      redis:
-        timeoutDuration: 2s
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
 springdoc:
   api-docs:
@@ -124,5 +98,7 @@ springdoc:
 logging:
   level:
     root: INFO
-    com.yourorg: DEBUG
+    com.union.solutions: DEBUG
     org.springframework.security: INFO
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level %logger{36} [%X{correlationId:-}] [%X{tenantId:-}] - %msg%n"

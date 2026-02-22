@@ -1,28 +1,25 @@
 spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: create-drop
+    show-sql: false
+  liquibase:
+    enabled: false
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
-  data:
-    redis:
-      host: localhost
-      port: 6379
-  rabbitmq:
-    host: localhost
-    port: 5672
+
 app:
-  region: region-a
-  jwt:
-    secret: test-secret-min-32-chars-for-hs256
-  datasource:
-    shard-a:
-      jdbc-url: jdbc:h2:mem:sharda;DB_CLOSE_DELAY=-1
-      username: sa
-      password: sa
-    shard-b:
-      jdbc-url: jdbc:h2:mem:shardb;DB_CLOSE_DELAY=-1
-      username: sa
-      password: sa
+  auth:
+    mode: hs256
+    jwt:
+      hs256-secret: test-secret-key-minimum-32-characters-long
+      issuer: test-issuer
+      expiration-seconds: 3600
+  dev:
+    token-endpoint-enabled: true
+  outbox:
+    publish-enabled: false
