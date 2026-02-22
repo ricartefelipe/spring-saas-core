@@ -1,19 +1,19 @@
 @startuml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
-title Containers - spring-saas-core
+title Containers - spring-saas-core (Union Solutions)
 Container_Boundary(saascore, "spring-saas-core") {
-    Container(api, "REST API", "Spring Web", "Controllers, DTOs")
-    Container(app, "Application", "Use cases", "Tenant, User, Auth, Admin")
-    Container(domain, "Domain", "Entities", "Tenant, User, Role, ABAC, Outbox")
-    Container(adapters, "Adapters", "JPA, Redis, Rabbit", "Persistence, events")
+    Container(api, "REST API", "Spring Web", "Controllers, DTOs, Filters")
+    Container(app, "Application", "Use cases", "TenantUseCase, PolicyService, FeatureFlagService, AbacEvaluator")
+    Container(domain, "Domain", "Entities", "Tenant, Policy")
+    Container(adapters, "Adapters", "JPA, Outbox", "Persistence, audit logging")
 }
 System_Ext(postgres, "PostgreSQL")
-System_Ext(redis, "Redis")
-System_Ext(rabbit, "RabbitMQ")
+System_Ext(redis, "Redis (optional)")
+System_Ext(rabbit, "RabbitMQ (optional)")
 Rel(api, app, "calls")
 Rel(app, domain, "uses")
 Rel(app, adapters, "uses")
 Rel(adapters, postgres, "JDBC")
-Rel(adapters, redis, "cache, rate limit")
-Rel(adapters, rabbit, "events")
+Rel(adapters, redis, "cache")
+Rel(adapters, rabbit, "outbox events")
 @enduml
