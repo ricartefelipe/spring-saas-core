@@ -1,0 +1,117 @@
+databaseChangeLog:
+  - changeSet:
+      id: phase1-seed-tenants
+      author: saascore
+      changes:
+        - insert:
+            tableName: tenants
+            columns:
+              - column: { name: id, value: "00000000-0000-0000-0000-000000000001" }
+              - column: { name: name, value: "System" }
+              - column: { name: plan, value: "enterprise" }
+              - column: { name: region, value: "global" }
+              - column: { name: status, value: "ACTIVE" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+        - insert:
+            tableName: tenants
+            columns:
+              - column: { name: id, value: "00000000-0000-0000-0000-000000000002" }
+              - column: { name: name, value: "Demo Corp" }
+              - column: { name: plan, value: "pro" }
+              - column: { name: region, value: "us-east-1" }
+              - column: { name: status, value: "ACTIVE" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+
+  - changeSet:
+      id: phase1-seed-policies
+      author: saascore
+      changes:
+        - insert:
+            tableName: policies
+            columns:
+              - column: { name: id, value: "10000000-0000-0000-0000-000000000001" }
+              - column: { name: permission_code, value: "tenants:read" }
+              - column: { name: effect, value: "ALLOW" }
+              - column: { name: allowed_plans, value: "[]" }
+              - column: { name: allowed_regions, value: "[]" }
+              - column: { name: enabled, valueBoolean: true }
+              - column: { name: notes, value: "Allow all plans/regions to read tenants" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+        - insert:
+            tableName: policies
+            columns:
+              - column: { name: id, value: "10000000-0000-0000-0000-000000000002" }
+              - column: { name: permission_code, value: "tenants:write" }
+              - column: { name: effect, value: "ALLOW" }
+              - column: { name: allowed_plans, value: '["pro","enterprise"]' }
+              - column: { name: allowed_regions, value: "[]" }
+              - column: { name: enabled, valueBoolean: true }
+              - column: { name: notes, value: "Only pro and enterprise plans can write tenants" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+        - insert:
+            tableName: policies
+            columns:
+              - column: { name: id, value: "10000000-0000-0000-0000-000000000003" }
+              - column: { name: permission_code, value: "admin:write" }
+              - column: { name: effect, value: "DENY" }
+              - column: { name: allowed_plans, value: '["free"]' }
+              - column: { name: allowed_regions, value: "[]" }
+              - column: { name: enabled, valueBoolean: true }
+              - column: { name: notes, value: "Deny admin write for free plan" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+        - insert:
+            tableName: policies
+            columns:
+              - column: { name: id, value: "10000000-0000-0000-0000-000000000004" }
+              - column: { name: permission_code, value: "policies:read" }
+              - column: { name: effect, value: "ALLOW" }
+              - column: { name: allowed_plans, value: "[]" }
+              - column: { name: allowed_regions, value: "[]" }
+              - column: { name: enabled, valueBoolean: true }
+              - column: { name: notes, value: "All plans can read policies" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+        - insert:
+            tableName: policies
+            columns:
+              - column: { name: id, value: "10000000-0000-0000-0000-000000000005" }
+              - column: { name: permission_code, value: "flags:read" }
+              - column: { name: effect, value: "ALLOW" }
+              - column: { name: allowed_plans, value: "[]" }
+              - column: { name: allowed_regions, value: "[]" }
+              - column: { name: enabled, valueBoolean: true }
+              - column: { name: notes, value: "All plans can read flags" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+
+  - changeSet:
+      id: phase1-seed-flags
+      author: saascore
+      changes:
+        - insert:
+            tableName: feature_flags
+            columns:
+              - column: { name: id, value: "20000000-0000-0000-0000-000000000001" }
+              - column: { name: tenant_id, value: "00000000-0000-0000-0000-000000000002" }
+              - column: { name: name, value: "new_dashboard" }
+              - column: { name: enabled, valueBoolean: true }
+              - column: { name: rollout_percent, valueNumeric: 100 }
+              - column: { name: allowed_roles, value: "[]" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+        - insert:
+            tableName: feature_flags
+            columns:
+              - column: { name: id, value: "20000000-0000-0000-0000-000000000002" }
+              - column: { name: tenant_id, value: "00000000-0000-0000-0000-000000000002" }
+              - column: { name: name, value: "beta_export" }
+              - column: { name: enabled, valueBoolean: true }
+              - column: { name: rollout_percent, valueNumeric: 25 }
+              - column: { name: allowed_roles, value: '["admin"]' }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }

@@ -1,31 +1,19 @@
 services:
-  postgres_a:
+  postgres:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: saascore
       POSTGRES_PASSWORD: saascore
-      POSTGRES_DB: saascore_a
+      POSTGRES_DB: saascore
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U saascore -d saascore_a"]
+      test: ["CMD-SHELL", "pg_isready -U saascore -d saascore"]
       interval: 5s
       timeout: 5s
       retries: 5
-
-  postgres_b:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: saascore
-      POSTGRES_PASSWORD: saascore
-      POSTGRES_DB: saascore_b
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U saascore -d saascore_b"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
@@ -51,101 +39,37 @@ services:
       timeout: 5s
       retries: 5
 
-  kafka:
-    image: apache/kafka:3.7.0
-    ports:
-      - "9092:9092"
-      - "9093:9093"
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-    healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 20s
-
-  app_a:
+  app:
     build:
       context: .
       dockerfile: docker/app.Dockerfile
     ports:
       - "8080:8080"
     environment:
-      APP_REGION: region-a
+      SPRING_PROFILES_ACTIVE: local
       SERVER_PORT: "8080"
-      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-min-32-chars-for-hs256}
-      SPRING_DATASOURCE_A_URL: jdbc:postgresql://postgres_a:5432/saascore_a
-      SPRING_DATASOURCE_A_USER: saascore
-      SPRING_DATASOURCE_A_PASSWORD: saascore
-      SPRING_DATASOURCE_B_URL: jdbc:postgresql://postgres_b:5432/saascore_b
-      SPRING_DATASOURCE_B_USER: saascore
-      SPRING_DATASOURCE_B_PASSWORD: saascore
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: "6379"
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: "5672"
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DB_URL: jdbc:postgresql://postgres:5432/saascore
+      DB_USER: saascore
+      DB_PASS: saascore
+      AUTH_MODE: hs256
+      JWT_HS256_SECRET: local-dev-secret-min-32-chars-for-hs256-signing
+      JWT_ISSUER: spring-saas-core
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
     depends_on:
-      postgres_a:
-        condition: service_healthy
-      postgres_b:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health/liveness"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 60s
-
-  app_b:
-    build:
-      context: .
-      dockerfile: docker/app.Dockerfile
-    ports:
-      - "8081:8080"
-    environment:
-      APP_REGION: region-b
-      SERVER_PORT: "8080"
-      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-min-32-chars-for-hs256}
-      SPRING_DATASOURCE_A_URL: jdbc:postgresql://postgres_a:5432/saascore_a
-      SPRING_DATASOURCE_A_USER: saascore
-      SPRING_DATASOURCE_A_PASSWORD: saascore
-      SPRING_DATASOURCE_B_URL: jdbc:postgresql://postgres_b:5432/saascore_b
-      SPRING_DATASOURCE_B_USER: saascore
-      SPRING_DATASOURCE_B_PASSWORD: saascore
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: "6379"
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: "5672"
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    depends_on:
-      postgres_a:
-        condition: service_healthy
-      postgres_b:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      retries: 10
       start_period: 60s
 
   prometheus:
@@ -156,9 +80,8 @@ services:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
     depends_on:
-      - app_a
+      - app
 
   grafana:
     image: grafana/grafana:latest
@@ -167,18 +90,11 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
-      GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
 
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
-    command: ["--config=/etc/otel-collector.yml"]
-    volumes:
-      - ./observability/otel/otel-collector.yml:/etc/otel-collector.yml:ro
-    ports:
-      - "4317:4317"
-      - "4318:4318"
+volumes:
+  pgdata:

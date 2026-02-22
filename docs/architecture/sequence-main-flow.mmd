@@ -1,27 +1,26 @@
 sequenceDiagram
     participant Client
-    participant API
-    participant App
-    participant TX
-    participant DB
+    participant Filter as JwtAuthFilter
+    participant ABAC as AbacEvaluator
+    participant Controller
+    participant Service
+    participant DB as PostgreSQL
     participant Outbox
-    participant Dispatcher
-    participant Rabbit
-    participant Consumer
-    participant ReplicaDB
-    Client->>API: POST /v1/tenants (JWT, X-Tenant-Id)
-    API->>App: create tenant
-    App->>TX: begin
-    TX->>DB: insert tenant
-    TX->>Outbox: insert outbox_event (PENDING)
-    TX->>TX: commit
-    App-->>API: Tenant
-    API-->>Client: 201
-    loop Dispatcher (scheduled)
-        Dispatcher->>Outbox: claim PENDING (lock)
-        Dispatcher->>Rabbit: publish (event_id, tenant_id, region_origin)
-        Dispatcher->>Outbox: mark SENT
+    Client->>Filter: POST /v1/tenants (JWT + X-Tenant-Id)
+    Filter->>Filter: Validate JWT, extract claims (tid, roles, perms, plan, region)
+    Filter->>Filter: Enforce X-Tenant-Id == tid
+    Filter->>ABAC: evaluate(permission, plan, region)
+    ABAC->>DB: load enabled policies
+    ABAC->>ABAC: DENY precedence, default-deny
+    alt Access Denied
+        ABAC->>DB: audit_log (ACCESS_DENIED)
+        ABAC-->>Client: 403 Forbidden
+    else Access Allowed
+        ABAC->>Controller: proceed
+        Controller->>Service: createTenant(request)
+        Service->>DB: INSERT tenant
+        Service->>Outbox: INSERT outbox_event (PENDING)
+        Service->>DB: INSERT audit_log (TENANT_CREATED)
+        Service-->>Controller: Tenant
+        Controller-->>Client: 201 Created
     end
-    Rabbit->>Consumer: message
-    Consumer->>ReplicaDB: apply (eventual)
-    Note over Client,ReplicaDB: Strong read from primary; eventual read from replica after delay

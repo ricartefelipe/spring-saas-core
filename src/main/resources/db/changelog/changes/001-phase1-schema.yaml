@@ -1,0 +1,349 @@
+databaseChangeLog:
+  - changeSet:
+      id: phase1-001-tenants
+      author: saascore
+      changes:
+        - createTable:
+            tableName: tenants
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: plan
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: region
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(32)
+                  constraints:
+                    nullable: false
+                  defaultValue: ACTIVE
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - createIndex:
+            indexName: idx_tenants_status
+            tableName: tenants
+            columns:
+              - column:
+                  name: status
+        - createIndex:
+            indexName: idx_tenants_plan
+            tableName: tenants
+            columns:
+              - column:
+                  name: plan
+        - createIndex:
+            indexName: idx_tenants_region
+            tableName: tenants
+            columns:
+              - column:
+                  name: region
+
+  - changeSet:
+      id: phase1-002-policies
+      author: saascore
+      changes:
+        - createTable:
+            tableName: policies
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: permission_code
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: effect
+                  type: varchar(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: allowed_plans
+                  type: text
+                  defaultValue: "[]"
+              - column:
+                  name: allowed_regions
+                  type: text
+                  defaultValue: "[]"
+              - column:
+                  name: enabled
+                  type: boolean
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: true
+              - column:
+                  name: notes
+                  type: text
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - createIndex:
+            indexName: idx_policies_permission_code
+            tableName: policies
+            columns:
+              - column:
+                  name: permission_code
+        - createIndex:
+            indexName: idx_policies_effect
+            tableName: policies
+            columns:
+              - column:
+                  name: effect
+
+  - changeSet:
+      id: phase1-003-feature-flags
+      author: saascore
+      changes:
+        - createTable:
+            tableName: feature_flags
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: enabled
+                  type: boolean
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: false
+              - column:
+                  name: rollout_percent
+                  type: int
+                  defaultValueNumeric: 0
+              - column:
+                  name: allowed_roles
+                  type: text
+                  defaultValue: "[]"
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addUniqueConstraint:
+            tableName: feature_flags
+            columnNames: tenant_id, name
+            constraintName: uk_feature_flags_tenant_name
+        - createIndex:
+            indexName: idx_feature_flags_tenant_id
+            tableName: feature_flags
+            columns:
+              - column:
+                  name: tenant_id
+        - addForeignKeyConstraint:
+            baseTableName: feature_flags
+            baseColumnNames: tenant_id
+            referencedTableName: tenants
+            referencedColumnNames: id
+            constraintName: fk_feature_flags_tenant
+
+  - changeSet:
+      id: phase1-004-audit-log
+      author: saascore
+      changes:
+        - createTable:
+            tableName: audit_log
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+              - column:
+                  name: actor_sub
+                  type: varchar(255)
+              - column:
+                  name: actor_roles
+                  type: text
+                  defaultValue: "[]"
+              - column:
+                  name: actor_perms
+                  type: text
+                  defaultValue: "[]"
+              - column:
+                  name: action
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: resource_type
+                  type: varchar(64)
+              - column:
+                  name: resource_id
+                  type: varchar(255)
+              - column:
+                  name: method
+                  type: varchar(10)
+              - column:
+                  name: path
+                  type: varchar(512)
+              - column:
+                  name: status_code
+                  type: int
+              - column:
+                  name: correlation_id
+                  type: varchar(64)
+              - column:
+                  name: details
+                  type: text
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - createIndex:
+            indexName: idx_audit_log_tenant_created
+            tableName: audit_log
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: created_at
+        - createIndex:
+            indexName: idx_audit_log_action
+            tableName: audit_log
+            columns:
+              - column:
+                  name: action
+        - createIndex:
+            indexName: idx_audit_log_correlation
+            tableName: audit_log
+            columns:
+              - column:
+                  name: correlation_id
+        - createIndex:
+            indexName: idx_audit_log_actor_sub
+            tableName: audit_log
+            columns:
+              - column:
+                  name: actor_sub
+
+  - changeSet:
+      id: phase1-005-outbox
+      author: saascore
+      changes:
+        - createTable:
+            tableName: outbox_events
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: aggregate_type
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: aggregate_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_type
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: payload
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(32)
+                  constraints:
+                    nullable: false
+                  defaultValue: PENDING
+              - column:
+                  name: attempts
+                  type: int
+                  defaultValueNumeric: 0
+              - column:
+                  name: next_attempt_at
+                  type: timestamp with time zone
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - createIndex:
+            indexName: idx_outbox_status_next
+            tableName: outbox_events
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: next_attempt_at
