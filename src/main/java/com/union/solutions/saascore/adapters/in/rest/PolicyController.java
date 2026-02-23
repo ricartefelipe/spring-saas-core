@@ -21,73 +21,115 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/v1/policies")
 public class PolicyController {
 
-    private final PolicyService policyService;
-    private final AbacEvaluator abacEvaluator;
+  private final PolicyService policyService;
+  private final AbacEvaluator abacEvaluator;
 
-    public PolicyController(PolicyService policyService, AbacEvaluator abacEvaluator) {
-        this.policyService = policyService;
-        this.abacEvaluator = abacEvaluator;
-    }
+  public PolicyController(PolicyService policyService, AbacEvaluator abacEvaluator) {
+    this.policyService = policyService;
+    this.abacEvaluator = abacEvaluator;
+  }
 
-    @PostMapping
-    public ResponseEntity<?> create(@Valid @RequestBody CreatePolicyRequest request) {
-        AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("policies:write"));
-        if (!abac.allowed()) return ResponseEntity.status(403).body(
-                ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/policies", null));
-        PolicyEntity entity = policyService.create(request.permissionCode(), request.effect(),
-                request.allowedPlans(), request.allowedRegions(), request.enabled(), request.notes());
-        return ResponseEntity.status(201).body(PolicyDto.from(entity));
-    }
+  @PostMapping
+  public ResponseEntity<?> create(@Valid @RequestBody CreatePolicyRequest request) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("policies:write"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/policies", null));
+    PolicyEntity entity =
+        policyService.create(
+            request.permissionCode(),
+            request.effect(),
+            request.allowedPlans(),
+            request.allowedRegions(),
+            request.enabled(),
+            request.notes());
+    return ResponseEntity.status(201).body(PolicyDto.from(entity));
+  }
 
-    @GetMapping
-    public ResponseEntity<Page<PolicyDto>> list(
-            @RequestParam(required = false) String permissionCode,
-            @RequestParam(required = false) Policy.Effect effect,
-            @RequestParam(required = false) Boolean enabled,
-            @PageableDefault(size = 20) Pageable pageable) {
-        Page<PolicyDto> page = policyService.search(permissionCode, effect, enabled, pageable)
-                .map(PolicyDto::from);
-        return ResponseEntity.ok(page);
-    }
+  @GetMapping
+  public ResponseEntity<Page<PolicyDto>> list(
+      @RequestParam(required = false) String permissionCode,
+      @RequestParam(required = false) Policy.Effect effect,
+      @RequestParam(required = false) Boolean enabled,
+      @PageableDefault(size = 20) Pageable pageable) {
+    Page<PolicyDto> page =
+        policyService.search(permissionCode, effect, enabled, pageable).map(PolicyDto::from);
+    return ResponseEntity.ok(page);
+  }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<PolicyDto> getById(@PathVariable UUID id) {
-        return policyService.getById(id)
-                .map(p -> ResponseEntity.ok(PolicyDto.from(p)))
-                .orElse(ResponseEntity.notFound().build());
-    }
+  @GetMapping("/{id}")
+  public ResponseEntity<PolicyDto> getById(@PathVariable UUID id) {
+    return policyService
+        .getById(id)
+        .map(p -> ResponseEntity.ok(PolicyDto.from(p)))
+        .orElse(ResponseEntity.notFound().build());
+  }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody UpdatePolicyRequest request) {
-        AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("policies:write"));
-        if (!abac.allowed()) return ResponseEntity.status(403).body(
-                ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/policies/" + id, null));
-        return policyService.update(id, request.permissionCode(), request.effect(),
-                        request.allowedPlans(), request.allowedRegions(), request.enabled(), request.notes())
-                .map(p -> ResponseEntity.ok(PolicyDto.from(p)))
-                .orElse(ResponseEntity.notFound().build());
-    }
+  @PatchMapping("/{id}")
+  public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody UpdatePolicyRequest request) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("policies:write"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/policies/" + id, null));
+    return policyService
+        .update(
+            id,
+            request.permissionCode(),
+            request.effect(),
+            request.allowedPlans(),
+            request.allowedRegions(),
+            request.enabled(),
+            request.notes())
+        .map(p -> ResponseEntity.ok(PolicyDto.from(p)))
+        .orElse(ResponseEntity.notFound().build());
+  }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("policies:write"));
-        if (!abac.allowed()) return ResponseEntity.status(403).build();
-        return policyService.delete(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
-    }
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("policies:write"));
+    if (!abac.allowed()) return ResponseEntity.status(403).build();
+    return policyService.delete(id)
+        ? ResponseEntity.noContent().build()
+        : ResponseEntity.notFound().build();
+  }
 
-    public record CreatePolicyRequest(@NotBlank String permissionCode, @NotNull Policy.Effect effect,
-                                      List<String> allowedPlans, List<String> allowedRegions,
-                                      boolean enabled, String notes) {}
-    public record UpdatePolicyRequest(String permissionCode, Policy.Effect effect,
-                                      List<String> allowedPlans, List<String> allowedRegions,
-                                      Boolean enabled, String notes) {}
-    public record PolicyDto(UUID id, String permissionCode, String effect, String allowedPlans,
-                            String allowedRegions, boolean enabled, String notes,
-                            java.time.Instant createdAt, java.time.Instant updatedAt) {
-        public static PolicyDto from(PolicyEntity e) {
-            return new PolicyDto(e.getId(), e.getPermissionCode(), e.getEffect().name(),
-                    e.getAllowedPlans(), e.getAllowedRegions(), e.isEnabled(), e.getNotes(),
-                    e.getCreatedAt(), e.getUpdatedAt());
-        }
+  public record CreatePolicyRequest(
+      @NotBlank String permissionCode,
+      @NotNull Policy.Effect effect,
+      List<String> allowedPlans,
+      List<String> allowedRegions,
+      boolean enabled,
+      String notes) {}
+
+  public record UpdatePolicyRequest(
+      String permissionCode,
+      Policy.Effect effect,
+      List<String> allowedPlans,
+      List<String> allowedRegions,
+      Boolean enabled,
+      String notes) {}
+
+  public record PolicyDto(
+      UUID id,
+      String permissionCode,
+      String effect,
+      String allowedPlans,
+      String allowedRegions,
+      boolean enabled,
+      String notes,
+      java.time.Instant createdAt,
+      java.time.Instant updatedAt) {
+    public static PolicyDto from(PolicyEntity e) {
+      return new PolicyDto(
+          e.getId(),
+          e.getPermissionCode(),
+          e.getEffect().name(),
+          e.getAllowedPlans(),
+          e.getAllowedRegions(),
+          e.isEnabled(),
+          e.getNotes(),
+          e.getCreatedAt(),
+          e.getUpdatedAt());
     }
+  }
 }

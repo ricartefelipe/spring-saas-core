@@ -1,1 +1,29 @@
-{"id": null, "title": "Outbox", "tags": ["spring-saas-core"], "panels": [{"title": "Outbox lag", "type": "graph", "targets": [{"expr": "outbox_lag_seconds", "legendFormat": "lag"}]}], "schemaVersion": 16, "version": 1}
+{
+  "id": null,
+  "title": "Outbox",
+  "tags": ["spring-saas-core"],
+  "panels": [
+    {
+      "title": "Outbox published",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "increase(saas_outbox_published_total[1h])",
+          "legendFormat": "published"
+        }
+      ]
+    },
+    {
+      "title": "Outbox failed",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "increase(saas_outbox_failed_total[1h])",
+          "legendFormat": "failed"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 16,
+  "version": 1
+}
