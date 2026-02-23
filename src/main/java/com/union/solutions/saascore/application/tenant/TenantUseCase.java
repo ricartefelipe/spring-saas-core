@@ -11,11 +11,13 @@ import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.Tenant;
 import io.micrometer.core.instrument.Counter;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,6 +83,21 @@ public class TenantUseCase {
     return tenantRepo.search(status, plan, region, name, pageable).map(TenantEntity::toDomain);
   }
 
+  @Transactional(readOnly = true)
+  public List<Tenant> searchCursor(
+      Tenant.TenantStatus status,
+      String plan,
+      String region,
+      String name,
+      Instant cursor,
+      int limit) {
+    return tenantRepo
+        .findNextPage(status, plan, region, name, cursor, PageRequest.of(0, limit))
+        .stream()
+        .map(TenantEntity::toDomain)
+        .toList();
+  }
+
   @Transactional
   public Optional<Tenant> update(
       UUID id, String name, String plan, String region, Tenant.TenantStatus status) {
@@ -125,6 +142,11 @@ public class TenantUseCase {
               entity.setStatus(Tenant.TenantStatus.DELETED);
               entity.setUpdatedAt(Instant.now());
               tenantRepo.save(entity);
+              publishOutbox(
+                  "TENANT",
+                  id.toString(),
+                  "tenant.deleted",
+                  Map.of("name", entity.getName(), "plan", entity.getPlan()));
               auditLogger.log(
                   TenantContext.getTenantId().orElse(null),
                   TenantContext.getSubject(),

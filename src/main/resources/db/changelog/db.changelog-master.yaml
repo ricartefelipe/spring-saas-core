@@ -3,3 +3,5 @@ databaseChangeLog:
       file: db/changelog/changes/001-phase1-schema.yaml
   - include:
       file: db/changelog/changes/002-phase1-seed.yaml
+  - include:
+      file: db/changelog/changes/003-soft-delete-policies-flags.yaml
