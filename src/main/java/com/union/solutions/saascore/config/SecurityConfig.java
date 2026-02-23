@@ -1,6 +1,7 @@
 package com.union.solutions.saascore.config;
 
 import com.union.solutions.saascore.adapters.in.auth.JwtAuthenticationFilter;
+import com.union.solutions.saascore.adapters.in.rest.RateLimitFilter;
 import com.union.solutions.saascore.observability.CorrelationIdFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,11 +21,15 @@ public class SecurityConfig {
 
   private final CorrelationIdFilter correlationIdFilter;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final RateLimitFilter rateLimitFilter;
 
   public SecurityConfig(
-      CorrelationIdFilter correlationIdFilter, JwtAuthenticationFilter jwtAuthenticationFilter) {
+      CorrelationIdFilter correlationIdFilter,
+      JwtAuthenticationFilter jwtAuthenticationFilter,
+      RateLimitFilter rateLimitFilter) {
     this.correlationIdFilter = correlationIdFilter;
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    this.rateLimitFilter = rateLimitFilter;
   }
 
   @Bean
@@ -48,7 +53,8 @@ public class SecurityConfig {
                     .anyRequest()
                     .authenticated())
         .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class);
     return http.build();
   }
 

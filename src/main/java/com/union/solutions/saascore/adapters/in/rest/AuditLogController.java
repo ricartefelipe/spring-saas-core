@@ -3,8 +3,11 @@ package com.union.solutions.saascore.adapters.in.rest;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogEntity;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaRepository;
 import java.time.Instant;
+import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -21,19 +24,51 @@ public class AuditLogController {
   }
 
   @GetMapping
-  public ResponseEntity<Page<AuditDto>> list(
+  public ResponseEntity<?> list(
       @RequestParam(required = false) UUID tenantId,
       @RequestParam(required = false) String action,
       @RequestParam(required = false) String actorSub,
       @RequestParam(required = false) String correlationId,
       @RequestParam(required = false) Instant from,
       @RequestParam(required = false) Instant to,
+      @RequestParam(required = false) String cursor,
+      @RequestParam(required = false, defaultValue = "50") int limit,
       @PageableDefault(size = 50) Pageable pageable) {
+
+    if (cursor != null && !cursor.isBlank()) {
+      Instant cursorInstant = decodeCursor(cursor);
+      List<AuditDto> items =
+          auditRepo
+              .findNextPage(
+                  tenantId,
+                  action,
+                  actorSub,
+                  correlationId,
+                  from,
+                  to,
+                  cursorInstant,
+                  PageRequest.of(0, limit))
+              .stream()
+              .map(AuditDto::from)
+              .toList();
+      boolean hasMore = items.size() == limit;
+      String nextCursor = hasMore ? encodeCursor(items.get(items.size() - 1).createdAt()) : null;
+      return ResponseEntity.ok(new CursorPage<>(items, nextCursor, hasMore));
+    }
+
     Page<AuditDto> page =
         auditRepo
             .search(tenantId, action, actorSub, correlationId, from, to, pageable)
             .map(AuditDto::from);
     return ResponseEntity.ok(page);
+  }
+
+  private static String encodeCursor(Instant instant) {
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(instant.toString().getBytes());
+  }
+
+  private static Instant decodeCursor(String cursor) {
+    return Instant.parse(new String(Base64.getUrlDecoder().decode(cursor)));
   }
 
   public record AuditDto(
