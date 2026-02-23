@@ -2,8 +2,8 @@
 
 Núcleo de governança multi-tenant para SaaS: tenants, RBAC/ABAC, feature flags, auditoria e publicação de eventos (outbox).
 
-[![Build](https://github.com/union-solutions/spring-saas-core/actions/workflows/ci.yml/badge.svg)](https://github.com/union-solutions/spring-saas-core/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-jacoco-green)](https://github.com/union-solutions/spring-saas-core)
+[![Build](https://github.com/ricartefelipe/spring-saas-core/actions/workflows/ci.yml/badge.svg)](https://github.com/ricartefelipe/spring-saas-core/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-jacoco-green)](https://github.com/ricartefelipe/spring-saas-core)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen)](docker-compose.yml)
 [![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0-yellow)](docs/api/openapi.yaml)
@@ -158,11 +158,11 @@ docker compose up -d postgres redis rabbitmq
 | `DB_URL`                  | `jdbc:postgresql://...`          | URL do PostgreSQL               |
 | `DB_USER`                 | `saascore`                       | Usuário do banco                |
 | `DB_PASS`                 | `saascore`                       | Senha do banco                  |
-| `AUTH_MODE`               | `hs256`                          | `hs256` ou `oidc`               |
+| `AUTH_MODE`               | `hs256`                          | `hs256` (local) ou `oidc` (prod) |
 | `JWT_ISSUER`              | `spring-saas-core`               | Issuer do JWT                   |
-| `JWT_HS256_SECRET`        | (dev secret)                     | Chave HS256 (somente hs256)     |
-| `OIDC_ISSUER_URI`         |                                  | URI do issuer OIDC              |
-| `OIDC_JWK_SET_URI`        |                                  | URI do JWK Set OIDC             |
+| `JWT_HS256_SECRET`        | (dev secret)                     | Chave HS256 (**somente profile local**) |
+| `OIDC_ISSUER_URI`         | *obrigatório em prod*            | URI do issuer OIDC (ex: Keycloak) |
+| `OIDC_JWK_SET_URI`        | (derivado do issuer)            | URI do JWK Set OIDC             |
 | `REDIS_HOST`              | `localhost`                      | Host Redis                      |
 | `RABBITMQ_HOST`           | `localhost`                      | Host RabbitMQ                   |
 | `OUTBOX_PUBLISH_ENABLED`  | `false`                          | Habilitar publicação outbox     |
@@ -210,12 +210,11 @@ Diagramas C4 e ERD disponíveis em `docs/architecture/`.
 
 ```bash
 ./mvnw test -Dtest="com.union.solutions.saascore.unit.**"
-
 ./mvnw test -Dtest="com.union.solutions.saascore.integration.**"
 ```
 
-- **Unit tests**: ABAC policy engine (ALLOW/DENY/precedência), domain Tenant
-- **Integration tests**: Testcontainers (PostgreSQL), CRUD completo, ABAC deny + audit
+- **Unit tests**: ABAC policy engine (default-deny, DENY precedência, filtros plano/região), domain Tenant
+- **Integration tests**: Testcontainers (PostgreSQL), CRUD completo, ABAC deny + audit — requer Docker
 
 ## Troubleshooting
 
@@ -227,11 +226,25 @@ Diagramas C4 e ERD disponíveis em `docs/architecture/`.
 | App não inicia (Docker)     | `docker compose logs app` para ver erros                        |
 | Migrations falham           | Verificar conectividade com PostgreSQL                          |
 
+## Demo Script (3–5 minutos)
+
+Para demonstrar o núcleo em uma reunião de vendas:
+
+1. **Subir a stack** (1 min): `./scripts/up.sh`
+2. **Health e docs** (30 s): Abrir http://localhost:8080/actuator/health e http://localhost:8080/docs
+3. **Gerar token e CRUD** (1 min): Rodar `./scripts/seed.sh` e mostrar tenants/ flags no terminal
+4. **Smoke completo** (1 min): `./scripts/smoke.sh` – valida health, CRUD, ABAC deny + audit
+5. **Observabilidade** (1 min): Grafana http://localhost:3000 (admin/admin) – dashboards de tenants, policies, outbox
+
+## Contratos de Integração
+
+- [JWT Claims e identidade](docs/contracts/identity.md)
+- [Headers HTTP](docs/contracts/headers.md)
+- [Eventos Outbox](docs/contracts/events.md)
+
 ## Autor
 
 **Felipe Ricarte** - felipericartem@gmail.com
-
-Union Solutions
 
 ## Licença
 
