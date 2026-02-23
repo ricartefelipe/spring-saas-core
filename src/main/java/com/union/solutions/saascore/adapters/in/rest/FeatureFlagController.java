@@ -58,7 +58,7 @@ public class FeatureFlagController {
   @DeleteMapping("/{flagName}")
   public ResponseEntity<Void> delete(@PathVariable UUID tenantId, @PathVariable String flagName) {
     enforceTenantAccess(tenantId);
-    return flagService.delete(tenantId, flagName)
+    return flagService.softDelete(tenantId, flagName)
         ? ResponseEntity.noContent().build()
         : ResponseEntity.notFound().build();
   }
