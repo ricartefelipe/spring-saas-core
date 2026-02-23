@@ -18,42 +18,42 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    private final CorrelationIdFilter correlationIdFilter;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final CorrelationIdFilter correlationIdFilter;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(
-            CorrelationIdFilter correlationIdFilter,
-            JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.correlationIdFilter = correlationIdFilter;
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
+  public SecurityConfig(
+      CorrelationIdFilter correlationIdFilter, JwtAuthenticationFilter jwtAuthenticationFilter) {
+    this.correlationIdFilter = correlationIdFilter;
+    this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+  }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/v1/auth/token",
-                                "/v1/dev/token",
-                                "/healthz",
-                                "/readyz",
-                                "/docs",
-                                "/docs/**",
-                                "/v3/api-docs",
-                                "/v3/api-docs/**",
-                                "/actuator",
-                                "/actuator/**")
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated())
-                .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        return http.build();
-    }
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http.csrf(csrf -> csrf.disable())
+        .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(
+            auth ->
+                auth.requestMatchers(
+                        "/v1/auth/token",
+                        "/v1/dev/token",
+                        "/healthz",
+                        "/readyz",
+                        "/docs",
+                        "/docs/**",
+                        "/v3/api-docs",
+                        "/v3/api-docs/**",
+                        "/actuator",
+                        "/actuator/**")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
+        .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+    return http.build();
+  }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder(10);
+  }
 }
