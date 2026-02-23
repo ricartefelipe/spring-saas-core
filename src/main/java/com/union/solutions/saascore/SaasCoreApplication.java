@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableAsync
 public class SaasCoreApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(SaasCoreApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(SaasCoreApplication.class, args);
+  }
 }

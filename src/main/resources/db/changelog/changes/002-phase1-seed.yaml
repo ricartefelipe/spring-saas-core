@@ -88,6 +88,42 @@ databaseChangeLog:
               - column: { name: notes, value: "All plans can read flags" }
               - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
               - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+        - insert:
+            tableName: policies
+            columns:
+              - column: { name: id, value: "10000000-0000-0000-0000-000000000006" }
+              - column: { name: permission_code, value: "policies:write" }
+              - column: { name: effect, value: "ALLOW" }
+              - column: { name: allowed_plans, value: '["pro","enterprise"]' }
+              - column: { name: allowed_regions, value: "[]" }
+              - column: { name: enabled, valueBoolean: true }
+              - column: { name: notes, value: "Pro and enterprise can manage policies" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+        - insert:
+            tableName: policies
+            columns:
+              - column: { name: id, value: "10000000-0000-0000-0000-000000000007" }
+              - column: { name: permission_code, value: "flags:write" }
+              - column: { name: effect, value: "ALLOW" }
+              - column: { name: allowed_plans, value: '["pro","enterprise"]' }
+              - column: { name: allowed_regions, value: "[]" }
+              - column: { name: enabled, valueBoolean: true }
+              - column: { name: notes, value: "Pro and enterprise can manage flags" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+        - insert:
+            tableName: policies
+            columns:
+              - column: { name: id, value: "10000000-0000-0000-0000-000000000008" }
+              - column: { name: permission_code, value: "admin:read" }
+              - column: { name: effect, value: "ALLOW" }
+              - column: { name: allowed_plans, value: '["pro","enterprise"]' }
+              - column: { name: allowed_regions, value: "[]" }
+              - column: { name: enabled, valueBoolean: true }
+              - column: { name: notes, value: "Admin read for pro/enterprise" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
 
   - changeSet:
       id: phase1-seed-flags
