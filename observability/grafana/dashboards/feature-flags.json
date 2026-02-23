@@ -1,1 +1,19 @@
-{"id": null, "title": "Feature flags", "tags": ["spring-saas-core"], "panels": [{"title": "Flag evaluations", "type": "stat", "targets": [{"expr": "feature_flag_evaluations_total", "legendFormat": "total"}]}], "schemaVersion": 16, "version": 1}
+{
+  "id": null,
+  "title": "Feature flags",
+  "tags": ["spring-saas-core"],
+  "panels": [
+    {
+      "title": "Flags toggled",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "increase(saas_flags_toggled_total[1h])",
+          "legendFormat": "toggled"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 16,
+  "version": 1
+}
