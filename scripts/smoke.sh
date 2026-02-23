@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+cd "$(dirname "$0")/.."
 BASE="http://localhost:8080"
 PASS=0
 FAIL=0

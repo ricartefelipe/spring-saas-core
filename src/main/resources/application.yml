@@ -54,6 +54,8 @@ app:
     lock-ttl-seconds: 60
     retry-max: 5
     dispatch-interval-ms: 5000
+    exchange: saas.events
+    routing-key-prefix: saas
   rate-limit:
     free: 60
     pro: 300
