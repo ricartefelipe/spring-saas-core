@@ -14,24 +14,32 @@ import org.springframework.web.bind.annotation.*;
 @ConditionalOnProperty(name = "app.dev.token-endpoint-enabled", havingValue = "true")
 public class DevTokenController {
 
-    private final TokenIssuer tokenIssuer;
+  private final TokenIssuer tokenIssuer;
 
-    public DevTokenController(TokenIssuer tokenIssuer) {
-        this.tokenIssuer = tokenIssuer;
-    }
+  public DevTokenController(TokenIssuer tokenIssuer) {
+    this.tokenIssuer = tokenIssuer;
+  }
 
-    @PostMapping("/token")
-    public ResponseEntity<Map<String, Object>> issueDevToken(@Valid @RequestBody DevTokenRequest request) {
-        String token = tokenIssuer.issue(
-                request.sub(), request.tid(), request.roles(), request.perms(),
-                request.plan(), request.region());
-        return ResponseEntity.ok(Map.of(
-                "access_token", token,
-                "token_type", "Bearer",
-                "expires_in", 3600));
-    }
+  @PostMapping("/token")
+  public ResponseEntity<Map<String, Object>> issueDevToken(
+      @Valid @RequestBody DevTokenRequest request) {
+    String token =
+        tokenIssuer.issue(
+            request.sub(),
+            request.tid(),
+            request.roles(),
+            request.perms(),
+            request.plan(),
+            request.region());
+    return ResponseEntity.ok(
+        Map.of("access_token", token, "token_type", "Bearer", "expires_in", 3600));
+  }
 
-    public record DevTokenRequest(@NotBlank String sub, @NotBlank String tid,
-                                  List<String> roles, List<String> perms,
-                                  String plan, String region) {}
+  public record DevTokenRequest(
+      @NotBlank String sub,
+      @NotBlank String tid,
+      List<String> roles,
+      List<String> perms,
+      String plan,
+      String region) {}
 }
