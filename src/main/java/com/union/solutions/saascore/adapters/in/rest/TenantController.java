@@ -7,6 +7,9 @@ import com.union.solutions.saascore.application.tenant.TenantUseCase;
 import com.union.solutions.saascore.domain.Tenant;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,13 +40,27 @@ public class TenantController {
   }
 
   @GetMapping
-  public ResponseEntity<Page<TenantDto>> list(
+  public ResponseEntity<?> list(
       @RequestParam(required = false) String status,
       @RequestParam(required = false) String plan,
       @RequestParam(required = false) String region,
       @RequestParam(required = false) String name,
+      @RequestParam(required = false) String cursor,
+      @RequestParam(required = false, defaultValue = "20") int limit,
       @PageableDefault(size = 20) Pageable pageable) {
     Tenant.TenantStatus statusEnum = status != null ? Tenant.TenantStatus.valueOf(status) : null;
+
+    if (cursor != null && !cursor.isBlank()) {
+      Instant cursorInstant = decodeCursor(cursor);
+      List<TenantDto> items =
+          tenantUseCase.searchCursor(statusEnum, plan, region, name, cursorInstant, limit).stream()
+              .map(TenantDto::from)
+              .toList();
+      boolean hasMore = items.size() == limit;
+      String nextCursor = hasMore ? encodeCursor(items.get(items.size() - 1).createdAt()) : null;
+      return ResponseEntity.ok(new CursorPage<>(items, nextCursor, hasMore));
+    }
+
     Page<TenantDto> page =
         tenantUseCase.search(statusEnum, plan, region, name, pageable).map(TenantDto::from);
     return ResponseEntity.ok(page);
@@ -78,6 +95,14 @@ public class TenantController {
     return tenantUseCase.softDelete(id)
         ? ResponseEntity.noContent().build()
         : ResponseEntity.notFound().build();
+  }
+
+  private static String encodeCursor(Instant instant) {
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(instant.toString().getBytes());
+  }
+
+  private static Instant decodeCursor(String cursor) {
+    return Instant.parse(new String(Base64.getUrlDecoder().decode(cursor)));
   }
 
   public record CreateTenantRequest(
