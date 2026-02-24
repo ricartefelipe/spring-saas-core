@@ -1,8 +1,13 @@
 package com.union.solutions.saascore.adapters.in.auth;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -12,10 +17,16 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name = "app.auth.mode", havingValue = "oidc")
 public class OidcTokenParser implements TokenParser {
 
-  private final JwtDecoder jwtDecoder;
+  private static final Logger log = LoggerFactory.getLogger(OidcTokenParser.class);
 
-  public OidcTokenParser(JwtDecoder jwtDecoder) {
+  private final JwtDecoder jwtDecoder;
+  private final String clientId;
+
+  public OidcTokenParser(
+      JwtDecoder jwtDecoder,
+      @Value("${app.auth.oidc.client-id:spring-saas-core}") String clientId) {
     this.jwtDecoder = jwtDecoder;
+    this.clientId = clientId;
   }
 
   @Override
@@ -24,6 +35,7 @@ public class OidcTokenParser implements TokenParser {
       Jwt jwt = jwtDecoder.decode(token);
       return Optional.of(toClaims(jwt));
     } catch (Exception e) {
+      log.debug("OIDC token parse failed: {}", e.getMessage());
       return Optional.empty();
     }
   }
@@ -33,10 +45,45 @@ public class OidcTokenParser implements TokenParser {
     String tid = getStringClaim(jwt, "tid");
     String plan = getStringClaim(jwt, "plan");
     String region = getStringClaim(jwt, "region");
-    List<String> roles = getStringListClaim(jwt, "roles");
+
+    List<String> roles = new ArrayList<>();
+    roles.addAll(extractRealmRoles(jwt));
+    roles.addAll(extractClientRoles(jwt));
+
     List<String> perms = getStringListClaim(jwt, "perms");
+    if (perms.isEmpty()) {
+      perms = getStringListClaim(jwt, "permissions");
+    }
+
     return new TokenClaims(
         sub, tid, roles, perms, plan != null ? plan : "", region != null ? region : "");
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<String> extractRealmRoles(Jwt jwt) {
+    Object realmAccess = jwt.getClaims().get("realm_access");
+    if (realmAccess instanceof Map<?, ?> map) {
+      Object rolesObj = map.get("roles");
+      if (rolesObj instanceof List<?> list) {
+        return list.stream().map(Object::toString).toList();
+      }
+    }
+    return getStringListClaim(jwt, "roles");
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<String> extractClientRoles(Jwt jwt) {
+    Object resourceAccess = jwt.getClaims().get("resource_access");
+    if (resourceAccess instanceof Map<?, ?> resources) {
+      Object clientResource = resources.get(clientId);
+      if (clientResource instanceof Map<?, ?> clientMap) {
+        Object rolesObj = clientMap.get("roles");
+        if (rolesObj instanceof List<?> list) {
+          return list.stream().map(Object::toString).toList();
+        }
+      }
+    }
+    return Collections.emptyList();
   }
 
   private String getStringClaim(Jwt jwt, String name) {
