@@ -79,7 +79,16 @@ class Phase1IntegrationTest {
   @Test
   void healthEndpoints_areAccessible() throws Exception {
     mvc.perform(get("/healthz")).andExpect(status().isOk());
-    mvc.perform(get("/readyz")).andExpect(status().isOk());
+  }
+
+  @Test
+  void readyz_returnsAggregatedHealth() throws Exception {
+    MvcResult result = mvc.perform(get("/readyz")).andExpect(status().isOk()).andReturn();
+    JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+    assertThat(body.get("db").asText()).isEqualTo("UP");
+    assertThat(body.get("status").asText()).isEqualTo("UP");
+    assertThat(body.has("redis")).isTrue();
+    assertThat(body.has("rabbitmq")).isTrue();
   }
 
   @Test
@@ -151,6 +160,95 @@ class Phase1IntegrationTest {
 
     mvc.perform(delete("/v1/policies/" + policyId).header("Authorization", "Bearer " + adminToken))
         .andExpect(status().isNoContent());
+
+    mvc.perform(get("/v1/policies/" + policyId).header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void policySoftDelete_hidesFromList() throws Exception {
+    MvcResult createResult =
+        mvc.perform(
+                post("/v1/policies")
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        "{\"permissionCode\":\"soft:delete:test\",\"effect\":\"ALLOW\",\"allowedPlans\":[],\"allowedRegions\":[],\"enabled\":true,\"notes\":\"will be soft-deleted\"}"))
+            .andExpect(status().isCreated())
+            .andReturn();
+    JsonNode created = objectMapper.readTree(createResult.getResponse().getContentAsString());
+    String policyId = created.get("id").asText();
+
+    mvc.perform(delete("/v1/policies/" + policyId).header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isNoContent());
+
+    mvc.perform(get("/v1/policies/" + policyId).header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void flagCrud_worksEndToEnd() throws Exception {
+    String tenantId = "00000000-0000-0000-0000-000000000001";
+
+    MvcResult createResult =
+        mvc.perform(
+                post("/v1/tenants/" + tenantId + "/flags")
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        "{\"name\":\"test_flag\",\"enabled\":true,\"rolloutPercent\":50,\"allowedRoles\":[\"admin\"]}"))
+            .andExpect(status().isCreated())
+            .andReturn();
+    JsonNode created = objectMapper.readTree(createResult.getResponse().getContentAsString());
+    assertThat(created.get("name").asText()).isEqualTo("test_flag");
+
+    mvc.perform(
+            get("/v1/tenants/" + tenantId + "/flags")
+                .header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isOk());
+
+    mvc.perform(
+            patch("/v1/tenants/" + tenantId + "/flags/test_flag")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"enabled\":false}"))
+        .andExpect(status().isOk());
+
+    mvc.perform(
+            delete("/v1/tenants/" + tenantId + "/flags/test_flag")
+                .header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  void flagSoftDelete_hidesFromList() throws Exception {
+    String tenantId = "00000000-0000-0000-0000-000000000001";
+
+    mvc.perform(
+            post("/v1/tenants/" + tenantId + "/flags")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    "{\"name\":\"soft_del_flag\",\"enabled\":true,\"rolloutPercent\":100,\"allowedRoles\":[]}"))
+        .andExpect(status().isCreated());
+
+    mvc.perform(
+            delete("/v1/tenants/" + tenantId + "/flags/soft_del_flag")
+                .header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isNoContent());
+
+    MvcResult listResult =
+        mvc.perform(
+                get("/v1/tenants/" + tenantId + "/flags")
+                    .header("Authorization", "Bearer " + adminToken))
+            .andExpect(status().isOk())
+            .andReturn();
+    JsonNode flags = objectMapper.readTree(listResult.getResponse().getContentAsString());
+    boolean found = false;
+    for (JsonNode flag : flags) {
+      if ("soft_del_flag".equals(flag.get("name").asText())) found = true;
+    }
+    assertThat(found).isFalse();
   }
 
   @Test
@@ -196,5 +294,182 @@ class Phase1IntegrationTest {
     mvc.perform(get("/healthz").header("X-Correlation-Id", "my-corr-123"))
         .andExpect(status().isOk())
         .andExpect(header().string("X-Correlation-Id", "my-corr-123"));
+  }
+
+  @Test
+  void businessMetrics_returnsData() throws Exception {
+    MvcResult result =
+        mvc.perform(get("/v1/metrics/business").header("Authorization", "Bearer " + adminToken))
+            .andExpect(status().isOk())
+            .andReturn();
+    JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+    assertThat(body.has("tenants")).isTrue();
+    assertThat(body.get("tenants").has("active")).isTrue();
+    assertThat(body.get("tenants").has("total")).isTrue();
+    assertThat(body.has("active_policies")).isTrue();
+    assertThat(body.has("active_flags")).isTrue();
+    assertThat(body.has("tenants_by_plan")).isTrue();
+  }
+
+  @Test
+  void tenantSnapshot_returnsData() throws Exception {
+    String tenantId = "00000000-0000-0000-0000-000000000002";
+    mvc.perform(
+            get("/v1/tenants/" + tenantId + "/snapshot")
+                .header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").exists())
+        .andExpect(jsonPath("$.plan").value("pro"));
+
+    mvc.perform(
+            get("/v1/tenants/" + tenantId + "/policies")
+                .header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isOk());
+
+    mvc.perform(
+            get("/v1/tenants/" + tenantId + "/flags")
+                .header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  void cursorPagination_tenantsEndpoint() throws Exception {
+    for (int i = 0; i < 3; i++) {
+      mvc.perform(
+          post("/v1/tenants")
+              .header("Authorization", "Bearer " + adminToken)
+              .contentType(MediaType.APPLICATION_JSON)
+              .content(
+                  "{\"name\":\"Cursor Corp "
+                      + i
+                      + "\",\"plan\":\"pro\",\"region\":\"us-east-1\"}"));
+    }
+
+    MvcResult result =
+        mvc.perform(
+                get("/v1/tenants?cursor="
+                        + java.util.Base64.getUrlEncoder()
+                            .withoutPadding()
+                            .encodeToString("1970-01-01T00:00:00Z".getBytes())
+                        + "&limit=2")
+                    .header("Authorization", "Bearer " + adminToken))
+            .andExpect(status().isOk())
+            .andReturn();
+    JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+    assertThat(body.has("items")).isTrue();
+    assertThat(body.has("hasMore")).isTrue();
+    assertThat(body.get("items").size()).isLessThanOrEqualTo(2);
+  }
+
+  @Test
+  void cursorPagination_auditEndpoint() throws Exception {
+    MvcResult result =
+        mvc.perform(
+                get("/v1/audit?cursor="
+                        + java.util.Base64.getUrlEncoder()
+                            .withoutPadding()
+                            .encodeToString("2099-01-01T00:00:00Z".getBytes())
+                        + "&limit=5")
+                    .header("Authorization", "Bearer " + adminToken))
+            .andExpect(status().isOk())
+            .andReturn();
+    JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+    assertThat(body.has("items")).isTrue();
+    assertThat(body.has("hasMore")).isTrue();
+  }
+
+  @Test
+  void policyUpdate_worksCorrectly() throws Exception {
+    MvcResult createResult =
+        mvc.perform(
+                post("/v1/policies")
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        "{\"permissionCode\":\"update:test\",\"effect\":\"ALLOW\",\"allowedPlans\":[],\"allowedRegions\":[],\"enabled\":true,\"notes\":\"original\"}"))
+            .andExpect(status().isCreated())
+            .andReturn();
+    JsonNode created = objectMapper.readTree(createResult.getResponse().getContentAsString());
+    String policyId = created.get("id").asText();
+
+    MvcResult updateResult =
+        mvc.perform(
+                patch("/v1/policies/" + policyId)
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"notes\":\"updated\",\"enabled\":false}"))
+            .andExpect(status().isOk())
+            .andReturn();
+    JsonNode updated = objectMapper.readTree(updateResult.getResponse().getContentAsString());
+    assertThat(updated.get("notes").asText()).isEqualTo("updated");
+    assertThat(updated.get("enabled").asBoolean()).isFalse();
+  }
+
+  @Test
+  void tenantSearch_filtersWork() throws Exception {
+    MvcResult result =
+        mvc.perform(
+                get("/v1/tenants?plan=enterprise").header("Authorization", "Bearer " + adminToken))
+            .andExpect(status().isOk())
+            .andReturn();
+    JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
+    for (JsonNode tenant : body.get("content")) {
+      assertThat(tenant.get("plan").asText()).isEqualTo("enterprise");
+    }
+  }
+
+  @Test
+  void auditLog_filtersWork() throws Exception {
+    mvc.perform(
+            get("/v1/audit?actorSub=admin@test").header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content").isArray());
+  }
+
+  @Test
+  void rateLimitHeaders_arePresent() throws Exception {
+    MvcResult result =
+        mvc.perform(get("/v1/me").header("Authorization", "Bearer " + adminToken))
+            .andExpect(status().isOk())
+            .andReturn();
+    assertThat(result.getResponse().getHeader("X-RateLimit-Limit")).isNotNull();
+    assertThat(result.getResponse().getHeader("X-RateLimit-Remaining")).isNotNull();
+  }
+
+  @Test
+  void flagDuplicate_returns400() throws Exception {
+    String tenantId = "00000000-0000-0000-0000-000000000001";
+    String flagBody =
+        "{\"name\":\"dup_flag\",\"enabled\":true,\"rolloutPercent\":100,\"allowedRoles\":[]}";
+
+    mvc.perform(
+            post("/v1/tenants/" + tenantId + "/flags")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(flagBody))
+        .andExpect(status().isCreated());
+
+    mvc.perform(
+            post("/v1/tenants/" + tenantId + "/flags")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(flagBody))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void nonExistentTenant_returns404() throws Exception {
+    mvc.perform(
+            get("/v1/tenants/99999999-9999-9999-9999-999999999999")
+                .header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void nonExistentPolicy_returns404() throws Exception {
+    mvc.perform(
+            get("/v1/policies/99999999-9999-9999-9999-999999999999")
+                .header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isNotFound());
   }
 }
