@@ -57,7 +57,7 @@ docker compose up -d postgres redis rabbitmq
 | OpenAPI     | http://localhost:8080/v3/api-docs       |
 | Health      | http://localhost:8080/actuator/health   |
 | Prometheus  | http://localhost:8080/actuator/prometheus |
-| Grafana     | http://localhost:3000 (admin/admin)     |
+| Grafana     | http://localhost:3030 (admin/admin)     |
 | RabbitMQ UI | http://localhost:15672 (guest/guest)    |
 
 ## API REST (prefixo /v1)
@@ -234,7 +234,7 @@ Para demonstrar o núcleo em uma reunião de vendas:
 2. **Health e docs** (30 s): Abrir http://localhost:8080/actuator/health e http://localhost:8080/docs
 3. **Gerar token e CRUD** (1 min): Rodar `./scripts/seed.sh` e mostrar tenants/ flags no terminal
 4. **Smoke completo** (1 min): `./scripts/smoke.sh` – valida health, CRUD, ABAC deny + audit
-5. **Observabilidade** (1 min): Grafana http://localhost:3000 (admin/admin) – dashboards de tenants, policies, outbox
+5. **Observabilidade** (1 min): Grafana http://localhost:3030 (admin/admin) – dashboards de tenants, policies, outbox
 
 ## Contratos de Integração
 
