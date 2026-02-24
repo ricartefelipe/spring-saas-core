@@ -88,7 +88,7 @@ public class PolicyController {
   public ResponseEntity<Void> delete(@PathVariable UUID id) {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("policies:write"));
     if (!abac.allowed()) return ResponseEntity.status(403).build();
-    return policyService.delete(id)
+    return policyService.softDelete(id)
         ? ResponseEntity.noContent().build()
         : ResponseEntity.notFound().build();
   }

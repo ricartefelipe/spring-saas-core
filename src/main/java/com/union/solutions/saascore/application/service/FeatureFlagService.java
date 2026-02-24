@@ -4,11 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.union.solutions.saascore.adapters.out.persistence.FeatureFlagEntity;
 import com.union.solutions.saascore.adapters.out.persistence.FeatureFlagJpaRepository;
+import com.union.solutions.saascore.adapters.out.persistence.OutboxEventEntity;
+import com.union.solutions.saascore.adapters.out.persistence.OutboxEventJpaRepository;
 import com.union.solutions.saascore.application.abac.AuditLogger;
 import com.union.solutions.saascore.config.TenantContext;
 import io.micrometer.core.instrument.Counter;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,16 +22,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class FeatureFlagService {
 
   private final FeatureFlagJpaRepository repo;
+  private final OutboxEventJpaRepository outboxRepo;
   private final AuditLogger auditLogger;
   private final ObjectMapper objectMapper;
   private final Counter flagsToggledCounter;
 
   public FeatureFlagService(
       FeatureFlagJpaRepository repo,
+      OutboxEventJpaRepository outboxRepo,
       AuditLogger auditLogger,
       ObjectMapper objectMapper,
       @Qualifier("flagsToggledCounter") Counter flagsToggledCounter) {
     this.repo = repo;
+    this.outboxRepo = outboxRepo;
     this.auditLogger = auditLogger;
     this.objectMapper = objectMapper;
     this.flagsToggledCounter = flagsToggledCounter;
@@ -51,6 +57,11 @@ public class FeatureFlagService {
     entity.setCreatedAt(now);
     entity.setUpdatedAt(now);
     repo.save(entity);
+    publishOutbox(
+        "FLAG",
+        entity.getId().toString(),
+        "flag.created",
+        Map.of("tenantId", tenantId.toString(), "name", name));
     auditLogger.log(
         tenantId,
         TenantContext.getSubject(),
@@ -89,6 +100,11 @@ public class FeatureFlagService {
               entity.setUpdatedAt(Instant.now());
               repo.save(entity);
               flagsToggledCounter.increment();
+              publishOutbox(
+                  "FLAG",
+                  entity.getId().toString(),
+                  "flag.toggled",
+                  Map.of("tenantId", tenantId.toString(), "name", name));
               auditLogger.log(
                   tenantId,
                   TenantContext.getSubject(),
@@ -107,11 +123,19 @@ public class FeatureFlagService {
   }
 
   @Transactional
-  public boolean delete(UUID tenantId, String name) {
+  public boolean softDelete(UUID tenantId, String name) {
     return repo.findByTenantIdAndName(tenantId, name)
         .map(
             entity -> {
-              repo.delete(entity);
+              entity.setDeleted(true);
+              entity.setDeletedAt(Instant.now());
+              entity.setUpdatedAt(Instant.now());
+              repo.save(entity);
+              publishOutbox(
+                  "FLAG",
+                  entity.getId().toString(),
+                  "flag.deleted",
+                  Map.of("tenantId", tenantId.toString(), "name", name));
               auditLogger.log(
                   tenantId,
                   TenantContext.getSubject(),
@@ -130,11 +154,40 @@ public class FeatureFlagService {
         .orElse(false);
   }
 
+  @Transactional(readOnly = true)
+  public long countActiveFlags() {
+    return repo.countActiveFlags();
+  }
+
+  private void publishOutbox(
+      String aggregateType, String aggregateId, String eventType, Map<String, String> data) {
+    OutboxEventEntity outbox = new OutboxEventEntity();
+    outbox.setId(UUID.randomUUID());
+    outbox.setAggregateType(aggregateType);
+    outbox.setAggregateId(aggregateId);
+    outbox.setEventType(eventType);
+    outbox.setPayload(writeJson(data));
+    outbox.setStatus("PENDING");
+    outbox.setAttempts(0);
+    Instant now = Instant.now();
+    outbox.setCreatedAt(now);
+    outbox.setUpdatedAt(now);
+    outboxRepo.save(outbox);
+  }
+
   private String toJson(List<String> list) {
     try {
       return objectMapper.writeValueAsString(list != null ? list : List.of());
     } catch (JsonProcessingException e) {
       return "[]";
+    }
+  }
+
+  private String writeJson(Object value) {
+    try {
+      return objectMapper.writeValueAsString(value);
+    } catch (JsonProcessingException e) {
+      return "{}";
     }
   }
 }
