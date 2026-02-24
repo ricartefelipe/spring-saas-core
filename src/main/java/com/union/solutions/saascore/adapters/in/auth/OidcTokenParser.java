@@ -59,7 +59,6 @@ public class OidcTokenParser implements TokenParser {
         sub, tid, roles, perms, plan != null ? plan : "", region != null ? region : "");
   }
 
-  @SuppressWarnings("unchecked")
   private List<String> extractRealmRoles(Jwt jwt) {
     Object realmAccess = jwt.getClaims().get("realm_access");
     if (realmAccess instanceof Map<?, ?> map) {
@@ -71,7 +70,6 @@ public class OidcTokenParser implements TokenParser {
     return getStringListClaim(jwt, "roles");
   }
 
-  @SuppressWarnings("unchecked")
   private List<String> extractClientRoles(Jwt jwt) {
     Object resourceAccess = jwt.getClaims().get("resource_access");
     if (resourceAccess instanceof Map<?, ?> resources) {
@@ -91,7 +89,6 @@ public class OidcTokenParser implements TokenParser {
     return v != null ? v.toString() : null;
   }
 
-  @SuppressWarnings("unchecked")
   private List<String> getStringListClaim(Jwt jwt, String name) {
     Object v = jwt.getClaims().get(name);
     if (v instanceof List<?> list) {

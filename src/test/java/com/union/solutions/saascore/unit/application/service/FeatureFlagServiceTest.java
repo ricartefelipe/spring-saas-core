@@ -15,6 +15,7 @@ import com.union.solutions.saascore.application.service.FeatureFlagService;
 import io.micrometer.core.instrument.Counter;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class FeatureFlagServiceTest {
 
   @Mock FeatureFlagJpaRepository flagRepo;
@@ -45,8 +47,8 @@ class FeatureFlagServiceTest {
   void create_savesEntity() {
     UUID tenantId = UUID.randomUUID();
     when(flagRepo.findByTenantIdAndName(tenantId, "new_flag")).thenReturn(Optional.empty());
-    when(flagRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(outboxRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(flagRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
 
     FeatureFlagEntity result = service.create(tenantId, "new_flag", true, 50, List.of("admin"));
 
@@ -66,7 +68,7 @@ class FeatureFlagServiceTest {
     UUID tenantId = UUID.randomUUID();
     FeatureFlagEntity existing = new FeatureFlagEntity();
     existing.setName("dup");
-    when(flagRepo.findByTenantIdAndName(tenantId, "dup")).thenReturn(Optional.of(existing));
+    when(flagRepo.findByTenantIdAndName(tenantId, "dup")).thenReturn(Optional.of(Objects.requireNonNull(existing)));
 
     assertThatThrownBy(() -> service.create(tenantId, "dup", true, 100, List.of()))
         .isInstanceOf(IllegalArgumentException.class)
@@ -77,8 +79,8 @@ class FeatureFlagServiceTest {
   void create_clampsRolloutPercent() {
     UUID tenantId = UUID.randomUUID();
     when(flagRepo.findByTenantIdAndName(tenantId, "clamp")).thenReturn(Optional.empty());
-    when(flagRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(outboxRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(flagRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
 
     FeatureFlagEntity over = service.create(tenantId, "clamp", true, 150, List.of());
     assertThat(over.getRolloutPercent()).isEqualTo(100);
@@ -88,9 +90,9 @@ class FeatureFlagServiceTest {
   void softDelete_setsDeletedFlag() {
     UUID tenantId = UUID.randomUUID();
     FeatureFlagEntity entity = makeFlag(tenantId, "del_flag");
-    when(flagRepo.findByTenantIdAndName(tenantId, "del_flag")).thenReturn(Optional.of(entity));
-    when(flagRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(outboxRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(flagRepo.findByTenantIdAndName(tenantId, "del_flag")).thenReturn(Optional.of(Objects.requireNonNull(entity)));
+    when(flagRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
 
     boolean result = service.softDelete(tenantId, "del_flag");
 
@@ -111,9 +113,9 @@ class FeatureFlagServiceTest {
   void update_modifiesFields() {
     UUID tenantId = UUID.randomUUID();
     FeatureFlagEntity entity = makeFlag(tenantId, "upd_flag");
-    when(flagRepo.findByTenantIdAndName(tenantId, "upd_flag")).thenReturn(Optional.of(entity));
-    when(flagRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(outboxRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(flagRepo.findByTenantIdAndName(tenantId, "upd_flag")).thenReturn(Optional.of(Objects.requireNonNull(entity)));
+    when(flagRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
 
     Optional<FeatureFlagEntity> result =
         service.update(tenantId, "upd_flag", false, 75, List.of("user"));

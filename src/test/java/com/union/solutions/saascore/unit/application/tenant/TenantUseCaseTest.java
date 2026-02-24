@@ -14,6 +14,7 @@ import com.union.solutions.saascore.application.tenant.TenantUseCase;
 import com.union.solutions.saascore.domain.Tenant;
 import io.micrometer.core.instrument.Counter;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class TenantUseCaseTest {
 
   @Mock TenantJpaRepository tenantRepo;
@@ -42,8 +44,8 @@ class TenantUseCaseTest {
 
   @Test
   void create_savesAndPublishesCreatedEvent() {
-    when(tenantRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(outboxRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(tenantRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
 
     Tenant result = useCase.create("Acme", "pro", "us-east-1");
 
@@ -62,9 +64,9 @@ class TenantUseCaseTest {
   void softDelete_setsStatusAndPublishesDeletedEvent() {
     UUID id = UUID.randomUUID();
     TenantEntity entity = makeTenantEntity(id, "Delete Corp");
-    when(tenantRepo.findById(id)).thenReturn(Optional.of(entity));
-    when(tenantRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(outboxRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(tenantRepo.findById(id)).thenReturn(Optional.of(Objects.requireNonNull(entity)));
+    when(tenantRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
 
     boolean result = useCase.softDelete(id);
 
@@ -89,9 +91,9 @@ class TenantUseCaseTest {
   void update_modifiesFieldsAndPublishesEvent() {
     UUID id = UUID.randomUUID();
     TenantEntity entity = makeTenantEntity(id, "Old Name");
-    when(tenantRepo.findById(id)).thenReturn(Optional.of(entity));
-    when(tenantRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(outboxRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(tenantRepo.findById(id)).thenReturn(Optional.of(Objects.requireNonNull(entity)));
+    when(tenantRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
 
     Optional<Tenant> result = useCase.update(id, "New Name", null, null, null);
 
@@ -108,7 +110,7 @@ class TenantUseCaseTest {
   void getById_found_returnsTenant() {
     UUID id = UUID.randomUUID();
     TenantEntity entity = makeTenantEntity(id, "Found Corp");
-    when(tenantRepo.findById(id)).thenReturn(Optional.of(entity));
+    when(tenantRepo.findById(id)).thenReturn(Optional.of(Objects.requireNonNull(entity)));
 
     Optional<Tenant> result = useCase.getById(id);
 

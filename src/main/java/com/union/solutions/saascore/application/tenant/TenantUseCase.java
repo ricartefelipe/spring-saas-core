@@ -13,12 +13,14 @@ import io.micrometer.core.instrument.Counter;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,7 +51,7 @@ public class TenantUseCase {
     UUID id = UUID.randomUUID();
     Instant now = Instant.now();
     Tenant tenant = new Tenant(id, name, plan, region, Tenant.TenantStatus.ACTIVE, now, now);
-    tenantRepo.save(TenantEntity.from(tenant));
+    tenantRepo.save(Objects.requireNonNull(TenantEntity.from(tenant)));
     publishOutbox(
         "TENANT",
         id.toString(),
@@ -73,7 +75,7 @@ public class TenantUseCase {
   }
 
   @Transactional(readOnly = true)
-  public Optional<Tenant> getById(UUID id) {
+  public Optional<Tenant> getById(@NonNull UUID id) {
     return tenantRepo.findById(id).map(TenantEntity::toDomain);
   }
 
@@ -100,7 +102,7 @@ public class TenantUseCase {
 
   @Transactional
   public Optional<Tenant> update(
-      UUID id, String name, String plan, String region, Tenant.TenantStatus status) {
+      @NonNull UUID id, String name, String plan, String region, Tenant.TenantStatus status) {
     return tenantRepo
         .findById(id)
         .map(
@@ -134,7 +136,7 @@ public class TenantUseCase {
   }
 
   @Transactional
-  public boolean softDelete(UUID id) {
+  public boolean softDelete(@NonNull UUID id) {
     return tenantRepo
         .findById(id)
         .map(
