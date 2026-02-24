@@ -1,0 +1,68 @@
+databaseChangeLog:
+  - changeSet:
+      id: phase2-001-soft-delete-policies
+      author: saascore
+      changes:
+        - addColumn:
+            tableName: policies
+            columns:
+              - column:
+                  name: deleted
+                  type: boolean
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: false
+              - column:
+                  name: deleted_at
+                  type: timestamp with time zone
+        - createIndex:
+            indexName: idx_policies_deleted
+            tableName: policies
+            columns:
+              - column:
+                  name: deleted
+
+  - changeSet:
+      id: phase2-002-soft-delete-feature-flags
+      author: saascore
+      changes:
+        - addColumn:
+            tableName: feature_flags
+            columns:
+              - column:
+                  name: deleted
+                  type: boolean
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: false
+              - column:
+                  name: deleted_at
+                  type: timestamp with time zone
+        - createIndex:
+            indexName: idx_feature_flags_deleted
+            tableName: feature_flags
+            columns:
+              - column:
+                  name: deleted
+
+  - changeSet:
+      id: phase2-003-tenant-count-views
+      author: saascore
+      comment: Add count queries for business metrics endpoint
+      changes:
+        - sql:
+            sql: >
+              CREATE OR REPLACE VIEW v_tenants_by_plan AS
+              SELECT plan, status, COUNT(*) AS total
+              FROM tenants
+              GROUP BY plan, status;
+        - sql:
+            sql: >
+              CREATE OR REPLACE VIEW v_active_flags_by_tenant AS
+              SELECT t.id AS tenant_id, t.name AS tenant_name, t.plan,
+                     COUNT(f.id) AS active_flags
+              FROM tenants t
+              LEFT JOIN feature_flags f ON f.tenant_id = t.id
+                AND f.enabled = true AND f.deleted = false
+              WHERE t.status = 'ACTIVE'
+              GROUP BY t.id, t.name, t.plan;
