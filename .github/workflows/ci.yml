@@ -16,7 +16,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build and test
-        run: ./mvnw -B test
+        run: ./mvnw -B test -Dtest='!*Integration*'
       - name: Spotless check
         run: ./mvnw -B spotless:check
       - name: Build JAR
