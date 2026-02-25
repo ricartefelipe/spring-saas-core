@@ -17,12 +17,6 @@ public class HealthController {
   private final org.springframework.amqp.rabbit.connection.ConnectionFactory
       rabbitConnectionFactory;
 
-  @Autowired(required = false)
-  private RedisConnectionFactory optionalRedis;
-
-  @Autowired(required = false)
-  private org.springframework.amqp.rabbit.connection.ConnectionFactory optionalRabbit;
-
   public HealthController(
       DataSource dataSource,
       @Autowired(required = false) RedisConnectionFactory redisConnectionFactory,
