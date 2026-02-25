@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.union.solutions.saascore.application.port.TokenIssuer;
 import java.util.List;
+import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class Phase1IntegrationTest {
 
   @Container
+  @SuppressWarnings("resource") // lifecycle managed by Testcontainers JUnit extension
   static PostgreSQLContainer<?> postgres =
       new PostgreSQLContainer<>("postgres:16-alpine")
           .withDatabaseName("saascore_test")
@@ -116,7 +118,7 @@ class Phase1IntegrationTest {
         mvc.perform(
                 post("/v1/tenants")
                     .header("Authorization", "Bearer " + adminToken)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                     .content("{\"name\":\"Test Corp\",\"plan\":\"pro\",\"region\":\"us-east-1\"}"))
             .andExpect(status().isCreated())
             .andReturn();
@@ -133,7 +135,7 @@ class Phase1IntegrationTest {
     mvc.perform(
             patch("/v1/tenants/" + tenantId)
                 .header("Authorization", "Bearer " + adminToken)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content("{\"name\":\"Updated Corp\"}"))
         .andExpect(status().isOk());
 
@@ -147,7 +149,7 @@ class Phase1IntegrationTest {
         mvc.perform(
                 post("/v1/policies")
                     .header("Authorization", "Bearer " + adminToken)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                     .content(
                         "{\"permissionCode\":\"test:action\",\"effect\":\"ALLOW\",\"allowedPlans\":[\"pro\"],\"allowedRegions\":[],\"enabled\":true,\"notes\":\"test\"}"))
             .andExpect(status().isCreated())
@@ -171,7 +173,7 @@ class Phase1IntegrationTest {
         mvc.perform(
                 post("/v1/policies")
                     .header("Authorization", "Bearer " + adminToken)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                     .content(
                         "{\"permissionCode\":\"soft:delete:test\",\"effect\":\"ALLOW\",\"allowedPlans\":[],\"allowedRegions\":[],\"enabled\":true,\"notes\":\"will be soft-deleted\"}"))
             .andExpect(status().isCreated())
@@ -194,7 +196,7 @@ class Phase1IntegrationTest {
         mvc.perform(
                 post("/v1/tenants/" + tenantId + "/flags")
                     .header("Authorization", "Bearer " + adminToken)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                     .content(
                         "{\"name\":\"test_flag\",\"enabled\":true,\"rolloutPercent\":50,\"allowedRoles\":[\"admin\"]}"))
             .andExpect(status().isCreated())
@@ -210,7 +212,7 @@ class Phase1IntegrationTest {
     mvc.perform(
             patch("/v1/tenants/" + tenantId + "/flags/test_flag")
                 .header("Authorization", "Bearer " + adminToken)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content("{\"enabled\":false}"))
         .andExpect(status().isOk());
 
@@ -227,7 +229,7 @@ class Phase1IntegrationTest {
     mvc.perform(
             post("/v1/tenants/" + tenantId + "/flags")
                 .header("Authorization", "Bearer " + adminToken)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(
                     "{\"name\":\"soft_del_flag\",\"enabled\":true,\"rolloutPercent\":100,\"allowedRoles\":[]}"))
         .andExpect(status().isCreated());
@@ -256,7 +258,7 @@ class Phase1IntegrationTest {
     mvc.perform(
             post("/v1/policies")
                 .header("Authorization", "Bearer " + adminToken)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(
                     "{\"permissionCode\":\"tenants:write\",\"effect\":\"DENY\",\"allowedPlans\":[\"free\"],\"allowedRegions\":[],\"enabled\":true,\"notes\":\"deny free\"}"))
         .andExpect(status().isCreated());
@@ -264,7 +266,7 @@ class Phase1IntegrationTest {
     mvc.perform(
             post("/v1/tenants")
                 .header("Authorization", "Bearer " + freeToken)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content("{\"name\":\"Denied Corp\",\"plan\":\"free\",\"region\":\"us-east-1\"}"))
         .andExpect(status().isForbidden());
 
@@ -282,7 +284,7 @@ class Phase1IntegrationTest {
   void devToken_endpointWorks() throws Exception {
     mvc.perform(
             post("/v1/dev/token")
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(
                     "{\"sub\":\"dev@test\",\"tid\":\"00000000-0000-0000-0000-000000000001\",\"roles\":[\"admin\"],\"perms\":[\"test:read\"],\"plan\":\"pro\",\"region\":\"us-east-1\"}"))
         .andExpect(status().isOk())
@@ -338,7 +340,7 @@ class Phase1IntegrationTest {
       mvc.perform(
           post("/v1/tenants")
               .header("Authorization", "Bearer " + adminToken)
-              .contentType(MediaType.APPLICATION_JSON)
+              .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
               .content(
                   "{\"name\":\"Cursor Corp "
                       + i
@@ -384,7 +386,7 @@ class Phase1IntegrationTest {
         mvc.perform(
                 post("/v1/policies")
                     .header("Authorization", "Bearer " + adminToken)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                     .content(
                         "{\"permissionCode\":\"update:test\",\"effect\":\"ALLOW\",\"allowedPlans\":[],\"allowedRegions\":[],\"enabled\":true,\"notes\":\"original\"}"))
             .andExpect(status().isCreated())
@@ -396,7 +398,7 @@ class Phase1IntegrationTest {
         mvc.perform(
                 patch("/v1/policies/" + policyId)
                     .header("Authorization", "Bearer " + adminToken)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                     .content("{\"notes\":\"updated\",\"enabled\":false}"))
             .andExpect(status().isOk())
             .andReturn();
@@ -445,14 +447,14 @@ class Phase1IntegrationTest {
     mvc.perform(
             post("/v1/tenants/" + tenantId + "/flags")
                 .header("Authorization", "Bearer " + adminToken)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(flagBody))
         .andExpect(status().isCreated());
 
     mvc.perform(
             post("/v1/tenants/" + tenantId + "/flags")
                 .header("Authorization", "Bearer " + adminToken)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .content(flagBody))
         .andExpect(status().isBadRequest());
   }

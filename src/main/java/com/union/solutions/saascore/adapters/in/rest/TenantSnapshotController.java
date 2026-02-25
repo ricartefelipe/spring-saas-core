@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,7 +27,7 @@ public class TenantSnapshotController {
   }
 
   @GetMapping("/snapshot")
-  public ResponseEntity<Map<String, Object>> snapshot(@PathVariable UUID id) {
+  public ResponseEntity<Map<String, Object>> snapshot(@PathVariable @NonNull UUID id) {
     return tenantUseCase
         .getById(id)
         .map(
@@ -41,7 +42,7 @@ public class TenantSnapshotController {
   }
 
   @GetMapping("/policies")
-  public ResponseEntity<?> policies(@PathVariable UUID id) {
+  public ResponseEntity<?> policies(@PathVariable @NonNull UUID id) {
     return tenantUseCase
         .getById(id)
         .map(
@@ -64,7 +65,7 @@ public class TenantSnapshotController {
   }
 
   @GetMapping("/flags")
-  public ResponseEntity<List<FeatureFlagController.FlagDto>> flags(@PathVariable UUID id) {
+  public ResponseEntity<List<FeatureFlagController.FlagDto>> flags(@PathVariable @NonNull UUID id) {
     return tenantUseCase
         .getById(id)
         .map(
