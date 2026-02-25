@@ -12,6 +12,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
+import org.springframework.lang.NonNull;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -67,7 +68,7 @@ public class TenantController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<TenantDto> getById(@PathVariable UUID id) {
+  public ResponseEntity<TenantDto> getById(@PathVariable @NonNull UUID id) {
     return tenantUseCase
         .getById(id)
         .map(t -> ResponseEntity.ok(TenantDto.from(t)))
@@ -75,7 +76,7 @@ public class TenantController {
   }
 
   @PatchMapping("/{id}")
-  public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody UpdateTenantRequest request) {
+  public ResponseEntity<?> update(@PathVariable @NonNull UUID id, @RequestBody UpdateTenantRequest request) {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:write"));
     if (!abac.allowed())
       return ResponseEntity.status(403)
@@ -89,7 +90,7 @@ public class TenantController {
   }
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(@PathVariable UUID id) {
+  public ResponseEntity<Void> delete(@PathVariable @NonNull UUID id) {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:write"));
     if (!abac.allowed()) return ResponseEntity.status(403).build();
     return tenantUseCase.softDelete(id)

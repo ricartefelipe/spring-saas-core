@@ -15,6 +15,7 @@ import com.union.solutions.saascore.domain.Policy;
 import io.micrometer.core.instrument.Counter;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class PolicyServiceTest {
 
   @Mock PolicyJpaRepository policyRepo;
@@ -43,8 +45,8 @@ class PolicyServiceTest {
 
   @Test
   void create_savesEntityAndPublishesOutbox() {
-    when(policyRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(outboxRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(policyRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
 
     PolicyEntity result =
         service.create("test:read", Policy.Effect.ALLOW, List.of("pro"), List.of(), true, "note");
@@ -66,9 +68,9 @@ class PolicyServiceTest {
   void softDelete_setsDeletedFlag() {
     UUID id = UUID.randomUUID();
     PolicyEntity entity = makePolicyEntity(id, "test:delete");
-    when(policyRepo.findActiveById(id)).thenReturn(Optional.of(entity));
-    when(policyRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(outboxRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(policyRepo.findActiveById(id)).thenReturn(Optional.of(Objects.requireNonNull(entity)));
+    when(policyRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
 
     boolean result = service.softDelete(id);
 
@@ -97,9 +99,9 @@ class PolicyServiceTest {
   void update_modifiesFields() {
     UUID id = UUID.randomUUID();
     PolicyEntity entity = makePolicyEntity(id, "test:update");
-    when(policyRepo.findActiveById(id)).thenReturn(Optional.of(entity));
-    when(policyRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(outboxRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(policyRepo.findActiveById(id)).thenReturn(Optional.of(Objects.requireNonNull(entity)));
+    when(policyRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
 
     Optional<PolicyEntity> result =
         service.update(id, null, Policy.Effect.DENY, null, null, false, "updated");
@@ -121,7 +123,7 @@ class PolicyServiceTest {
     p2.setAllowedPlans("[]");
     p2.setAllowedRegions("[\"eu-west-1\"]");
 
-    when(policyRepo.findByEnabledTrue()).thenReturn(List.of(p1, p2));
+    when(policyRepo.findByEnabledTrue()).thenReturn(List.of(Objects.requireNonNull(p1), Objects.requireNonNull(p2)));
 
     List<PolicyEntity> result = service.getApplicablePolicies("pro", "us-east-1");
     assertThat(result).hasSize(1);
