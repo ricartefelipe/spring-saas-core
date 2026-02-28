@@ -4,10 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.union.solutions.saascore.adapters.out.persistence.TenantEntity;
-import com.union.solutions.saascore.adapters.out.persistence.TenantJpaRepository;
 import com.union.solutions.saascore.application.abac.AuditLogger;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
+import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.tenant.TenantUseCase;
 import com.union.solutions.saascore.domain.Tenant;
 import io.micrometer.core.instrument.Counter;
@@ -23,7 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class TenantUseCaseTest {
 
-  @Mock TenantJpaRepository tenantRepo;
+  @Mock TenantRepository tenantRepo;
   @Mock OutboxPublisherPort outboxPublisher;
   @Mock AuditLogger auditLogger;
   @Mock Counter tenantsCreatedCounter;
@@ -51,14 +50,14 @@ class TenantUseCaseTest {
   @Test
   void softDelete_setsStatusAndPublishesDeletedEvent() {
     UUID id = UUID.randomUUID();
-    TenantEntity entity = makeTenantEntity(id, "Delete Corp");
-    when(tenantRepo.findById(id)).thenReturn(Optional.of(entity));
+    Tenant tenant = makeTenant(id, "Delete Corp");
+    when(tenantRepo.findById(id)).thenReturn(Optional.of(tenant));
     when(tenantRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     boolean result = useCase.softDelete(id);
 
     assertThat(result).isTrue();
-    assertThat(entity.getStatus()).isEqualTo(Tenant.TenantStatus.DELETED);
+    verify(tenantRepo).save(argThat(t -> t.getStatus() == Tenant.TenantStatus.DELETED));
     verify(outboxPublisher)
         .publish(eq("TENANT"), eq(id.toString()), eq("tenant.deleted"), anyMap());
   }
@@ -74,8 +73,8 @@ class TenantUseCaseTest {
   @Test
   void update_modifiesFieldsAndPublishesEvent() {
     UUID id = UUID.randomUUID();
-    TenantEntity entity = makeTenantEntity(id, "Old Name");
-    when(tenantRepo.findById(id)).thenReturn(Optional.of(entity));
+    Tenant tenant = makeTenant(id, "Old Name");
+    when(tenantRepo.findById(id)).thenReturn(Optional.of(tenant));
     when(tenantRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     Optional<Tenant> result = useCase.update(id, "New Name", null, null, null);
@@ -89,8 +88,8 @@ class TenantUseCaseTest {
   @Test
   void getById_found_returnsTenant() {
     UUID id = UUID.randomUUID();
-    TenantEntity entity = makeTenantEntity(id, "Found Corp");
-    when(tenantRepo.findById(id)).thenReturn(Optional.of(entity));
+    Tenant tenant = makeTenant(id, "Found Corp");
+    when(tenantRepo.findById(id)).thenReturn(Optional.of(tenant));
 
     Optional<Tenant> result = useCase.getById(id);
 
@@ -106,10 +105,8 @@ class TenantUseCaseTest {
     assertThat(useCase.getById(id)).isEmpty();
   }
 
-  private TenantEntity makeTenantEntity(UUID id, String name) {
-    Tenant t =
-        new Tenant(
-            id, name, "pro", "us-east-1", Tenant.TenantStatus.ACTIVE, Instant.now(), Instant.now());
-    return TenantEntity.from(t);
+  private Tenant makeTenant(UUID id, String name) {
+    return new Tenant(
+        id, name, "pro", "us-east-1", Tenant.TenantStatus.ACTIVE, Instant.now(), Instant.now());
   }
 }
