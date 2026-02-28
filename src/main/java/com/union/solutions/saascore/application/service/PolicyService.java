@@ -3,11 +3,10 @@ package com.union.solutions.saascore.application.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.union.solutions.saascore.adapters.out.persistence.OutboxEventEntity;
-import com.union.solutions.saascore.adapters.out.persistence.OutboxEventJpaRepository;
 import com.union.solutions.saascore.adapters.out.persistence.PolicyEntity;
 import com.union.solutions.saascore.adapters.out.persistence.PolicyJpaRepository;
 import com.union.solutions.saascore.application.abac.AuditLogger;
+import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.Policy;
 import io.micrometer.core.instrument.Counter;
@@ -28,19 +27,19 @@ public class PolicyService {
   private static final TypeReference<List<String>> LIST_TYPE = new TypeReference<>() {};
 
   private final PolicyJpaRepository repo;
-  private final OutboxEventJpaRepository outboxRepo;
+  private final OutboxPublisherPort outboxPublisher;
   private final AuditLogger auditLogger;
   private final ObjectMapper objectMapper;
   private final Counter policiesUpdatedCounter;
 
   public PolicyService(
       PolicyJpaRepository repo,
-      OutboxEventJpaRepository outboxRepo,
+      OutboxPublisherPort outboxPublisher,
       AuditLogger auditLogger,
       ObjectMapper objectMapper,
       @Qualifier("policiesUpdatedCounter") Counter policiesUpdatedCounter) {
     this.repo = repo;
-    this.outboxRepo = outboxRepo;
+    this.outboxPublisher = outboxPublisher;
     this.auditLogger = auditLogger;
     this.objectMapper = objectMapper;
     this.policiesUpdatedCounter = policiesUpdatedCounter;
@@ -66,7 +65,7 @@ public class PolicyService {
     entity.setCreatedAt(now);
     entity.setUpdatedAt(now);
     repo.save(entity);
-    publishOutbox(
+    outboxPublisher.publish(
         "POLICY",
         entity.getId().toString(),
         "policy.created",
@@ -119,7 +118,7 @@ public class PolicyService {
               entity.setUpdatedAt(Instant.now());
               repo.save(entity);
               policiesUpdatedCounter.increment();
-              publishOutbox(
+              outboxPublisher.publish(
                   "POLICY",
                   id.toString(),
                   "policy.updated",
@@ -152,7 +151,7 @@ public class PolicyService {
               entity.setDeletedAt(Instant.now());
               entity.setUpdatedAt(Instant.now());
               repo.save(entity);
-              publishOutbox(
+              outboxPublisher.publish(
                   "POLICY",
                   id.toString(),
                   "policy.deleted",
@@ -194,35 +193,11 @@ public class PolicyService {
     return repo.countActive();
   }
 
-  private void publishOutbox(
-      String aggregateType, String aggregateId, String eventType, Map<String, String> data) {
-    OutboxEventEntity outbox = new OutboxEventEntity();
-    outbox.setId(UUID.randomUUID());
-    outbox.setAggregateType(aggregateType);
-    outbox.setAggregateId(aggregateId);
-    outbox.setEventType(eventType);
-    outbox.setPayload(writeJson(data));
-    outbox.setStatus("PENDING");
-    outbox.setAttempts(0);
-    Instant now = Instant.now();
-    outbox.setCreatedAt(now);
-    outbox.setUpdatedAt(now);
-    outboxRepo.save(outbox);
-  }
-
   private String toJson(List<String> list) {
     try {
       return objectMapper.writeValueAsString(list != null ? list : List.of());
     } catch (JsonProcessingException e) {
       return "[]";
-    }
-  }
-
-  private String writeJson(Object value) {
-    try {
-      return objectMapper.writeValueAsString(value);
-    } catch (JsonProcessingException e) {
-      return "{}";
     }
   }
 
