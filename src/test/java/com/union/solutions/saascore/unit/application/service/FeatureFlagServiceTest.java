@@ -2,35 +2,31 @@ package com.union.solutions.saascore.unit.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.union.solutions.saascore.adapters.out.persistence.FeatureFlagEntity;
 import com.union.solutions.saascore.adapters.out.persistence.FeatureFlagJpaRepository;
-import com.union.solutions.saascore.adapters.out.persistence.OutboxEventEntity;
-import com.union.solutions.saascore.adapters.out.persistence.OutboxEventJpaRepository;
 import com.union.solutions.saascore.application.abac.AuditLogger;
+import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import io.micrometer.core.instrument.Counter;
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("null")
 class FeatureFlagServiceTest {
 
   @Mock FeatureFlagJpaRepository flagRepo;
-  @Mock OutboxEventJpaRepository outboxRepo;
+  @Mock OutboxPublisherPort outboxPublisher;
   @Mock AuditLogger auditLogger;
   @Mock Counter flagsToggledCounter;
 
@@ -40,15 +36,14 @@ class FeatureFlagServiceTest {
   void setUp() {
     service =
         new FeatureFlagService(
-            flagRepo, outboxRepo, auditLogger, new ObjectMapper(), flagsToggledCounter);
+            flagRepo, outboxPublisher, auditLogger, new ObjectMapper(), flagsToggledCounter);
   }
 
   @Test
   void create_savesEntity() {
     UUID tenantId = UUID.randomUUID();
     when(flagRepo.findByTenantIdAndName(tenantId, "new_flag")).thenReturn(Optional.empty());
-    when(flagRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
-    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(flagRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     FeatureFlagEntity result = service.create(tenantId, "new_flag", true, 50, List.of("admin"));
 
@@ -56,11 +51,7 @@ class FeatureFlagServiceTest {
     assertThat(result.isEnabled()).isTrue();
     assertThat(result.getRolloutPercent()).isEqualTo(50);
     verify(flagRepo).save(any());
-
-    ArgumentCaptor<OutboxEventEntity> outboxCaptor =
-        ArgumentCaptor.forClass(OutboxEventEntity.class);
-    verify(outboxRepo).save(outboxCaptor.capture());
-    assertThat(outboxCaptor.getValue().getEventType()).isEqualTo("flag.created");
+    verify(outboxPublisher).publish(eq("FLAG"), anyString(), eq("flag.created"), anyMap());
   }
 
   @Test
@@ -68,7 +59,7 @@ class FeatureFlagServiceTest {
     UUID tenantId = UUID.randomUUID();
     FeatureFlagEntity existing = new FeatureFlagEntity();
     existing.setName("dup");
-    when(flagRepo.findByTenantIdAndName(tenantId, "dup")).thenReturn(Optional.of(Objects.requireNonNull(existing)));
+    when(flagRepo.findByTenantIdAndName(tenantId, "dup")).thenReturn(Optional.of(existing));
 
     assertThatThrownBy(() -> service.create(tenantId, "dup", true, 100, List.of()))
         .isInstanceOf(IllegalArgumentException.class)
@@ -79,8 +70,7 @@ class FeatureFlagServiceTest {
   void create_clampsRolloutPercent() {
     UUID tenantId = UUID.randomUUID();
     when(flagRepo.findByTenantIdAndName(tenantId, "clamp")).thenReturn(Optional.empty());
-    when(flagRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
-    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(flagRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     FeatureFlagEntity over = service.create(tenantId, "clamp", true, 150, List.of());
     assertThat(over.getRolloutPercent()).isEqualTo(100);
@@ -90,9 +80,8 @@ class FeatureFlagServiceTest {
   void softDelete_setsDeletedFlag() {
     UUID tenantId = UUID.randomUUID();
     FeatureFlagEntity entity = makeFlag(tenantId, "del_flag");
-    when(flagRepo.findByTenantIdAndName(tenantId, "del_flag")).thenReturn(Optional.of(Objects.requireNonNull(entity)));
-    when(flagRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
-    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(flagRepo.findByTenantIdAndName(tenantId, "del_flag")).thenReturn(Optional.of(entity));
+    when(flagRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     boolean result = service.softDelete(tenantId, "del_flag");
 
@@ -113,9 +102,8 @@ class FeatureFlagServiceTest {
   void update_modifiesFields() {
     UUID tenantId = UUID.randomUUID();
     FeatureFlagEntity entity = makeFlag(tenantId, "upd_flag");
-    when(flagRepo.findByTenantIdAndName(tenantId, "upd_flag")).thenReturn(Optional.of(Objects.requireNonNull(entity)));
-    when(flagRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
-    when(outboxRepo.save(any())).thenAnswer(inv -> Objects.requireNonNull(inv.getArgument(0)));
+    when(flagRepo.findByTenantIdAndName(tenantId, "upd_flag")).thenReturn(Optional.of(entity));
+    when(flagRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     Optional<FeatureFlagEntity> result =
         service.update(tenantId, "upd_flag", false, 75, List.of("user"));
