@@ -5,11 +5,12 @@ import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaReposito
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,8 +33,13 @@ public class AuditLogController {
       @RequestParam(required = false) Instant from,
       @RequestParam(required = false) Instant to,
       @RequestParam(required = false) String cursor,
-      @RequestParam(required = false, defaultValue = "50") int limit,
-      @PageableDefault(size = 50) Pageable pageable) {
+      @RequestParam(required = false, defaultValue = "50") int limit) {
+
+    String safeAction = (action == null || action.isBlank()) ? "" : action;
+    String safeActorSub = (actorSub == null || actorSub.isBlank()) ? "" : actorSub;
+    String safeCorrelationId = (correlationId == null || correlationId.isBlank()) ? "" : correlationId;
+    Instant safeFrom = from != null ? from : Instant.EPOCH;
+    Instant safeTo = to != null ? to : Instant.now().plusSeconds(86400 * 365 * 30L);
 
     if (cursor != null && !cursor.isBlank()) {
       Instant cursorInstant = decodeCursor(cursor);
@@ -41,30 +47,114 @@ public class AuditLogController {
           auditRepo
               .findNextPage(
                   tenantId,
-                  action,
-                  actorSub,
-                  correlationId,
-                  from,
-                  to,
+                  safeAction,
+                  safeActorSub,
+                  safeCorrelationId,
+                  safeFrom,
+                  safeTo,
                   cursorInstant,
                   PageRequest.of(0, limit))
               .stream()
               .map(AuditDto::from)
               .toList();
       boolean hasMore = items.size() == limit;
-      String nextCursor = hasMore ? encodeCursor(items.getLast().createdAt()) : null;
+      String nextCursor = buildNextCursor(items, hasMore);
       return ResponseEntity.ok(new CursorPage<>(items, nextCursor, hasMore));
     }
 
-    Page<AuditDto> page =
-        auditRepo
-            .search(tenantId, action, actorSub, correlationId, from, to, pageable)
-            .map(AuditDto::from);
-    return ResponseEntity.ok(page);
+    int safeLimit = Math.max(1, Math.min(100, limit));
+    Page<AuditLogEntity> page =
+        auditRepo.search(
+            tenantId,
+            safeAction,
+            safeActorSub,
+            safeCorrelationId,
+            safeFrom,
+            safeTo,
+            PageRequest.of(0, safeLimit, Sort.by(Sort.Direction.DESC, "createdAt")));
+    List<AuditDto> content = page.getContent().stream().map(AuditDto::from).toList();
+    return ResponseEntity.ok(new AuditPageResponse(content, page.getTotalElements()));
+  }
+
+  /** DTO para evitar serialização direta de Spring Page (Sort etc.). */
+  public record AuditPageResponse(List<AuditDto> content, long totalElements) {}
+
+  /**
+   * Exportação de audit log para compliance (retenção/exportação). Requer filtros from/to para
+   * limitar o volume. Máximo 10_000 registros por requisição.
+   */
+  @GetMapping("/export")
+  public ResponseEntity<?> export(
+      @RequestParam(required = false) UUID tenantId,
+      @RequestParam(required = false) String action,
+      @RequestParam Instant from,
+      @RequestParam Instant to,
+      @RequestParam(required = false, defaultValue = "json") String format,
+      @RequestParam(required = false, defaultValue = "10000") int limit) {
+    int maxLimit = Math.min(10_000, Math.max(1, limit));
+    String safeAction = (action == null || action.isBlank()) ? "" : action;
+    Instant safeFrom = from;
+    Instant safeTo = to;
+    Page<AuditLogEntity> page =
+        auditRepo.search(
+            tenantId, safeAction, "", "", safeFrom, safeTo, PageRequest.of(0, maxLimit));
+    List<AuditDto> items = page.getContent().stream().map(AuditDto::from).toList();
+
+    if ("csv".equalsIgnoreCase(format)) {
+      String csv = toCsv(items);
+      return ResponseEntity.ok()
+          .header("Content-Disposition", "attachment; filename=audit-export.csv")
+          .contentType(org.springframework.http.MediaType.parseMediaType("text/csv; charset=UTF-8"))
+          .body(csv);
+    }
+    return ResponseEntity.ok(
+        Map.of(
+            "from", from.toString(),
+            "to", to.toString(),
+            "count", items.size(),
+            "items", items));
+  }
+
+  private static String toCsv(List<AuditDto> items) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(
+        "id,tenantId,actorSub,actorRoles,actorPerms,action,resourceType,resourceId,method,path,statusCode,correlationId,details,createdAt\n");
+    for (AuditDto a : items) {
+      sb.append(a.id()).append(',')
+          .append(a.tenantId()).append(',')
+          .append(escapeCsv(a.actorSub())).append(',')
+          .append(escapeCsv(a.actorRoles())).append(',')
+          .append(escapeCsv(a.actorPerms())).append(',')
+          .append(escapeCsv(a.action())).append(',')
+          .append(escapeCsv(a.resourceType())).append(',')
+          .append(escapeCsv(a.resourceId())).append(',')
+          .append(escapeCsv(a.method())).append(',')
+          .append(escapeCsv(a.path())).append(',')
+          .append(a.statusCode() != null ? a.statusCode() : "").append(',')
+          .append(escapeCsv(a.correlationId())).append(',')
+          .append(escapeCsv(a.details())).append(',')
+          .append(a.createdAt() != null ? a.createdAt().toString() : "")
+          .append('\n');
+    }
+    return sb.toString();
+  }
+
+  private static String escapeCsv(String value) {
+    if (value == null) return "";
+    if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+      return "\"" + value.replace("\"", "\"\"") + "\"";
+    }
+    return value;
   }
 
   private static String encodeCursor(Instant instant) {
     return Base64.getUrlEncoder().withoutPadding().encodeToString(instant.toString().getBytes());
+  }
+
+  private static String buildNextCursor(List<AuditDto> items, boolean hasMore) {
+    if (!hasMore || items.isEmpty()) return null;
+    Instant last = items.get(items.size() - 1).createdAt();
+    return last != null ? encodeCursor(last) : null;
   }
 
   private static Instant decodeCursor(String cursor) {

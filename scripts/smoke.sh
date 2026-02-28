@@ -162,11 +162,19 @@ else
   echo "  FAIL: Audit log empty"
   FAIL=$((FAIL + 1))
 fi
+FROM="2000-01-01T00:00:00Z"
+TO="2030-12-31T23:59:59Z"
+HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/v1/audit/export?from=$FROM&to=$TO&format=json" -H "Authorization: Bearer $TOKEN")
+check "GET /v1/audit/export (compliance)" "200" "$HTTP"
+HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/v1/audit/export?from=$FROM&to=$TO&format=csv" -H "Authorization: Bearer $TOKEN")
+check "GET /v1/audit/export format=csv" "200" "$HTTP"
 
 echo ""
 echo "--- 11. Tenant Snapshot endpoints ---"
 HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/v1/tenants/$DEMO_TID/snapshot" -H "Authorization: Bearer $TOKEN")
 check "GET /v1/tenants/{id}/snapshot" "200" "$HTTP"
+HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/v1/tenants/$DEMO_TID/snapshot?include=policies,flags" -H "Authorization: Bearer $TOKEN")
+check "GET /v1/tenants/{id}/snapshot?include=policies,flags" "200" "$HTTP"
 HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/v1/tenants/$DEMO_TID/policies" -H "Authorization: Bearer $TOKEN")
 check "GET /v1/tenants/{id}/policies" "200" "$HTTP"
 HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/v1/tenants/$DEMO_TID/flags" \
