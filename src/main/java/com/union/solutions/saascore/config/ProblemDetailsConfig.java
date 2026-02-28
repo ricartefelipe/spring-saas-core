@@ -71,7 +71,7 @@ public class ProblemDetailsConfig {
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ProblemDetails> handleOther(Exception ex, HttpServletRequest req) {
+  public ResponseEntity<ProblemDetails> handleOther(HttpServletRequest req) {
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(
             ProblemDetails.of(
