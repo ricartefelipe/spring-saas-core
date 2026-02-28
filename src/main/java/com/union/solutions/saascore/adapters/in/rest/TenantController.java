@@ -11,9 +11,6 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
@@ -47,24 +44,45 @@ public class TenantController {
       @RequestParam(required = false) String region,
       @RequestParam(required = false) String name,
       @RequestParam(required = false) String cursor,
-      @RequestParam(required = false, defaultValue = "20") int limit,
-      @PageableDefault(size = 20) Pageable pageable) {
-    Tenant.TenantStatus statusEnum = status != null ? Tenant.TenantStatus.valueOf(status) : null;
+      @RequestParam(required = false, defaultValue = "20") int limit) {
+    Tenant.TenantStatus statusEnum = null;
+    if (status != null && !status.isBlank()) {
+      try {
+        statusEnum = Tenant.TenantStatus.valueOf(status);
+      } catch (IllegalArgumentException e) {
+        return ResponseEntity.badRequest()
+            .body(ProblemDetails.of(400, "Bad Request", "Invalid status: " + status, "/v1/tenants", null));
+      }
+    }
 
-    if (cursor != null && !cursor.isBlank()) {
-      Instant cursorInstant = decodeCursor(cursor);
+    int safeLimit = Math.max(1, Math.min(100, limit));
+    String effectiveCursor = (cursor != null && !cursor.isBlank()) ? cursor : null;
+    if (effectiveCursor == null) {
+      // Sem cursor: retorna primeira página como CursorPage (evita serialização de Page)
+      Instant cursorInstant = Instant.EPOCH;
       List<TenantDto> items =
-          tenantUseCase.searchCursor(statusEnum, plan, region, name, cursorInstant, limit).stream()
+          tenantUseCase.searchCursor(statusEnum, plan, region, name, cursorInstant, safeLimit).stream()
               .map(TenantDto::from)
               .toList();
-      boolean hasMore = items.size() == limit;
-      String nextCursor = hasMore ? encodeCursor(items.getLast().createdAt()) : null;
+      boolean hasMore = items.size() == safeLimit;
+      String nextCursor = buildNextCursor(items, hasMore);
       return ResponseEntity.ok(new CursorPage<>(items, nextCursor, hasMore));
     }
 
-    Page<TenantDto> page =
-        tenantUseCase.search(statusEnum, plan, region, name, pageable).map(TenantDto::from);
-    return ResponseEntity.ok(page);
+    Instant cursorInstant = decodeCursor(effectiveCursor);
+    List<TenantDto> items =
+        tenantUseCase.searchCursor(statusEnum, plan, region, name, cursorInstant, safeLimit).stream()
+            .map(TenantDto::from)
+            .toList();
+    boolean hasMore = items.size() == safeLimit;
+    String nextCursor = buildNextCursor(items, hasMore);
+    return ResponseEntity.ok(new CursorPage<>(items, nextCursor, hasMore));
+  }
+
+  private static String buildNextCursor(List<TenantDto> items, boolean hasMore) {
+    if (!hasMore || items.isEmpty()) return null;
+    Instant lastCreatedAt = items.get(items.size() - 1).createdAt();
+    return lastCreatedAt != null ? encodeCursor(lastCreatedAt) : null;
   }
 
   @GetMapping("/{id}")

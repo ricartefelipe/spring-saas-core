@@ -1,6 +1,5 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
-import com.union.solutions.saascore.adapters.out.persistence.PolicyEntity;
 import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
@@ -35,7 +34,7 @@ public class PolicyController {
     if (!abac.allowed())
       return ResponseEntity.status(403)
           .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/policies", null));
-    PolicyEntity entity =
+    Policy policy =
         policyService.create(
             request.permissionCode(),
             request.effect(),
@@ -43,7 +42,7 @@ public class PolicyController {
             request.allowedRegions(),
             request.enabled(),
             request.notes());
-    return ResponseEntity.status(201).body(PolicyDto.from(entity));
+    return ResponseEntity.status(201).body(PolicyDto.from(policy));
   }
 
   @GetMapping
@@ -119,17 +118,26 @@ public class PolicyController {
       String notes,
       java.time.Instant createdAt,
       java.time.Instant updatedAt) {
-    public static PolicyDto from(PolicyEntity e) {
+    public static PolicyDto from(Policy p) {
       return new PolicyDto(
-          e.getId(),
-          e.getPermissionCode(),
-          e.getEffect().name(),
-          e.getAllowedPlans(),
-          e.getAllowedRegions(),
-          e.isEnabled(),
-          e.getNotes(),
-          e.getCreatedAt(),
-          e.getUpdatedAt());
+          p.getId(),
+          p.getPermissionCode(),
+          p.getEffect().name(),
+          toJson(p.getAllowedPlans()),
+          toJson(p.getAllowedRegions()),
+          p.isEnabled(),
+          p.getNotes(),
+          p.getCreatedAt(),
+          p.getUpdatedAt());
+    }
+
+    private static String toJson(java.util.List<String> list) {
+      if (list == null || list.isEmpty()) return "[]";
+      try {
+        return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(list);
+      } catch (Exception e) {
+        return "[]";
+      }
     }
   }
 }
