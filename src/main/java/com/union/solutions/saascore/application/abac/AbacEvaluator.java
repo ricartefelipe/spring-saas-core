@@ -1,13 +1,12 @@
 package com.union.solutions.saascore.application.abac;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.union.solutions.saascore.adapters.out.persistence.PolicyEntity;
-import com.union.solutions.saascore.adapters.out.persistence.PolicyJpaRepository;
+import com.union.solutions.saascore.application.port.PolicyRepository;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.Policy;
 import io.micrometer.core.instrument.Counter;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,15 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class AbacEvaluator {
 
   private static final Logger log = LoggerFactory.getLogger(AbacEvaluator.class);
-  private static final TypeReference<List<String>> LIST_TYPE = new TypeReference<>() {};
 
-  private final PolicyJpaRepository policyRepo;
+  private final PolicyRepository policyRepo;
   private final AuditLogger auditLogger;
   private final ObjectMapper objectMapper;
   private final Counter accessDeniedCounter;
 
   public AbacEvaluator(
-      PolicyJpaRepository policyRepo,
+      PolicyRepository policyRepo,
       AuditLogger auditLogger,
       ObjectMapper objectMapper,
       @Qualifier("accessDeniedCounter") Counter accessDeniedCounter) {
@@ -39,20 +37,20 @@ public class AbacEvaluator {
 
   @Transactional(readOnly = true)
   public AbacResult evaluate(AbacContext ctx) {
-    List<PolicyEntity> policies = policyRepo.findByPermissionCodeAndEnabledTrue(ctx.permission());
+    List<Policy> policies = policyRepo.findByPermissionCodeAndEnabledTrue(ctx.permission());
     if (policies.isEmpty()) {
       logDeny(ctx, null);
       return AbacResult.deny(null, "no_matching_allow_policy");
     }
-    for (PolicyEntity pe : policies) {
-      if (pe.getEffect() == Policy.Effect.DENY && matchesContext(pe, ctx)) {
-        logDeny(ctx, pe);
-        return AbacResult.deny(pe.getId(), "denied_by_policy");
+    for (Policy p : policies) {
+      if (p.getEffect() == Policy.Effect.DENY && p.appliesTo(ctx.plan(), ctx.region())) {
+        logDeny(ctx, p);
+        return AbacResult.deny(p.getId(), "denied_by_policy");
       }
     }
     boolean hasAllow = false;
-    for (PolicyEntity pe : policies) {
-      if (pe.getEffect() == Policy.Effect.ALLOW && matchesContext(pe, ctx)) {
+    for (Policy p : policies) {
+      if (p.getEffect() == Policy.Effect.ALLOW && p.appliesTo(ctx.plan(), ctx.region())) {
         hasAllow = true;
         break;
       }
@@ -64,25 +62,7 @@ public class AbacEvaluator {
     return AbacResult.allow();
   }
 
-  private boolean matchesContext(PolicyEntity pe, AbacContext ctx) {
-    List<String> plans = parseJson(pe.getAllowedPlans());
-    List<String> regions = parseJson(pe.getAllowedRegions());
-    boolean planMatch = plans.isEmpty() || plans.contains(ctx.plan());
-    boolean regionMatch = regions.isEmpty() || regions.contains(ctx.region());
-    return planMatch && regionMatch;
-  }
-
-  private List<String> parseJson(String json) {
-    if (json == null || json.isBlank() || "[]".equals(json)) return List.of();
-    try {
-      return objectMapper.readValue(json, LIST_TYPE);
-    } catch (Exception e) {
-      log.warn("Failed to parse policy JSON: {}", e.getMessage());
-      return List.of();
-    }
-  }
-
-  private void logDeny(AbacContext ctx, PolicyEntity policy) {
+  private void logDeny(AbacContext ctx, Policy policy) {
     accessDeniedCounter.increment();
     String policyId = policy != null ? policy.getId().toString() : "none";
     log.warn(
@@ -98,7 +78,7 @@ public class AbacEvaluator {
       UUID tenantId = ctx.tenantId();
       String details =
           objectMapper.writeValueAsString(
-              java.util.Map.of(
+              Map.of(
                   "permission", ctx.permission() != null ? ctx.permission() : "",
                   "plan", ctx.plan() != null ? ctx.plan() : "",
                   "region", ctx.region() != null ? ctx.region() : "",
