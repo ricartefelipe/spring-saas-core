@@ -71,7 +71,9 @@ public class ProblemDetailsConfig {
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ProblemDetails> handleOther(HttpServletRequest req) {
+  public ResponseEntity<ProblemDetails> handleOther(Exception ex, HttpServletRequest req) {
+    org.slf4j.LoggerFactory.getLogger(ProblemDetailsConfig.class)
+        .warn("Unhandled exception: {} - {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(
             ProblemDetails.of(

@@ -1,9 +1,8 @@
 package com.union.solutions.saascore.application.tenant;
 
-import com.union.solutions.saascore.adapters.out.persistence.TenantEntity;
-import com.union.solutions.saascore.adapters.out.persistence.TenantJpaRepository;
-import com.union.solutions.saascore.application.abac.AuditLogger;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
+import com.union.solutions.saascore.application.port.TenantRepository;
+import com.union.solutions.saascore.application.abac.AuditLogger;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.Tenant;
 import io.micrometer.core.instrument.Counter;
@@ -22,13 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class TenantUseCase {
 
-  private final TenantJpaRepository tenantRepo;
+  private final TenantRepository tenantRepo;
   private final OutboxPublisherPort outboxPublisher;
   private final AuditLogger auditLogger;
   private final Counter tenantsCreatedCounter;
 
   public TenantUseCase(
-      TenantJpaRepository tenantRepo,
+      TenantRepository tenantRepo,
       OutboxPublisherPort outboxPublisher,
       AuditLogger auditLogger,
       @Qualifier("tenantsCreatedCounter") Counter tenantsCreatedCounter) {
@@ -43,7 +42,7 @@ public class TenantUseCase {
     UUID id = UUID.randomUUID();
     Instant now = Instant.now();
     Tenant tenant = new Tenant(id, name, plan, region, Tenant.TenantStatus.ACTIVE, now, now);
-    tenantRepo.save(TenantEntity.from(tenant));
+    tenantRepo.save(tenant);
     outboxPublisher.publish(
         "TENANT",
         id.toString(),
@@ -68,13 +67,13 @@ public class TenantUseCase {
 
   @Transactional(readOnly = true)
   public Optional<Tenant> getById(UUID id) {
-    return tenantRepo.findById(id).map(TenantEntity::toDomain);
+    return tenantRepo.findById(id);
   }
 
   @Transactional(readOnly = true)
   public Page<Tenant> search(
       Tenant.TenantStatus status, String plan, String region, String name, Pageable pageable) {
-    return tenantRepo.search(status, plan, region, name, pageable).map(TenantEntity::toDomain);
+    return tenantRepo.search(status, plan, region, name, pageable);
   }
 
   @Transactional(readOnly = true)
@@ -85,11 +84,7 @@ public class TenantUseCase {
       String name,
       Instant cursor,
       int limit) {
-    return tenantRepo
-        .findNextPage(status, plan, region, name, cursor, PageRequest.of(0, limit))
-        .stream()
-        .map(TenantEntity::toDomain)
-        .toList();
+    return tenantRepo.findNextPage(status, plan, region, name, cursor, PageRequest.of(0, limit));
   }
 
   @Transactional
@@ -98,18 +93,18 @@ public class TenantUseCase {
     return tenantRepo
         .findById(id)
         .map(
-            entity -> {
-              if (name != null) entity.setName(name);
-              if (plan != null) entity.setPlan(plan);
-              if (region != null) entity.setRegion(region);
-              if (status != null) entity.setStatus(status);
-              entity.setUpdatedAt(Instant.now());
-              tenantRepo.save(entity);
+            tenant -> {
+              if (name != null) tenant.setName(name);
+              if (plan != null) tenant.setPlan(plan);
+              if (region != null) tenant.setRegion(region);
+              if (status != null) tenant.setStatus(status);
+              tenant.setUpdatedAt(Instant.now());
+              Tenant saved = tenantRepo.save(tenant);
               outboxPublisher.publish(
                   "TENANT",
                   id.toString(),
                   "tenant.updated",
-                  Map.of("name", entity.getName(), "plan", entity.getPlan()));
+                  Map.of("name", saved.getName(), "plan", saved.getPlan()));
               auditLogger.log(
                   TenantContext.getTenantId().orElse(null),
                   TenantContext.getSubject(),
@@ -123,7 +118,7 @@ public class TenantUseCase {
                   200,
                   TenantContext.getCorrelationId(),
                   null);
-              return entity.toDomain();
+              return saved;
             });
   }
 
@@ -132,15 +127,15 @@ public class TenantUseCase {
     return tenantRepo
         .findById(id)
         .map(
-            entity -> {
-              entity.setStatus(Tenant.TenantStatus.DELETED);
-              entity.setUpdatedAt(Instant.now());
-              tenantRepo.save(entity);
+            tenant -> {
+              tenant.setStatus(Tenant.TenantStatus.DELETED);
+              tenant.setUpdatedAt(Instant.now());
+              tenantRepo.save(tenant);
               outboxPublisher.publish(
                   "TENANT",
                   id.toString(),
                   "tenant.deleted",
-                  Map.of("name", entity.getName(), "plan", entity.getPlan()));
+                  Map.of("name", tenant.getName(), "plan", tenant.getPlan()));
               auditLogger.log(
                   TenantContext.getTenantId().orElse(null),
                   TenantContext.getSubject(),
