@@ -52,7 +52,7 @@ public class AuditLogController {
               .map(AuditDto::from)
               .toList();
       boolean hasMore = items.size() == limit;
-      String nextCursor = hasMore ? encodeCursor(items.get(items.size() - 1).createdAt()) : null;
+      String nextCursor = hasMore ? encodeCursor(items.getLast().createdAt()) : null;
       return ResponseEntity.ok(new CursorPage<>(items, nextCursor, hasMore));
     }
 
