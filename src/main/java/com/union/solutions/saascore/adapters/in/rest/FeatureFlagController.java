@@ -1,8 +1,8 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
-import com.union.solutions.saascore.adapters.out.persistence.FeatureFlagEntity;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.config.TenantContext;
+import com.union.solutions.saascore.domain.FeatureFlag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
@@ -25,7 +25,7 @@ public class FeatureFlagController {
   public ResponseEntity<?> create(
       @PathVariable UUID tenantId, @Valid @RequestBody CreateFlagRequest request) {
     enforceTenantAccess(tenantId);
-    FeatureFlagEntity flag =
+    FeatureFlag flag =
         flagService.create(
             tenantId,
             request.name(),
@@ -85,16 +85,25 @@ public class FeatureFlagController {
       String allowedRoles,
       Instant createdAt,
       Instant updatedAt) {
-    public static FlagDto from(FeatureFlagEntity e) {
+    public static FlagDto from(FeatureFlag f) {
       return new FlagDto(
-          e.getId(),
-          e.getTenantId(),
-          e.getName(),
-          e.isEnabled(),
-          e.getRolloutPercent(),
-          e.getAllowedRoles(),
-          e.getCreatedAt(),
-          e.getUpdatedAt());
+          f.getId(),
+          f.getTenantId(),
+          f.getName(),
+          f.isEnabled(),
+          f.getRolloutPercent(),
+          toJson(f.getAllowedRoles()),
+          f.getCreatedAt(),
+          f.getUpdatedAt());
+    }
+
+    private static String toJson(java.util.List<String> list) {
+      if (list == null || list.isEmpty()) return "[]";
+      try {
+        return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(list);
+      } catch (Exception e) {
+        return "[]";
+      }
     }
   }
 }

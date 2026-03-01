@@ -1,6 +1,6 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
-import com.union.solutions.saascore.adapters.out.persistence.TenantJpaRepository;
+import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.application.service.PolicyService;
 import com.union.solutions.saascore.domain.Tenant;
@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/v1/metrics/business")
 public class BusinessMetricsController {
 
-  private final TenantJpaRepository tenantRepo;
+  private final TenantRepository tenantRepo;
   private final PolicyService policyService;
   private final FeatureFlagService flagService;
 
   public BusinessMetricsController(
-      TenantJpaRepository tenantRepo, PolicyService policyService, FeatureFlagService flagService) {
+      TenantRepository tenantRepo, PolicyService policyService, FeatureFlagService flagService) {
     this.tenantRepo = tenantRepo;
     this.policyService = policyService;
     this.flagService = flagService;
@@ -42,13 +42,12 @@ public class BusinessMetricsController {
             "deleted", deletedCount,
             "total", activeCount + suspendedCount + deletedCount));
 
-    List<Object[]> byPlanStatus = tenantRepo.countByPlanAndStatus();
+    List<TenantRepository.PlanStatusCount> byPlanStatus = tenantRepo.countByPlanAndStatus();
     Map<String, Map<String, Long>> tenantsByPlan = new LinkedHashMap<>();
-    for (Object[] row : byPlanStatus) {
-      String plan = (String) row[0];
-      String status = ((Tenant.TenantStatus) row[1]).name();
-      long count = (Long) row[2];
-      tenantsByPlan.computeIfAbsent(plan, k -> new LinkedHashMap<>()).put(status, count);
+    for (TenantRepository.PlanStatusCount row : byPlanStatus) {
+      tenantsByPlan
+          .computeIfAbsent(row.plan(), k -> new LinkedHashMap<>())
+          .put(row.status(), row.count());
     }
     result.put("tenants_by_plan", tenantsByPlan);
 

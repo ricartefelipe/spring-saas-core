@@ -4,15 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.union.solutions.saascore.adapters.out.persistence.PolicyEntity;
-import com.union.solutions.saascore.adapters.out.persistence.PolicyJpaRepository;
 import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.application.abac.AuditLogger;
+import com.union.solutions.saascore.application.port.PolicyRepository;
 import com.union.solutions.saascore.domain.Policy;
 import io.micrometer.core.instrument.Counter;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class AbacEvaluatorTest {
 
-  @Mock PolicyJpaRepository policyRepo;
+  @Mock PolicyRepository policyRepo;
   @Mock AuditLogger auditLogger;
   @Mock Counter accessDeniedCounter;
 
@@ -50,8 +48,7 @@ class AbacEvaluatorTest {
   @Test
   void evaluate_denyPolicyMatchesPlan_returnsDeny() {
     UUID policyId = UUID.randomUUID();
-    PolicyEntity deny =
-        makePolicyEntity(policyId, "admin:write", Policy.Effect.DENY, "[\"free\"]", "[]");
+    Policy deny = makePolicy(policyId, "admin:write", Policy.Effect.DENY, List.of("free"), List.of());
     when(policyRepo.findByPermissionCodeAndEnabledTrue("admin:write")).thenReturn(List.of(deny));
 
     AbacContext ctx =
@@ -67,10 +64,8 @@ class AbacEvaluatorTest {
 
   @Test
   void evaluate_denyPolicyDoesNotMatchPlan_returnsAllow() {
-    PolicyEntity deny =
-        makePolicyEntity(UUID.randomUUID(), "admin:write", Policy.Effect.DENY, "[\"free\"]", "[]");
-    PolicyEntity allow =
-        makePolicyEntity(UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, "[]", "[]");
+    Policy deny = makePolicy(UUID.randomUUID(), "admin:write", Policy.Effect.DENY, List.of("free"), List.of());
+    Policy allow = makePolicy(UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, List.of(), List.of());
     when(policyRepo.findByPermissionCodeAndEnabledTrue("admin:write"))
         .thenReturn(List.of(deny, allow));
 
@@ -85,9 +80,8 @@ class AbacEvaluatorTest {
   @Test
   void evaluate_denyTakesPrecedenceOverAllow() {
     UUID denyId = UUID.randomUUID();
-    PolicyEntity deny = makePolicyEntity(denyId, "admin:write", Policy.Effect.DENY, "[]", "[]");
-    PolicyEntity allow =
-        makePolicyEntity(UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, "[]", "[]");
+    Policy deny = makePolicy(denyId, "admin:write", Policy.Effect.DENY, List.of(), List.of());
+    Policy allow = makePolicy(UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, List.of(), List.of());
     when(policyRepo.findByPermissionCodeAndEnabledTrue("admin:write"))
         .thenReturn(List.of(deny, allow));
 
@@ -102,9 +96,7 @@ class AbacEvaluatorTest {
 
   @Test
   void evaluate_noMatchingAllowPolicy_returnsDeny() {
-    PolicyEntity allow =
-        makePolicyEntity(
-            UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, "[\"enterprise\"]", "[]");
+    Policy allow = makePolicy(UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, List.of("enterprise"), List.of());
     when(policyRepo.findByPermissionCodeAndEnabledTrue("admin:write")).thenReturn(List.of(allow));
 
     AbacContext ctx =
@@ -118,9 +110,7 @@ class AbacEvaluatorTest {
 
   @Test
   void evaluate_regionFilter_worksCorrectly() {
-    PolicyEntity allow =
-        makePolicyEntity(
-            UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, "[]", "[\"eu-west-1\"]");
+    Policy allow = makePolicy(UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, List.of(), List.of("eu-west-1"));
     when(policyRepo.findByPermissionCodeAndEnabledTrue("admin:write")).thenReturn(List.of(allow));
 
     AbacContext euCtx =
@@ -134,18 +124,9 @@ class AbacEvaluatorTest {
     assertThat(evaluator.evaluate(usCtx).allowed()).isFalse();
   }
 
-  private PolicyEntity makePolicyEntity(
-      UUID id, String permCode, Policy.Effect effect, String allowedPlans, String allowedRegions) {
-    PolicyEntity e = new PolicyEntity();
-    e.setId(id);
-    e.setPermissionCode(permCode);
-    e.setEffect(effect);
-    e.setAllowedPlans(allowedPlans);
-    e.setAllowedRegions(allowedRegions);
-    e.setEnabled(true);
-    Instant now = Instant.now();
-    e.setCreatedAt(now);
-    e.setUpdatedAt(now);
-    return e;
+  private Policy makePolicy(
+      UUID id, String permCode, Policy.Effect effect, List<String> allowedPlans, List<String> allowedRegions) {
+    return new Policy(
+        id, permCode, effect, allowedPlans, allowedRegions, true, null, java.time.Instant.now(), java.time.Instant.now());
   }
 }

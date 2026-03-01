@@ -1,9 +1,9 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
-import com.union.solutions.saascore.adapters.out.persistence.PolicyEntity;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.application.service.PolicyService;
 import com.union.solutions.saascore.application.tenant.TenantUseCase;
+import com.union.solutions.saascore.domain.Policy;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -27,17 +27,50 @@ public class TenantSnapshotController {
   }
 
   @GetMapping("/snapshot")
-  public ResponseEntity<Map<String, Object>> snapshot(@PathVariable @NonNull UUID id) {
+  public ResponseEntity<Map<String, Object>> snapshot(
+      @PathVariable @NonNull UUID id,
+      @RequestParam(required = false) String include) {
     return tenantUseCase
         .getById(id)
         .map(
-            t ->
-                ResponseEntity.ok(
-                    Map.<String, Object>of(
-                        "id", t.getId(),
-                        "plan", t.getPlan(),
-                        "region", t.getRegion(),
-                        "status", t.getStatus().name())))
+            t -> {
+              Map<String, Object> body =
+                  new java.util.LinkedHashMap<>(
+                      Map.of(
+                          "id", t.getId(),
+                          "plan", t.getPlan(),
+                          "region", t.getRegion(),
+                          "status", t.getStatus().name()));
+              if (include != null && !include.isBlank()) {
+                String[] parts = include.toLowerCase().split(",");
+                for (String part : parts) {
+                  if ("policies".equals(part.trim())) {
+                    List<Policy> policies =
+                        policyService.getApplicablePolicies(t.getPlan(), t.getRegion());
+                    body.put(
+                        "policies",
+                        policies.stream()
+                            .map(PolicyController.PolicyDto::from)
+                            .map(
+                                dto ->
+                                    Map.of(
+                                        "id", dto.id(),
+                                        "permission_code", dto.permissionCode(),
+                                        "effect", dto.effect(),
+                                        "allowed_plans", dto.allowedPlans(),
+                                        "allowed_regions", dto.allowedRegions()))
+                            .toList());
+                  } else if ("flags".equals(part.trim())) {
+                    body.put(
+                        "flags",
+                        flagService.listByTenant(id).stream()
+                            .map(FeatureFlagController.FlagDto::from)
+                            .toList());
+                  }
+                }
+              }
+              return ResponseEntity.ok(body);
+            })
         .orElse(ResponseEntity.notFound().build());
   }
 
@@ -47,33 +80,21 @@ public class TenantSnapshotController {
         .getById(id)
         .map(
             t -> {
-              List<PolicyEntity> policies =
+              List<Policy> policies =
                   policyService.getApplicablePolicies(t.getPlan(), t.getRegion());
               return ResponseEntity.ok(
                   policies.stream()
+                      .map(PolicyController.PolicyDto::from)
                       .map(
-                          p ->
+                          dto ->
                               Map.of(
-                                  "id", p.getId(),
-                                  "permission_code", p.getPermissionCode(),
-                                  "effect", p.getEffect().name(),
-                                  "allowed_plans", p.getAllowedPlans(),
-                                  "allowed_regions", p.getAllowedRegions()))
+                                  "id", dto.id(),
+                                  "permission_code", dto.permissionCode(),
+                                  "effect", dto.effect(),
+                                  "allowed_plans", dto.allowedPlans(),
+                                  "allowed_regions", dto.allowedRegions()))
                       .toList());
             })
-        .orElse(ResponseEntity.notFound().build());
-  }
-
-  @GetMapping("/flags")
-  public ResponseEntity<List<FeatureFlagController.FlagDto>> flags(@PathVariable @NonNull UUID id) {
-    return tenantUseCase
-        .getById(id)
-        .map(
-            t ->
-                ResponseEntity.ok(
-                    flagService.listByTenant(id).stream()
-                        .map(FeatureFlagController.FlagDto::from)
-                        .toList()))
         .orElse(ResponseEntity.notFound().build());
   }
 }
