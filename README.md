@@ -126,6 +126,8 @@ Testes de integração (Testcontainers) exigem Docker em execução.
 
 ## API REST (prefixo /v1)
 
+A API está versionada como **v1** e é estável para integração com node-b2b-orders, py-payments-ledger e agentes (IA/LLM). Ver [docs/api/agents.md](docs/api/agents.md) para endpoints recomendados a agentes.
+
 ### Tenants
 
 | Método | Endpoint | Descrição |
@@ -160,12 +162,13 @@ Testes de integração (Testcontainers) exigem Docker em execução.
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | GET | `/v1/audit` | Consultar (paginado; filtros: tenantId, action, from/to) |
+| GET | `/v1/audit/export` | Exportar para compliance: `from`, `to` (obrig.), format=json ou csv, até 10k registros |
 
-### Consumer endpoints (Node/Python)
+### Consumer endpoints (Node/Python e agentes)
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET | `/v1/tenants/{id}/snapshot` | Snapshot do tenant (id, plan, region, status) |
+| GET | `/v1/tenants/{id}/snapshot` | Snapshot do tenant (id, plan, region, status). Opcional: `?include=policies,flags` |
 | GET | `/v1/tenants/{id}/policies` | Políticas aplicáveis ao tenant |
 | GET | `/v1/tenants/{id}/flags` | Feature flags do tenant |
 
@@ -323,6 +326,14 @@ Diagramas C4 e ERD em `docs/architecture/`.
 - [JWT Claims e identidade](docs/contracts/identity.md)
 - [Headers HTTP](docs/contracts/headers.md)
 - [Eventos Outbox](docs/contracts/events.md)
+- [Compliance e auditoria](docs/compliance.md) — retenção, exportação de audit log
+- [APIs para agentes (IA/LLM)](docs/api/agents.md)
+- [Prompt de evolução](docs/PROMPT-EVOLUCAO.md) — objetivo entregável/vendável e IA/LLM para evolução contínua
+- [Backlog de evolução](docs/BACKLOG-EVOLUCAO.md) — checklist entregável/vendável
+- [Prompt de conclusão e vistoria](docs/PROMPT-CONCLUSAO-VISTORIA.md) — critérios de qualidade, vistoria e etapas finais para encerrar o projeto em estado vendável
+- [Relatório de conclusão e evolução](docs/RELATORIO-CONCLUSAO-EVOLUCAO.md) — consolidação do que foi feito nos 4 projetos (core, suite, orders, payments) para conclusão e venda
+- [O que foi feito e o que falta (resumo)](docs/O-QUE-FOI-FEITO-E-O-QUE-FALTA.md) — em linguagem simples: estado atual e próximos passos
+- [O que falta para concluir (sistema inteligente + front perfeito)](docs/O-QUE-FALTA-PARA-CONCLUIR.md) — checklist backend + front e ordem sugerida
 
 ---
 

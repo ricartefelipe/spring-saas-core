@@ -59,6 +59,8 @@ public class HealthController {
       }
       return "UP";
     } catch (Exception e) {
+      org.slf4j.LoggerFactory.getLogger(HealthController.class)
+          .warn("Health check DB failed: {}", e.getMessage(), e);
       return "DOWN";
     }
   }
@@ -69,6 +71,8 @@ public class HealthController {
       conn.ping();
       return "UP";
     } catch (Exception e) {
+      org.slf4j.LoggerFactory.getLogger(HealthController.class)
+          .warn("Health check Redis failed: {}", e.getMessage(), e);
       return "DOWN";
     }
   }
@@ -80,6 +84,8 @@ public class HealthController {
       conn.close();
       return "UP";
     } catch (Exception e) {
+      org.slf4j.LoggerFactory.getLogger(HealthController.class)
+          .warn("Health check RabbitMQ failed: {}", e.getMessage(), e);
       return "DOWN";
     }
   }
