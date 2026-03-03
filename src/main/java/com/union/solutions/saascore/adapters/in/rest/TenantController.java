@@ -45,6 +45,10 @@ public class TenantController {
       @RequestParam(required = false) String name,
       @RequestParam(required = false) String cursor,
       @RequestParam(required = false, defaultValue = "20") int limit) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:read"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/tenants", null));
     Tenant.TenantStatus statusEnum = null;
     if (status != null && !status.isBlank()) {
       try {
@@ -86,7 +90,11 @@ public class TenantController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<TenantDto> getById(@PathVariable @NonNull UUID id) {
+  public ResponseEntity<?> getById(@PathVariable @NonNull UUID id) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:read"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/tenants/" + id, null));
     return tenantUseCase
         .getById(id)
         .map(t -> ResponseEntity.ok(TenantDto.from(t)))
