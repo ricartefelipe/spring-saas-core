@@ -39,6 +39,8 @@ server:
   shutdown: graceful
 
 app:
+  cors:
+    allowed-origins: "*"
   auth:
     mode: ${AUTH_MODE:hs256}
     jwt:
