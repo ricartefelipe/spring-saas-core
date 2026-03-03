@@ -2,6 +2,9 @@ package com.union.solutions.saascore.adapters.in.rest;
 
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogEntity;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaRepository;
+import com.union.solutions.saascore.application.abac.AbacContext;
+import com.union.solutions.saascore.application.abac.AbacEvaluator;
+import com.union.solutions.saascore.application.abac.AbacResult;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
@@ -9,7 +12,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +21,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuditLogController {
 
   private final AuditLogJpaRepository auditRepo;
+  private final AbacEvaluator abacEvaluator;
 
-  public AuditLogController(AuditLogJpaRepository auditRepo) {
+  public AuditLogController(AuditLogJpaRepository auditRepo, AbacEvaluator abacEvaluator) {
     this.auditRepo = auditRepo;
+    this.abacEvaluator = abacEvaluator;
   }
 
   @GetMapping
@@ -34,6 +38,10 @@ public class AuditLogController {
       @RequestParam(required = false) Instant to,
       @RequestParam(required = false) String cursor,
       @RequestParam(required = false, defaultValue = "50") int limit) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("audit:read"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/audit", null));
 
     String safeAction = (action == null || action.isBlank()) ? "" : action;
     String safeActorSub = (actorSub == null || actorSub.isBlank()) ? "" : actorSub;
@@ -91,6 +99,10 @@ public class AuditLogController {
       @RequestParam Instant to,
       @RequestParam(required = false, defaultValue = "json") String format,
       @RequestParam(required = false, defaultValue = "10000") int limit) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("audit:read"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/audit/export", null));
     int maxLimit = Math.min(10_000, Math.max(1, limit));
     String safeAction = (action == null || action.isBlank()) ? "" : action;
     Instant safeFrom = from;
