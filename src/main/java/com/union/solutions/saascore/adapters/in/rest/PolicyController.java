@@ -46,18 +46,26 @@ public class PolicyController {
   }
 
   @GetMapping
-  public ResponseEntity<Page<PolicyDto>> list(
+  public ResponseEntity<?> list(
       @RequestParam(required = false) String permissionCode,
       @RequestParam(required = false) Policy.Effect effect,
       @RequestParam(required = false) Boolean enabled,
       @PageableDefault(size = 20) Pageable pageable) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("policies:read"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/policies", null));
     Page<PolicyDto> page =
         policyService.search(permissionCode, effect, enabled, pageable).map(PolicyDto::from);
     return ResponseEntity.ok(page);
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<PolicyDto> getById(@PathVariable UUID id) {
+  public ResponseEntity<?> getById(@PathVariable UUID id) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("policies:read"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/policies/" + id, null));
     return policyService
         .getById(id)
         .map(p -> ResponseEntity.ok(PolicyDto.from(p)))

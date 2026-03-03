@@ -1,5 +1,8 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
+import com.union.solutions.saascore.application.abac.AbacContext;
+import com.union.solutions.saascore.application.abac.AbacEvaluator;
+import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.FeatureFlag;
@@ -16,14 +19,21 @@ import org.springframework.web.bind.annotation.*;
 public class FeatureFlagController {
 
   private final FeatureFlagService flagService;
+  private final AbacEvaluator abacEvaluator;
 
-  public FeatureFlagController(FeatureFlagService flagService) {
+  public FeatureFlagController(FeatureFlagService flagService, AbacEvaluator abacEvaluator) {
     this.flagService = flagService;
+    this.abacEvaluator = abacEvaluator;
   }
 
   @PostMapping
   public ResponseEntity<?> create(
       @PathVariable UUID tenantId, @Valid @RequestBody CreateFlagRequest request) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("flags:write"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(),
+              "/v1/tenants/" + tenantId + "/flags", null));
     enforceTenantAccess(tenantId);
     FeatureFlag flag =
         flagService.create(
@@ -36,7 +46,12 @@ public class FeatureFlagController {
   }
 
   @GetMapping
-  public ResponseEntity<List<FlagDto>> list(@PathVariable UUID tenantId) {
+  public ResponseEntity<?> list(@PathVariable UUID tenantId) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("flags:read"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(),
+              "/v1/tenants/" + tenantId + "/flags", null));
     enforceTenantAccess(tenantId);
     List<FlagDto> flags = flagService.listByTenant(tenantId).stream().map(FlagDto::from).toList();
     return ResponseEntity.ok(flags);
@@ -47,6 +62,11 @@ public class FeatureFlagController {
       @PathVariable UUID tenantId,
       @PathVariable String flagName,
       @RequestBody UpdateFlagRequest request) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("flags:write"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(),
+              "/v1/tenants/" + tenantId + "/flags/" + flagName, null));
     enforceTenantAccess(tenantId);
     return flagService
         .update(
@@ -56,7 +76,12 @@ public class FeatureFlagController {
   }
 
   @DeleteMapping("/{flagName}")
-  public ResponseEntity<Void> delete(@PathVariable UUID tenantId, @PathVariable String flagName) {
+  public ResponseEntity<?> delete(@PathVariable UUID tenantId, @PathVariable String flagName) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("flags:write"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(),
+              "/v1/tenants/" + tenantId + "/flags/" + flagName, null));
     enforceTenantAccess(tenantId);
     return flagService.softDelete(tenantId, flagName)
         ? ResponseEntity.noContent().build()
