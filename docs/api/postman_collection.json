@@ -1,1 +1,48 @@
-{"info":{"name":"spring-saas-core","schema":"https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},"item":[{"name":"Auth","item":[{"name":"Get token","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"raw":"{\"username\":\"admin@example.com\",\"password\":\"password\"}"},"url":"{{baseUrl}}/v1/auth/token"}}]},{"name":"Me","item":[{"name":"Get me","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":"{{baseUrl}}/v1/me"}}]}]}
+{
+  "info": {
+    "name": "spring-saas-core",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Dev",
+      "item": [
+        {
+          "name": "Issue dev token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sub\": \"admin@example.com\",\n  \"tid\": \"tenant-001\",\n  \"roles\": [\"ADMIN\"],\n  \"perms\": [\"tenant:read\", \"tenant:write\"],\n  \"plan\": \"pro\",\n  \"region\": \"br\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/dev/token"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Me",
+      "item": [
+        {
+          "name": "Get me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/v1/me"
+          }
+        }
+      ]
+    }
+  ]
+}
