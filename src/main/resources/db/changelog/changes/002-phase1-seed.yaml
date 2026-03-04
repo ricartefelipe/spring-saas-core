@@ -2,7 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: phase1-seed-tenants
       author: saascore
-      context: "dev or test"
+      context: "dev or test or local"
       changes:
         - insert:
             tableName: tenants
@@ -28,7 +28,7 @@ databaseChangeLog:
   - changeSet:
       id: phase1-seed-policies
       author: saascore
-      context: "dev or test"
+      context: "dev or test or local"
       changes:
         - insert:
             tableName: policies
@@ -130,7 +130,7 @@ databaseChangeLog:
   - changeSet:
       id: phase1-seed-flags
       author: saascore
-      context: "dev or test"
+      context: "dev or test or local"
       changes:
         - insert:
             tableName: feature_flags
