@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: saascore
       POSTGRES_DB: saascore
     ports:
-      - "5432:5432"
+      - "5435:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U saascore -d saascore"]
       interval: 5s
@@ -18,7 +18,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "6382:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -29,8 +29,8 @@ services:
     container_name: fluxe-rabbitmq
     image: rabbitmq:3-management-alpine
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "5675:5672"
+      - "15675:15672"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -55,6 +55,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/saascore
       DB_USER: saascore
       DB_PASS: saascore
+      SPRING_LIQUIBASE_CONTEXTS: local
       AUTH_MODE: hs256
       JWT_HS256_SECRET: local-dev-secret-min-32-chars-for-hs256-signing
       JWT_ISSUER: spring-saas-core
