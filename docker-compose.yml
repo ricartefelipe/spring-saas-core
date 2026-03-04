@@ -55,6 +55,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/saascore
       DB_USER: saascore
       DB_PASS: saascore
+      SPRING_LIQUIBASE_CONTEXTS: local
       AUTH_MODE: hs256
       JWT_HS256_SECRET: local-dev-secret-min-32-chars-for-hs256-signing
       JWT_ISSUER: spring-saas-core
