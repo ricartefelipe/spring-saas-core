@@ -4,6 +4,10 @@ app:
   auth:
     mode: hs256
 
+spring:
+  liquibase:
+    contexts: local
+
 logging:
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{correlationId:-}] [%X{tenantId:-}] - %msg%n"
