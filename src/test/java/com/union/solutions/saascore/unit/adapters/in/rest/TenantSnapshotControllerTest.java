@@ -1,11 +1,15 @@
 package com.union.solutions.saascore.unit.adapters.in.rest;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.union.solutions.saascore.adapters.in.rest.TenantSnapshotController;
+import com.union.solutions.saascore.application.abac.AbacContext;
+import com.union.solutions.saascore.application.abac.AbacEvaluator;
+import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.application.service.PolicyService;
 import com.union.solutions.saascore.application.tenant.TenantUseCase;
@@ -30,6 +34,7 @@ class TenantSnapshotControllerTest {
   @Mock TenantUseCase tenantUseCase;
   @Mock PolicyService policyService;
   @Mock FeatureFlagService flagService;
+  @Mock AbacEvaluator abacEvaluator;
 
   private MockMvc mvc;
   private UUID tenantId;
@@ -37,9 +42,10 @@ class TenantSnapshotControllerTest {
 
   @BeforeEach
   void setUp() {
+    when(abacEvaluator.evaluate(any(AbacContext.class))).thenReturn(AbacResult.allow());
     mvc =
         MockMvcBuilders.standaloneSetup(
-                new TenantSnapshotController(tenantUseCase, policyService, flagService))
+                new TenantSnapshotController(tenantUseCase, policyService, flagService, abacEvaluator))
             .build();
     tenantId = UUID.randomUUID();
     tenant =
