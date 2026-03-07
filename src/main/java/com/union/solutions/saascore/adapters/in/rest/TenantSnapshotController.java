@@ -1,5 +1,8 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
+import com.union.solutions.saascore.application.abac.AbacContext;
+import com.union.solutions.saascore.application.abac.AbacEvaluator;
+import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.application.service.PolicyService;
 import com.union.solutions.saascore.application.tenant.TenantUseCase;
@@ -18,18 +21,27 @@ public class TenantSnapshotController {
   private final TenantUseCase tenantUseCase;
   private final PolicyService policyService;
   private final FeatureFlagService flagService;
+  private final AbacEvaluator abacEvaluator;
 
   public TenantSnapshotController(
-      TenantUseCase tenantUseCase, PolicyService policyService, FeatureFlagService flagService) {
+      TenantUseCase tenantUseCase,
+      PolicyService policyService,
+      FeatureFlagService flagService,
+      AbacEvaluator abacEvaluator) {
     this.tenantUseCase = tenantUseCase;
     this.policyService = policyService;
     this.flagService = flagService;
+    this.abacEvaluator = abacEvaluator;
   }
 
   @GetMapping("/snapshot")
-  public ResponseEntity<Map<String, Object>> snapshot(
+  public ResponseEntity<?> snapshot(
       @PathVariable @NonNull UUID id,
       @RequestParam(required = false) String include) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:read"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/tenants/" + id + "/snapshot", null));
     return tenantUseCase
         .getById(id)
         .map(
@@ -76,6 +88,10 @@ public class TenantSnapshotController {
 
   @GetMapping("/policies")
   public ResponseEntity<?> policies(@PathVariable @NonNull UUID id) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:read"));
+    if (!abac.allowed())
+      return ResponseEntity.status(403)
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/tenants/" + id + "/policies", null));
     return tenantUseCase
         .getById(id)
         .map(
