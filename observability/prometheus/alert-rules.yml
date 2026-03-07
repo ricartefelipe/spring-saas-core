@@ -1,0 +1,83 @@
+groups:
+  - name: saas-core-alerts
+    rules:
+
+      - alert: HighErrorRate
+        expr: >
+          sum(rate(http_server_requests_seconds_count{job="spring-saas-core", status=~"5.."}[5m]))
+          /
+          sum(rate(http_server_requests_seconds_count{job="spring-saas-core"}[5m]))
+          > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP 5xx error rate above 5%"
+          description: "{{ $value | humanizePercentage }} of requests are returning 5xx for the last 5 minutes."
+
+      - alert: HighLatency
+        expr: >
+          histogram_quantile(0.95,
+            sum(rate(http_server_requests_seconds_bucket{job="spring-saas-core"}[5m])) by (le)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 latency above 2 seconds"
+          description: "95th percentile latency is {{ $value | humanizeDuration }} over the last 5 minutes."
+
+      - alert: ServiceDown
+        expr: up{job="spring-saas-core"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "spring-saas-core instance is down"
+          description: "Instance {{ $labels.instance }} has been unreachable for more than 1 minute."
+
+      - alert: HighMemoryUsage
+        expr: >
+          sum(jvm_memory_used_bytes{job="spring-saas-core", area="heap"})
+          /
+          sum(jvm_memory_max_bytes{job="spring-saas-core", area="heap"})
+          > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM heap usage above 85%"
+          description: "Heap utilization is {{ $value | humanizePercentage }} for the last 10 minutes."
+
+      - alert: OutboxBacklog
+        expr: saas_outbox_pending{job="spring-saas-core"} > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Outbox has more than 100 pending events"
+          description: "{{ $value }} events are pending in the outbox for over 5 minutes."
+
+      - alert: AuditExportOOM
+        expr: >
+          sum(jvm_memory_used_bytes{job="spring-saas-core", area="heap"})
+          /
+          sum(jvm_memory_max_bytes{job="spring-saas-core", area="heap"})
+          > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "JVM heap near OOM — possible audit export pressure"
+          description: "Heap usage at {{ $value | humanizePercentage }}. Check if streaming audit export is causing memory pressure."
+
+      - alert: RateLimitTriggered
+        expr: >
+          sum(rate(http_server_requests_seconds_count{job="spring-saas-core", status="429"}[1m])) * 60
+          > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rate limit triggered — more than 50 HTTP 429s per minute"
+          description: "{{ $value }} rate-limited requests per minute over the last 5 minutes."

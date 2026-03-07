@@ -36,6 +36,9 @@ tags:
 paths:
   # ── Tenants ───────────────────────────────────────────────
   /v1/tenants:
+    parameters:
+      - $ref: "#/components/parameters/XTenantId"
+      - $ref: "#/components/parameters/XCorrelationId"
     post:
       tags: [Tenants]
       summary: Criar tenant
@@ -99,6 +102,8 @@ paths:
         in: path
         required: true
         schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/XTenantId"
+      - $ref: "#/components/parameters/XCorrelationId"
     get:
       tags: [Tenants]
       summary: Buscar tenant por ID
@@ -155,6 +160,9 @@ paths:
 
   # ── Policies ──────────────────────────────────────────────
   /v1/policies:
+    parameters:
+      - $ref: "#/components/parameters/XTenantId"
+      - $ref: "#/components/parameters/XCorrelationId"
     post:
       tags: [Policies]
       summary: Criar política
@@ -221,6 +229,8 @@ paths:
         in: path
         required: true
         schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/XTenantId"
+      - $ref: "#/components/parameters/XCorrelationId"
     get:
       tags: [Policies]
       summary: Buscar política por ID
@@ -282,6 +292,8 @@ paths:
         in: path
         required: true
         schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/XTenantId"
+      - $ref: "#/components/parameters/XCorrelationId"
     post:
       tags: [Feature Flags]
       summary: Criar feature flag
@@ -333,6 +345,8 @@ paths:
         in: path
         required: true
         schema: { type: string }
+      - $ref: "#/components/parameters/XTenantId"
+      - $ref: "#/components/parameters/XCorrelationId"
     patch:
       tags: [Feature Flags]
       summary: Atualizar feature flag
@@ -372,6 +386,9 @@ paths:
 
   # ── Audit ─────────────────────────────────────────────────
   /v1/audit:
+    parameters:
+      - $ref: "#/components/parameters/XTenantId"
+      - $ref: "#/components/parameters/XCorrelationId"
     get:
       tags: [Audit]
       summary: Listar audit logs (cursor pagination)
@@ -414,6 +431,9 @@ paths:
           $ref: "#/components/responses/Forbidden"
 
   /v1/audit/export:
+    parameters:
+      - $ref: "#/components/parameters/XTenantId"
+      - $ref: "#/components/parameters/XCorrelationId"
     get:
       tags: [Audit]
       summary: Exportar audit logs (compliance)
@@ -464,6 +484,8 @@ paths:
         in: path
         required: true
         schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/XTenantId"
+      - $ref: "#/components/parameters/XCorrelationId"
     get:
       tags: [Snapshot]
       summary: Snapshot do tenant (para consumers como orders e payments)
@@ -492,6 +514,8 @@ paths:
         in: path
         required: true
         schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/XTenantId"
+      - $ref: "#/components/parameters/XCorrelationId"
     get:
       tags: [Snapshot]
       summary: Políticas aplicáveis ao tenant (consumer endpoint)
@@ -512,6 +536,9 @@ paths:
 
   # ── Me ────────────────────────────────────────────────────
   /v1/me:
+    parameters:
+      - $ref: "#/components/parameters/XTenantId"
+      - $ref: "#/components/parameters/XCorrelationId"
     get:
       tags: [Me]
       summary: Dados do usuário autenticado
@@ -555,6 +582,9 @@ paths:
 
   # ── Business Metrics ──────────────────────────────────────
   /v1/metrics/business:
+    parameters:
+      - $ref: "#/components/parameters/XTenantId"
+      - $ref: "#/components/parameters/XCorrelationId"
     get:
       tags: [Metrics]
       summary: Métricas de negócio (tenants, políticas, flags)
@@ -611,6 +641,16 @@ components:
       bearerFormat: JWT
 
   parameters:
+    XTenantId:
+      name: X-Tenant-Id
+      in: header
+      description: ID do tenant (UUID). Opcional quando já presente no JWT.
+      schema: { type: string, format: uuid }
+    XCorrelationId:
+      name: X-Correlation-Id
+      in: header
+      description: ID de correlação para distributed tracing. Gerado automaticamente se ausente.
+      schema: { type: string }
     cursor:
       name: cursor
       in: query

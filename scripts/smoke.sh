@@ -47,7 +47,7 @@ TOKEN_RESP=$(curl -sf -X POST "$BASE/v1/dev/token" \
     "sub": "smoke-admin@test.local",
     "tid": "00000000-0000-0000-0000-000000000001",
     "roles": ["admin"],
-    "perms": ["tenants:read","tenants:write","policies:read","policies:write","flags:read","flags:write"],
+    "perms": ["tenants:read","tenants:write","policies:read","policies:write","flags:read","flags:write","audit:read"],
     "plan": "enterprise",
     "region": "global"
   }')

@@ -1,31 +1,43 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogEntity;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaRepository;
 import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @RestController
 @RequestMapping("/v1/audit")
 public class AuditLogController {
 
+  private static final int EXPORT_PAGE_SIZE = 500;
+
   private final AuditLogJpaRepository auditRepo;
   private final AbacEvaluator abacEvaluator;
+  private final ObjectMapper objectMapper;
 
-  public AuditLogController(AuditLogJpaRepository auditRepo, AbacEvaluator abacEvaluator) {
+  public AuditLogController(
+      AuditLogJpaRepository auditRepo,
+      AbacEvaluator abacEvaluator,
+      ObjectMapper objectMapper) {
     this.auditRepo = auditRepo;
     this.abacEvaluator = abacEvaluator;
+    this.objectMapper = objectMapper;
   }
 
   @GetMapping
@@ -89,7 +101,8 @@ public class AuditLogController {
 
   /**
    * Exportação de audit log para compliance (retenção/exportação). Requer filtros from/to para
-   * limitar o volume. Máximo 10_000 registros por requisição.
+   * limitar o volume. Usa streaming para não carregar todos os registros na memória.
+   * Máximo 10_000 registros por requisição.
    */
   @GetMapping("/export")
   public ResponseEntity<?> export(
@@ -103,51 +116,100 @@ public class AuditLogController {
     if (!abac.allowed())
       return ResponseEntity.status(403)
           .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/audit/export", null));
+
     int maxLimit = Math.min(10_000, Math.max(1, limit));
     String safeAction = (action == null || action.isBlank()) ? "" : action;
-    Instant safeFrom = from;
-    Instant safeTo = to;
-    Page<AuditLogEntity> page =
-        auditRepo.search(
-            tenantId, safeAction, "", "", safeFrom, safeTo, PageRequest.of(0, maxLimit));
-    List<AuditDto> items = page.getContent().stream().map(AuditDto::from).toList();
+    Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
 
     if ("csv".equalsIgnoreCase(format)) {
-      String csv = toCsv(items);
+      StreamingResponseBody body = out ->
+          streamCsv(out, tenantId, safeAction, from, to, maxLimit, sort);
       return ResponseEntity.ok()
           .header("Content-Disposition", "attachment; filename=audit-export.csv")
-          .contentType(org.springframework.http.MediaType.parseMediaType("text/csv; charset=UTF-8"))
-          .body(csv);
+          .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+          .body(body);
     }
-    return ResponseEntity.ok(
-        Map.of(
-            "from", from.toString(),
-            "to", to.toString(),
-            "count", items.size(),
-            "items", items));
+
+    StreamingResponseBody body = out ->
+        streamJson(out, tenantId, safeAction, from, to, maxLimit, sort);
+    return ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(body);
   }
 
-  private static String toCsv(List<AuditDto> items) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(
-        "id,tenantId,actorSub,actorRoles,actorPerms,action,resourceType,resourceId,method,path,statusCode,correlationId,details,createdAt\n");
-    for (AuditDto a : items) {
-      sb.append(a.id()).append(',')
-          .append(a.tenantId()).append(',')
-          .append(escapeCsv(a.actorSub())).append(',')
-          .append(escapeCsv(a.actorRoles())).append(',')
-          .append(escapeCsv(a.actorPerms())).append(',')
-          .append(escapeCsv(a.action())).append(',')
-          .append(escapeCsv(a.resourceType())).append(',')
-          .append(escapeCsv(a.resourceId())).append(',')
-          .append(escapeCsv(a.method())).append(',')
-          .append(escapeCsv(a.path())).append(',')
-          .append(a.statusCode() != null ? a.statusCode() : "").append(',')
-          .append(escapeCsv(a.correlationId())).append(',')
-          .append(escapeCsv(a.details())).append(',')
-          .append(a.createdAt() != null ? a.createdAt().toString() : "")
-          .append('\n');
+  private void streamCsv(
+      OutputStream out, UUID tenantId, String action,
+      Instant from, Instant to, int maxLimit, Sort sort) throws IOException {
+    out.write(("id,tenantId,actorSub,actorRoles,actorPerms,action,resourceType,resourceId,"
+        + "method,path,statusCode,correlationId,details,createdAt\n")
+        .getBytes(StandardCharsets.UTF_8));
+
+    int remaining = maxLimit;
+    int pageNum = 0;
+    while (remaining > 0) {
+      int pageSize = Math.min(EXPORT_PAGE_SIZE, remaining);
+      Page<AuditLogEntity> page = auditRepo.search(
+          tenantId, action, "", "", from, to, PageRequest.of(pageNum, pageSize, sort));
+      List<AuditLogEntity> content = page.getContent();
+      if (content.isEmpty()) break;
+      for (AuditLogEntity e : content) {
+        out.write(toCsvRow(AuditDto.from(e)).getBytes(StandardCharsets.UTF_8));
+      }
+      out.flush();
+      remaining -= content.size();
+      pageNum++;
+      if (!page.hasNext()) break;
     }
+  }
+
+  private void streamJson(
+      OutputStream out, UUID tenantId, String action,
+      Instant from, Instant to, int maxLimit, Sort sort) throws IOException {
+    out.write(("{\"from\":\"" + from + "\",\"to\":\"" + to + "\",\"items\":[")
+        .getBytes(StandardCharsets.UTF_8));
+
+    int remaining = maxLimit;
+    int pageNum = 0;
+    boolean first = true;
+    int count = 0;
+    while (remaining > 0) {
+      int pageSize = Math.min(EXPORT_PAGE_SIZE, remaining);
+      Page<AuditLogEntity> page = auditRepo.search(
+          tenantId, action, "", "", from, to, PageRequest.of(pageNum, pageSize, sort));
+      List<AuditLogEntity> content = page.getContent();
+      if (content.isEmpty()) break;
+      for (AuditLogEntity e : content) {
+        if (!first) out.write(',');
+        first = false;
+        objectMapper.writeValue(out, AuditDto.from(e));
+        count++;
+      }
+      out.flush();
+      remaining -= content.size();
+      pageNum++;
+      if (!page.hasNext()) break;
+    }
+
+    out.write(("],\"count\":" + count + "}").getBytes(StandardCharsets.UTF_8));
+  }
+
+  private static String toCsvRow(AuditDto a) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(a.id()).append(',')
+        .append(a.tenantId()).append(',')
+        .append(escapeCsv(a.actorSub())).append(',')
+        .append(escapeCsv(a.actorRoles())).append(',')
+        .append(escapeCsv(a.actorPerms())).append(',')
+        .append(escapeCsv(a.action())).append(',')
+        .append(escapeCsv(a.resourceType())).append(',')
+        .append(escapeCsv(a.resourceId())).append(',')
+        .append(escapeCsv(a.method())).append(',')
+        .append(escapeCsv(a.path())).append(',')
+        .append(a.statusCode() != null ? a.statusCode() : "").append(',')
+        .append(escapeCsv(a.correlationId())).append(',')
+        .append(escapeCsv(a.details())).append(',')
+        .append(a.createdAt() != null ? a.createdAt().toString() : "")
+        .append('\n');
     return sb.toString();
   }
 

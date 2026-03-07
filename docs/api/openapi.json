@@ -1,1 +1,1964 @@
-{"openapi":"3.0.1","info":{"title":"spring-saas-core","version":"1.0.0"},"paths":{"/v1/auth/token":{"post":{"summary":"Obtain token","requestBody":{"content":{"application/json":{"schema":{"type":"object","properties":{"username":{"type":"string"},"password":{"type":"string"}}}}}},"responses":{"200":{"description":"OK"}}}},"/v1/me":{"get":{"summary":"Current user","responses":{"200":{"description":"OK"}}}},"/v1/tenants":{"post":{"summary":"Create tenant","responses":{"201":{"description":"Created"}}}},"/v1/tenants/{id}":{"get":{"summary":"Get tenant by id","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/healthz":{"get":{"summary":"Liveness"}},"/readyz":{"get":{"summary":"Readiness"}}}}
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "spring-saas-core",
+    "description": "Control plane multi-tenant da plataforma B2B — tenants, governança ABAC/RBAC, feature flags, auditoria e JWT padronizado.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Union Solutions"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local development"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Tenants",
+      "description": "CRUD de tenants multi-tenant"
+    },
+    {
+      "name": "Policies",
+      "description": "CRUD de políticas ABAC"
+    },
+    {
+      "name": "Feature Flags",
+      "description": "CRUD de feature flags por tenant"
+    },
+    {
+      "name": "Audit",
+      "description": "Consulta e exportação de audit log"
+    },
+    {
+      "name": "Snapshot",
+      "description": "Snapshot e dados de consumo por tenant"
+    },
+    {
+      "name": "Me",
+      "description": "Usuário autenticado"
+    },
+    {
+      "name": "Dev",
+      "description": "Endpoints de desenvolvimento (desabilitados em produção)"
+    },
+    {
+      "name": "Metrics",
+      "description": "Métricas de negócio"
+    },
+    {
+      "name": "Health",
+      "description": "Liveness e readiness probes"
+    }
+  ],
+  "paths": {
+    "/v1/tenants": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/XTenantId"
+        },
+        {
+          "$ref": "#/components/parameters/XCorrelationId"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Criar tenant",
+        "operationId": "createTenant",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTenantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tenant criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tenant"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Listar tenants (cursor pagination)",
+        "operationId": "listTenants",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/TenantStatus"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de tenants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageTenant"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/v1/tenants/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/XTenantId"
+        },
+        {
+          "$ref": "#/components/parameters/XCorrelationId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Buscar tenant por ID",
+        "operationId": "getTenant",
+        "responses": {
+          "200": {
+            "description": "Tenant encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tenant"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Atualizar tenant",
+        "operationId": "updateTenant",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTenantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tenant atualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tenant"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Soft-delete de tenant",
+        "operationId": "deleteTenant",
+        "responses": {
+          "204": {
+            "description": "Tenant removido"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/policies": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/XTenantId"
+        },
+        {
+          "$ref": "#/components/parameters/XCorrelationId"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Criar política",
+        "operationId": "createPolicy",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePolicyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Política criada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Policy"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Listar políticas (offset pagination)",
+        "operationId": "listPolicies",
+        "parameters": [
+          {
+            "name": "permissionCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "effect",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PolicyEffect"
+            }
+          },
+          {
+            "name": "enabled",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "example": "createdAt,desc"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de políticas (Spring Page)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagePolicy"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/v1/policies/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/XTenantId"
+        },
+        {
+          "$ref": "#/components/parameters/XCorrelationId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Buscar política por ID",
+        "operationId": "getPolicy",
+        "responses": {
+          "200": {
+            "description": "Política encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Policy"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Atualizar política",
+        "operationId": "updatePolicy",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePolicyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Política atualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Policy"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Soft-delete de política",
+        "operationId": "deletePolicy",
+        "responses": {
+          "204": {
+            "description": "Política removida"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenantId}/flags": {
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/XTenantId"
+        },
+        {
+          "$ref": "#/components/parameters/XCorrelationId"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Feature Flags"
+        ],
+        "summary": "Criar feature flag",
+        "operationId": "createFlag",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFlagRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Flag criada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureFlag"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Feature Flags"
+        ],
+        "summary": "Listar feature flags de um tenant",
+        "operationId": "listFlags",
+        "responses": {
+          "200": {
+            "description": "Lista de flags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeatureFlag"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenantId}/flags/{flagName}": {
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "flagName",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/XTenantId"
+        },
+        {
+          "$ref": "#/components/parameters/XCorrelationId"
+        }
+      ],
+      "patch": {
+        "tags": [
+          "Feature Flags"
+        ],
+        "summary": "Atualizar feature flag",
+        "operationId": "updateFlag",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFlagRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Flag atualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureFlag"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Feature Flags"
+        ],
+        "summary": "Soft-delete de feature flag",
+        "operationId": "deleteFlag",
+        "responses": {
+          "204": {
+            "description": "Flag removida"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/audit": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/XTenantId"
+        },
+        {
+          "$ref": "#/components/parameters/XCorrelationId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Audit"
+        ],
+        "summary": "Listar audit logs (cursor pagination)",
+        "operationId": "listAuditLogs",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorSub",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "correlationId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de audit logs (cursor ou offset dependendo dos params)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CursorPageAudit"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AuditPageResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/v1/audit/export": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/XTenantId"
+        },
+        {
+          "$ref": "#/components/parameters/XCorrelationId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Audit"
+        ],
+        "summary": "Exportar audit logs (compliance)",
+        "operationId": "exportAuditLogs",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "default": "json"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10000,
+              "minimum": 1,
+              "maximum": 10000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados exportados (JSON ou CSV conforme formato solicitado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditExportResponse"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/v1/tenants/{id}/snapshot": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/XTenantId"
+        },
+        {
+          "$ref": "#/components/parameters/XCorrelationId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Snapshot"
+        ],
+        "summary": "Snapshot do tenant (para consumers como orders e payments)",
+        "operationId": "tenantSnapshot",
+        "parameters": [
+          {
+            "name": "include",
+            "in": "query",
+            "description": "Seções adicionais separadas por vírgula: policies, flags",
+            "schema": {
+              "type": "string"
+            },
+            "example": "policies,flags"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Snapshot do tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSnapshot"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/tenants/{id}/policies": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/XTenantId"
+        },
+        {
+          "$ref": "#/components/parameters/XCorrelationId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Snapshot"
+        ],
+        "summary": "Políticas aplicáveis ao tenant (consumer endpoint)",
+        "operationId": "tenantPolicies",
+        "responses": {
+          "200": {
+            "description": "Lista de políticas aplicáveis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PolicySummary"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/me": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/XTenantId"
+        },
+        {
+          "$ref": "#/components/parameters/XCorrelationId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Me"
+        ],
+        "summary": "Dados do usuário autenticado",
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "Contexto do usuário",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/dev/token": {
+      "post": {
+        "tags": [
+          "Dev"
+        ],
+        "summary": "Emitir token de desenvolvimento (desabilitado em produção)",
+        "operationId": "issueDevToken",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token emitido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevTokenResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Endpoint desabilitado em perfil de produção",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/metrics/business": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/XTenantId"
+        },
+        {
+          "$ref": "#/components/parameters/XCorrelationId"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Metrics"
+        ],
+        "summary": "Métricas de negócio (tenants, políticas, flags)",
+        "operationId": "businessMetrics",
+        "responses": {
+          "200": {
+            "description": "Métricas agregadas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessMetrics"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Liveness probe",
+        "operationId": "healthz",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Serviço vivo",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "OK"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Readiness probe (DB, Redis, RabbitMQ)",
+        "operationId": "readyz",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Todas as dependências UP",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Alguma dependência DOWN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "XTenantId": {
+        "name": "X-Tenant-Id",
+        "in": "header",
+        "description": "ID do tenant (UUID). Opcional quando já presente no JWT.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "XCorrelationId": {
+        "name": "X-Correlation-Id",
+        "in": "header",
+        "description": "ID de correlação para distributed tracing. Gerado automaticamente se ausente.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "cursor": {
+        "name": "cursor",
+        "in": "query",
+        "description": "Cursor opaco da página anterior (base64url de Instant)",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "default": 20,
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Requisição inválida",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Não autenticado",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Sem permissão (ABAC)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Recurso não encontrado"
+      }
+    },
+    "schemas": {
+      "Tenant": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TenantStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "plan",
+          "region",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "TenantStatus": {
+        "type": "string",
+        "enum": [
+          "ACTIVE",
+          "SUSPENDED",
+          "DELETED"
+        ]
+      },
+      "CreateTenantRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "plan",
+          "region"
+        ]
+      },
+      "UpdateTenantRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TenantStatus"
+          }
+        }
+      },
+      "CursorPageTenant": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tenant"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "hasMore"
+        ]
+      },
+      "Policy": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "permissionCode": {
+            "type": "string"
+          },
+          "effect": {
+            "$ref": "#/components/schemas/PolicyEffect"
+          },
+          "allowedPlans": {
+            "type": "string",
+            "description": "JSON array serializado como string"
+          },
+          "allowedRegions": {
+            "type": "string",
+            "description": "JSON array serializado como string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "permissionCode",
+          "effect",
+          "enabled",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PolicyEffect": {
+        "type": "string",
+        "enum": [
+          "ALLOW",
+          "DENY"
+        ]
+      },
+      "CreatePolicyRequest": {
+        "type": "object",
+        "properties": {
+          "permissionCode": {
+            "type": "string"
+          },
+          "effect": {
+            "$ref": "#/components/schemas/PolicyEffect"
+          },
+          "allowedPlans": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedRegions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "permissionCode",
+          "effect",
+          "enabled"
+        ]
+      },
+      "UpdatePolicyRequest": {
+        "type": "object",
+        "properties": {
+          "permissionCode": {
+            "type": "string"
+          },
+          "effect": {
+            "$ref": "#/components/schemas/PolicyEffect"
+          },
+          "allowedPlans": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedRegions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "PolicySummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "permission_code": {
+            "type": "string"
+          },
+          "effect": {
+            "type": "string"
+          },
+          "allowed_plans": {
+            "type": "string"
+          },
+          "allowed_regions": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "permission_code",
+          "effect"
+        ]
+      },
+      "PagePolicy": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Policy"
+            }
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "number": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "totalElements",
+          "totalPages",
+          "size",
+          "number"
+        ]
+      },
+      "FeatureFlag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "rolloutPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "allowedRoles": {
+            "type": "string",
+            "description": "JSON array serializado como string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "tenantId",
+          "name",
+          "enabled",
+          "rolloutPercent",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateFlagRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "rolloutPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "allowedRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateFlagRequest": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "rolloutPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "allowedRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AuditLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorSub": {
+            "type": "string"
+          },
+          "actorRoles": {
+            "type": "string"
+          },
+          "actorPerms": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "resourceId": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "statusCode": {
+            "type": "integer",
+            "nullable": true
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "createdAt"
+        ]
+      },
+      "CursorPageAudit": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLog"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "hasMore"
+        ]
+      },
+      "AuditPageResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLog"
+            }
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "content",
+          "totalElements"
+        ]
+      },
+      "AuditExportResponse": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLog"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "count",
+          "items"
+        ]
+      },
+      "TenantSnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plan": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TenantStatus"
+          },
+          "policies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolicySummary"
+            },
+            "description": "Incluído quando include=policies"
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeatureFlag"
+            },
+            "description": "Incluído quando include=flags"
+          }
+        },
+        "required": [
+          "id",
+          "plan",
+          "region",
+          "status"
+        ]
+      },
+      "MeResponse": {
+        "type": "object",
+        "properties": {
+          "sub": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "perms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "correlation_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sub",
+          "tenant_id",
+          "roles",
+          "perms"
+        ]
+      },
+      "DevTokenRequest": {
+        "type": "object",
+        "properties": {
+          "sub": {
+            "type": "string"
+          },
+          "tid": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "perms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "plan": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sub",
+          "tid"
+        ]
+      },
+      "DevTokenResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "example": 3600
+          }
+        },
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in"
+        ]
+      },
+      "BusinessMetrics": {
+        "type": "object",
+        "properties": {
+          "tenants": {
+            "type": "object",
+            "properties": {
+              "active": {
+                "type": "integer"
+              },
+              "suspended": {
+                "type": "integer"
+              },
+              "deleted": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "active",
+              "suspended",
+              "deleted",
+              "total"
+            ]
+          },
+          "tenants_by_plan": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            }
+          },
+          "active_policies": {
+            "type": "integer"
+          },
+          "active_flags": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tenants",
+          "tenants_by_plan",
+          "active_policies",
+          "active_flags"
+        ]
+      },
+      "ReadinessResponse": {
+        "type": "object",
+        "properties": {
+          "db": {
+            "type": "string",
+            "enum": [
+              "UP",
+              "DOWN"
+            ]
+          },
+          "redis": {
+            "type": "string",
+            "enum": [
+              "UP",
+              "DOWN",
+              "SKIPPED"
+            ]
+          },
+          "rabbitmq": {
+            "type": "string",
+            "enum": [
+              "UP",
+              "DOWN",
+              "SKIPPED"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "UP",
+              "DOWN"
+            ]
+          }
+        },
+        "required": [
+          "db",
+          "redis",
+          "rabbitmq",
+          "status"
+        ]
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "about:blank"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "correlation_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status"
+        ]
+      }
+    }
+  }
+}
