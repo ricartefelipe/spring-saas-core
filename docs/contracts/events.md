@@ -139,3 +139,35 @@ Events may include standard metadata:
 | `correlationId` | string | Distributed tracing ID |
 
 Individual event schemas may extend these fields.
+
+---
+
+## Schema Validation
+
+Event contracts are formally defined as **JSON Schema (draft-07)** files in `docs/contracts/schemas/`:
+
+| Schema file | Events covered | `$id` |
+|-------------|---------------|-------|
+| [`tenant-event.schema.json`](schemas/tenant-event.schema.json) | `tenant.created`, `tenant.updated`, `tenant.suspended`, `tenant.reactivated` | `https://fluxe.io/schemas/events/tenant-event/v1` |
+| [`policy-event.schema.json`](schemas/policy-event.schema.json) | `policy.created`, `policy.updated`, `policy.deleted` | `https://fluxe.io/schemas/events/policy-event/v1` |
+| [`flag-event.schema.json`](schemas/flag-event.schema.json) | `flag.created`, `flag.updated`, `flag.deleted` | `https://fluxe.io/schemas/events/flag-event/v1` |
+
+### Versioning strategy
+
+Schemas follow **URL-based versioning** through the `$id` field:
+
+- The version segment in the `$id` URL (e.g. `/v1`) identifies the schema version.
+- The `version` field inside each event payload (e.g. `"1.0"`) carries the contract version at runtime.
+- **Backward-compatible changes** (adding optional fields) keep the same major version.
+- **Breaking changes** (removing fields, changing types, tightening enums) bump to a new major version (e.g. `/v2`), producing a new schema file while the previous version remains available.
+- Consumers should validate against the schema matching the `version` field in the event.
+
+### How to validate
+
+Any JSON Schema draft-07 validator can be used. Example with `ajv-cli`:
+
+```bash
+npx ajv-cli validate -s docs/contracts/schemas/tenant-event.schema.json -d event.json
+```
+
+Or programmatically in Java tests using `everit-org/json-schema` or `networknt/json-schema-validator`.
