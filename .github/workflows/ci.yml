@@ -16,15 +16,24 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build and test
-        run: ./mvnw -B test -Dtest='!*Integration*'
+        run: ./mvnw -B test
       - name: Spotless check
         run: ./mvnw -B spotless:check
       - name: Build JAR
         run: ./mvnw -B package -DskipTests
       - name: Validate OpenAPI spec exists
+        # Spec is generated from a running instance via scripts/api-export.sh (curls /v3/api-docs).
+        # CI only validates the committed spec is present; regenerate locally before pushing.
         run: test -f docs/api/openapi.json && echo "OpenAPI present"
       - name: Docker build
         run: docker build -f docker/app.Dockerfile -t spring-saas-core:ci .
+      - name: Security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
       - name: Upload OpenAPI
         uses: actions/upload-artifact@v4
         with:

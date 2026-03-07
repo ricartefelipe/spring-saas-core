@@ -10,7 +10,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -55,9 +54,10 @@ public class PolicyController {
     if (!abac.allowed())
       return ResponseEntity.status(403)
           .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/policies", null));
-    Page<PolicyDto> page =
+    var page =
         policyService.search(permissionCode, effect, enabled, pageable).map(PolicyDto::from);
-    return ResponseEntity.ok(page);
+    return ResponseEntity.ok(
+        new PolicyPageResponse(page.getContent(), page.getTotalElements()));
   }
 
   @GetMapping("/{id}")
@@ -115,6 +115,9 @@ public class PolicyController {
       List<String> allowedRegions,
       Boolean enabled,
       String notes) {}
+
+  /** DTO para evitar serialização direta de Spring Page (Sort etc.). */
+  public record PolicyPageResponse(List<PolicyDto> content, long totalElements) {}
 
   public record PolicyDto(
       UUID id,
