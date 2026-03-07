@@ -24,7 +24,7 @@ Estado atual por critério de "pronto para venda".
 - [x] OIDC configurado para produção
 - [x] ABAC em TenantSnapshotController
 - [x] Sem credenciais hardcoded em código
-- [ ] Rate limiting por tenant
+- [x] Rate limiting por tenant
 - [ ] Rotação de JWT_SECRET sem downtime
 
 ---
@@ -36,7 +36,7 @@ Estado atual por critério de "pronto para venda".
 - [x] OpenAPI (YAML + JSON)
 - [x] Docker multi-stage
 - [x] Scripts: up, migrate, seed
-- [ ] Script de smoke test
+- [x] Script de smoke test
 - [ ] Alertas Grafana pré-configurados
 
 ---
@@ -56,7 +56,7 @@ Estado atual por critério de "pronto para venda".
 - [x] Auditoria de ações sensíveis
 - [x] Auditoria de negações
 - [ ] Retenção configurável de audit log
-- [ ] Exportação de audit log (CSV/JSON)
+- [x] Exportação de audit log (CSV/JSON)
 - [ ] Política de privacidade de dados
 
 ---
