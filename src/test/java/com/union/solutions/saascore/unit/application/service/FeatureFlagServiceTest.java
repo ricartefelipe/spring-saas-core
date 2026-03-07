@@ -39,23 +39,26 @@ class FeatureFlagServiceTest {
   @Test
   void create_savesEntity() {
     UUID tenantId = UUID.randomUUID();
-    when(flagRepo.findByTenantIdAndName(tenantId, "new_flag")).thenReturn(Optional.empty());
-    when(flagRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(flagRepo.createOrResurrect(eq(tenantId), eq("new_flag"), eq(true), eq(50), eq(List.of("admin"))))
+        .thenAnswer(inv -> new FeatureFlag(
+            UUID.randomUUID(), inv.getArgument(0), inv.getArgument(1),
+            inv.getArgument(2), inv.getArgument(3), inv.getArgument(4),
+            Instant.now(), Instant.now()));
 
     FeatureFlag result = service.create(tenantId, "new_flag", true, 50, List.of("admin"));
 
     assertThat(result.getName()).isEqualTo("new_flag");
     assertThat(result.isEnabled()).isTrue();
     assertThat(result.getRolloutPercent()).isEqualTo(50);
-    verify(flagRepo).save(any());
+    verify(flagRepo).createOrResurrect(eq(tenantId), eq("new_flag"), eq(true), eq(50), eq(List.of("admin")));
     verify(outboxPublisher).publish(eq("FLAG"), anyString(), eq("flag.created"), anyMap());
   }
 
   @Test
   void create_duplicateName_throwsException() {
     UUID tenantId = UUID.randomUUID();
-    FeatureFlag existing = makeFlag(tenantId, "dup");
-    when(flagRepo.findByTenantIdAndName(tenantId, "dup")).thenReturn(Optional.of(existing));
+    when(flagRepo.createOrResurrect(eq(tenantId), eq("dup"), anyBoolean(), anyInt(), anyList()))
+        .thenThrow(new IllegalArgumentException("Flag already exists for tenant"));
 
     assertThatThrownBy(() -> service.create(tenantId, "dup", true, 100, List.of()))
         .isInstanceOf(IllegalArgumentException.class)
@@ -65,8 +68,11 @@ class FeatureFlagServiceTest {
   @Test
   void create_clampsRolloutPercent() {
     UUID tenantId = UUID.randomUUID();
-    when(flagRepo.findByTenantIdAndName(tenantId, "clamp")).thenReturn(Optional.empty());
-    when(flagRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(flagRepo.createOrResurrect(eq(tenantId), eq("clamp"), eq(true), eq(150), eq(List.of())))
+        .thenAnswer(inv -> new FeatureFlag(
+            UUID.randomUUID(), inv.getArgument(0), inv.getArgument(1),
+            inv.getArgument(2), inv.getArgument(3), inv.getArgument(4),
+            Instant.now(), Instant.now()));
 
     FeatureFlag over = service.create(tenantId, "clamp", true, 150, List.of());
     assertThat(over.getRolloutPercent()).isEqualTo(100);

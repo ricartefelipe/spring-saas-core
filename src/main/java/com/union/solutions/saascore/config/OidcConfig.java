@@ -5,6 +5,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
@@ -31,13 +34,26 @@ public class OidcConfig {
               + "Example: OIDC_ISSUER_URI=https://keycloak.example.com/realms/saas");
     }
 
+    OAuth2TokenValidator<Jwt> audienceValidator =
+        token -> {
+          if (audience != null
+              && !audience.isBlank()
+              && !token.getAudience().contains(audience)) {
+            return OAuth2TokenValidatorResult.failure(
+                new OAuth2Error(
+                    "invalid_token", "Required audience " + audience + " not found", null));
+          }
+          return OAuth2TokenValidatorResult.success();
+        };
+
     DelegatingOAuth2TokenValidator<Jwt> validators;
     if (issuerUri != null && !issuerUri.isBlank()) {
       validators =
           new DelegatingOAuth2TokenValidator<>(
-              new JwtTimestampValidator(), new JwtIssuerValidator(issuerUri));
+              new JwtTimestampValidator(), new JwtIssuerValidator(issuerUri), audienceValidator);
     } else {
-      validators = new DelegatingOAuth2TokenValidator<>(new JwtTimestampValidator());
+      validators =
+          new DelegatingOAuth2TokenValidator<>(new JwtTimestampValidator(), audienceValidator);
     }
     decoder.setJwtValidator(validators);
 
