@@ -128,6 +128,24 @@ databaseChangeLog:
               - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
 
   - changeSet:
+      id: phase1-seed-policy-audit-read
+      author: saascore
+      context: "dev or test or local"
+      changes:
+        - insert:
+            tableName: policies
+            columns:
+              - column: { name: id, value: "10000000-0000-0000-0000-000000000009" }
+              - column: { name: permission_code, value: "audit:read" }
+              - column: { name: effect, value: "ALLOW" }
+              - column: { name: allowed_plans, value: "[]" }
+              - column: { name: allowed_regions, value: "[]" }
+              - column: { name: enabled, valueBoolean: true }
+              - column: { name: notes, value: "All plans can read audit log (compliance)" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+
+  - changeSet:
       id: phase1-seed-flags
       author: saascore
       context: "dev or test or local"
