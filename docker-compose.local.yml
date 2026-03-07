@@ -1,0 +1,7 @@
+# Override para usar JAR pré-buildado no host (docker/app.local.Dockerfile).
+# Use: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+# Requer: mvn -q -DskipTests package -B já executado no host.
+services:
+  app:
+    build:
+      dockerfile: docker/app.local.Dockerfile

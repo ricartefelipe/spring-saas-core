@@ -60,6 +60,8 @@ app:
     dispatch-interval-ms: 5000
     exchange: saas.events
     routing-key-prefix: saas
+  audit:
+    retention-days: ${AUDIT_RETENTION_DAYS:90}
   rate-limit:
     free: 60
     pro: 300
