@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -e
 cd "$(dirname "$0")/.."
+
+docker network inspect fluxe_shared >/dev/null 2>&1 || docker network create fluxe_shared
+
 echo "Starting infrastructure..."
 docker compose up -d --build
 echo "Waiting for app to be ready..."
