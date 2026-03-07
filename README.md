@@ -82,6 +82,14 @@ Outros serviços (node-b2b-orders, py-payments-ledger) **validam** o JWT emitido
 - **Java 21+**, **Maven 3.9+**
 - **Docker** e **Docker Compose** (para stack completa e testes de integração)
 
+### Rede Docker compartilhada
+
+Todos os serviços da plataforma Fluxe B2B usam a rede externa `fluxe_shared` para comunicação entre containers. O script `up.sh` cria automaticamente a rede caso ela não exista. Para criar manualmente:
+
+```bash
+docker network create fluxe_shared
+```
+
 ### Opção 1: Docker Compose (recomendado)
 
 Sobe app, PostgreSQL, Redis, RabbitMQ, Prometheus e Grafana:
