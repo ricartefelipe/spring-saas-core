@@ -47,7 +47,7 @@ Estado atual por critério de "pronto para venda".
 - [x] docs/contracts/identity.md
 - [x] docs/contracts/headers.md
 - [x] API v1 estável
-- [ ] Versionamento de contratos
+- [x] Versionamento de contratos
 
 ---
 
@@ -57,12 +57,12 @@ Estado atual por critério de "pronto para venda".
 - [x] Auditoria de negações
 - [ ] Retenção configurável de audit log
 - [x] Exportação de audit log (CSV/JSON)
-- [ ] Política de privacidade de dados
+- [x] Política de privacidade de dados
 
 ---
 
 ## IA/LLM
 
-- [ ] API de dados agregados para análise
-- [ ] Endpoint de anomalias em audit log
+- [x] API de dados agregados para análise
+- [x] Endpoint de anomalias em audit log
 - [ ] Documentação viva gerada por IA
