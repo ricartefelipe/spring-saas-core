@@ -82,6 +82,14 @@ Outros serviços (node-b2b-orders, py-payments-ledger) **validam** o JWT emitido
 - **Java 21+**, **Maven 3.9+**
 - **Docker** e **Docker Compose** (para stack completa e testes de integração)
 
+### Rede Docker compartilhada
+
+Todos os serviços da plataforma Fluxe B2B usam a rede externa `fluxe_shared` para comunicação entre containers. O script `up.sh` cria automaticamente a rede caso ela não exista. Para criar manualmente:
+
+```bash
+docker network create fluxe_shared
+```
+
 ### Opção 1: Docker Compose (recomendado)
 
 Sobe app, PostgreSQL, Redis, RabbitMQ, Prometheus e Grafana:
@@ -126,7 +134,7 @@ Testes de integração (Testcontainers) exigem Docker em execução.
 
 ## API REST (prefixo /v1)
 
-A API está versionada como **v1** e é estável para integração com node-b2b-orders, py-payments-ledger e agentes (IA/LLM). Ver [docs/api/agents.md](docs/api/agents.md) para endpoints recomendados a agentes.
+A API está versionada como **v1** e é estável para integração com node-b2b-orders, py-payments-ledger e agentes (IA/LLM). Endpoints recomendados a agentes: `/v1/tenants`, `/v1/audit`, `/v1/tenants/{id}/snapshot` (ver [BACKLOG-EVOLUCAO.md](docs/BACKLOG-EVOLUCAO.md) — IA/LLM).
 
 ### Tenants
 
@@ -327,13 +335,10 @@ Diagramas C4 e ERD em `docs/architecture/`.
 - [Headers HTTP](docs/contracts/headers.md)
 - [Eventos Outbox](docs/contracts/events.md)
 - [Compliance e auditoria](docs/compliance.md) — retenção, exportação de audit log
-- [APIs para agentes (IA/LLM)](docs/api/agents.md)
 - [Prompt de evolução](docs/PROMPT-EVOLUCAO.md) — objetivo entregável/vendável e IA/LLM para evolução contínua
 - [Backlog de evolução](docs/BACKLOG-EVOLUCAO.md) — checklist entregável/vendável
-- [Prompt de conclusão e vistoria](docs/PROMPT-CONCLUSAO-VISTORIA.md) — critérios de qualidade, vistoria e etapas finais para encerrar o projeto em estado vendável
-- [Relatório de conclusão e evolução](docs/RELATORIO-CONCLUSAO-EVOLUCAO.md) — consolidação do que foi feito nos 4 projetos (core, suite, orders, payments) para conclusão e venda
-- [O que foi feito e o que falta (resumo)](docs/O-QUE-FOI-FEITO-E-O-QUE-FALTA.md) — em linguagem simples: estado atual e próximos passos
-- [O que falta para concluir (sistema inteligente + front perfeito)](docs/O-QUE-FALTA-PARA-CONCLUIR.md) — checklist backend + front e ordem sugerida
+
+Documentos planejados (a criar quando necessário): `docs/api/agents.md` (APIs para agentes IA/LLM), `docs/PROMPT-CONCLUSAO-VISTORIA.md`, `docs/RELATORIO-CONCLUSAO-EVOLUCAO.md`, `docs/O-QUE-FOI-FEITO-E-O-QUE-FALTA.md`, `docs/O-QUE-FALTA-PARA-CONCLUIR.md`.
 
 ---
 
