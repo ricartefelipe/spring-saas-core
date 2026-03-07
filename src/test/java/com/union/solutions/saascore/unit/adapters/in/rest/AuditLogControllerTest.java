@@ -1,5 +1,6 @@
 package com.union.solutions.saascore.unit.adapters.in.rest;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -8,12 +9,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.union.solutions.saascore.adapters.in.rest.AuditLogController;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogEntity;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaRepository;
 import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
+import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -24,8 +28,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @ExtendWith(MockitoExtension.class)
 class AuditLogControllerTest {
@@ -34,10 +40,14 @@ class AuditLogControllerTest {
   @Mock AbacEvaluator abacEvaluator;
 
   private MockMvc mvc;
+  private AuditLogController controller;
 
   @BeforeEach
   void setUp() {
-    mvc = MockMvcBuilders.standaloneSetup(new AuditLogController(auditRepo, abacEvaluator)).build();
+    ObjectMapper om = new ObjectMapper();
+    om.registerModule(new JavaTimeModule());
+    controller = new AuditLogController(auditRepo, abacEvaluator, om);
+    mvc = MockMvcBuilders.standaloneSetup(controller).build();
   }
 
   @Test
@@ -64,7 +74,7 @@ class AuditLogControllerTest {
   }
 
   @Test
-  void export_withAuditReadPermission_returns200() throws Exception {
+  void export_jsonFormat_streamsItemsAndCount() throws Exception {
     when(abacEvaluator.evaluate(any(AbacContext.class))).thenReturn(AbacResult.allow());
 
     AuditLogEntity entity = makeAuditEntity("POLICY_CREATED");
@@ -75,17 +85,21 @@ class AuditLogControllerTest {
     Instant from = Instant.parse("2025-01-01T00:00:00Z");
     Instant to = Instant.parse("2026-12-31T23:59:59Z");
 
-    mvc.perform(
-            get("/v1/audit/export")
-                .param("from", from.toString())
-                .param("to", to.toString()))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.count").value(1))
-        .andExpect(jsonPath("$.items").isArray());
+    ResponseEntity<?> response = controller.export(null, null, from, to, "json", 10000);
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+
+    StreamingResponseBody body = (StreamingResponseBody) response.getBody();
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    body.writeTo(out);
+    String json = out.toString();
+
+    assertThat(json).contains("\"count\":1");
+    assertThat(json).contains("\"items\":[");
+    assertThat(json).contains("POLICY_CREATED");
   }
 
   @Test
-  void export_csvFormat_returnsTextCsv() throws Exception {
+  void export_csvFormat_streamsHeaderAndRows() throws Exception {
     when(abacEvaluator.evaluate(any(AbacContext.class))).thenReturn(AbacResult.allow());
 
     AuditLogEntity entity = makeAuditEntity("FLAG_CREATED");
@@ -93,12 +107,21 @@ class AuditLogControllerTest {
             isNull(), eq(""), eq(""), eq(""), any(Instant.class), any(Instant.class), any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(entity)));
 
-    mvc.perform(
-            get("/v1/audit/export")
-                .param("from", "2025-01-01T00:00:00Z")
-                .param("to", "2026-12-31T23:59:59Z")
-                .param("format", "csv"))
-        .andExpect(status().isOk());
+    Instant from = Instant.parse("2025-01-01T00:00:00Z");
+    Instant to = Instant.parse("2026-12-31T23:59:59Z");
+
+    ResponseEntity<?> response = controller.export(null, null, from, to, "csv", 10000);
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(response.getHeaders().getFirst("Content-Disposition"))
+        .contains("audit-export.csv");
+
+    StreamingResponseBody body = (StreamingResponseBody) response.getBody();
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    body.writeTo(out);
+    String csv = out.toString();
+
+    assertThat(csv).startsWith("id,tenantId,");
+    assertThat(csv).contains("FLAG_CREATED");
   }
 
   @Test
