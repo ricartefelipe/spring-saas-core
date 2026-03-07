@@ -9,9 +9,9 @@ on:
   pull_request:
   push:
     branches:
-      - develop
+      - main
       - master
-      - feature/melhoria_de_codigo
+      - develop
 
 jobs:
   qodana:
