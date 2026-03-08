@@ -14,12 +14,17 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: maven
       - name: Build
         run: |
-          mvn --version
-          mvn -B -e -DskipTests package 2>&1 | tee build-output.txt
-          exit ${PIPESTATUS[0]}
+          chmod +x mvnw
+          ./mvnw -B -e -DskipTests package 2>&1 | tee build-output.txt; BUILD_RC=$?
+          if [ $BUILD_RC -ne 0 ]; then
+            echo '## Build Failed' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -80 build-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+          exit $BUILD_RC
       - name: Upload build log on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -27,10 +32,11 @@ jobs:
           name: build-log
           path: build-output.txt
       - name: Spotless check
-        run: mvn -B spotless:check
+        run: ./mvnw -B spotless:check
       - name: Validate OpenAPI spec exists
         run: test -f docs/api/openapi.json && echo "OpenAPI present"
       - name: Upload OpenAPI
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: openapi
