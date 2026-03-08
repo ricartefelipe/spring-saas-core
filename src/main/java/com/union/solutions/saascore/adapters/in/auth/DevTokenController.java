@@ -32,22 +32,27 @@ public class DevTokenController {
 
   @PostConstruct
   void init() {
-    this.productionProfile = Arrays.stream(environment.getActiveProfiles())
-        .anyMatch(p -> p.equalsIgnoreCase("prod") || p.equalsIgnoreCase("production"));
+    this.productionProfile =
+        Arrays.stream(environment.getActiveProfiles())
+            .anyMatch(p -> p.equalsIgnoreCase("prod") || p.equalsIgnoreCase("production"));
     if (productionProfile) {
-      log.warn("DevTokenController is loaded but production profile is active — "
-          + "all requests will be refused. Set app.dev.token-endpoint-enabled=false in prod.");
+      log.warn(
+          "DevTokenController is loaded but production profile is active — "
+              + "all requests will be refused. Set app.dev.token-endpoint-enabled=false in prod.");
     }
   }
 
   @PostMapping("/token")
-  public ResponseEntity<?> issueDevToken(
-      @Valid @RequestBody DevTokenRequest request) {
+  public ResponseEntity<?> issueDevToken(@Valid @RequestBody DevTokenRequest request) {
     if (productionProfile) {
       log.warn("Attempt to issue dev token in production profile refused (sub={})", request.sub());
       return ResponseEntity.status(403)
-          .body(Map.of("error", "dev_token_disabled",
-              "detail", "Dev token endpoint is disabled in production profiles"));
+          .body(
+              Map.of(
+                  "error",
+                  "dev_token_disabled",
+                  "detail",
+                  "Dev token endpoint is disabled in production profiles"));
     }
     String token =
         tokenIssuer.issue(
