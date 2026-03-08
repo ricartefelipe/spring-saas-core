@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.union.solutions.saascore.adapters.out.persistence.OutboxEventEntity;
 import com.union.solutions.saascore.adapters.out.persistence.OutboxEventJpaRepository;
 import com.union.solutions.saascore.infrastructure.outbox.OutboxPublisher;
+import com.union.solutions.saascore.infrastructure.outbox.RabbitOutboxSender;
 import io.micrometer.core.instrument.Counter;
 import java.time.Instant;
 import java.util.List;
@@ -20,17 +21,15 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class OutboxPublisherTest {
 
   @Mock OutboxEventJpaRepository outboxRepo;
-  @Mock RabbitTemplate rabbitTemplate;
+  @Mock RabbitOutboxSender rabbitOutboxSender;
   @Mock Counter publishedCounter;
   @Mock Counter failedCounter;
 
@@ -42,7 +41,7 @@ class OutboxPublisherTest {
     publisher =
         new OutboxPublisher(
             outboxRepo,
-            rabbitTemplate,
+            rabbitOutboxSender,
             objectMapper,
             publishedCounter,
             failedCounter,
@@ -62,8 +61,8 @@ class OutboxPublisherTest {
 
     publisher.publishPending();
 
-    verify(rabbitTemplate)
-        .convertAndSend(eq("saas.events"), eq("saas.tenant.tenant.created"), anyString());
+    verify(rabbitOutboxSender)
+        .send(eq("saas.events"), eq("saas.tenant.tenant.created"), anyString());
     assertThat(event.getStatus()).isEqualTo("PUBLISHED");
     verify(publishedCounter).increment();
     verify(outboxRepo).save(event);
@@ -76,7 +75,7 @@ class OutboxPublisherTest {
 
     publisher.publishPending();
 
-    verify(rabbitTemplate, never()).convertAndSend(anyString(), anyString(), anyString());
+    verify(rabbitOutboxSender, never()).send(anyString(), anyString(), anyString());
   }
 
   @Test
@@ -87,8 +86,8 @@ class OutboxPublisherTest {
     when(outboxRepo.findPendingReadyForDispatch(any(Instant.class), any(Pageable.class)))
         .thenReturn(List.of(event));
     doThrow(new RuntimeException("Connection refused"))
-        .when(rabbitTemplate)
-        .convertAndSend(anyString(), anyString(), anyString());
+        .when(rabbitOutboxSender)
+        .send(anyString(), anyString(), anyString());
 
     publisher.publishPending();
 
@@ -106,8 +105,8 @@ class OutboxPublisherTest {
     when(outboxRepo.findPendingReadyForDispatch(any(Instant.class), any(Pageable.class)))
         .thenReturn(List.of(event));
     doThrow(new RuntimeException("Connection refused"))
-        .when(rabbitTemplate)
-        .convertAndSend(anyString(), anyString(), anyString());
+        .when(rabbitOutboxSender)
+        .send(anyString(), anyString(), anyString());
 
     publisher.publishPending();
 
@@ -126,10 +125,10 @@ class OutboxPublisherTest {
 
     publisher.publishPending();
 
-    verify(rabbitTemplate)
-        .convertAndSend(eq("saas.events"), eq("saas.tenant.tenant.created"), anyString());
-    verify(rabbitTemplate)
-        .convertAndSend(eq("saas.events"), eq("saas.policy.policy.updated"), anyString());
+    verify(rabbitOutboxSender)
+        .send(eq("saas.events"), eq("saas.tenant.tenant.created"), anyString());
+    verify(rabbitOutboxSender)
+        .send(eq("saas.events"), eq("saas.policy.policy.updated"), anyString());
     assertThat(e1.getStatus()).isEqualTo("PUBLISHED");
     assertThat(e2.getStatus()).isEqualTo("PUBLISHED");
     verify(publishedCounter, org.mockito.Mockito.times(2)).increment();
