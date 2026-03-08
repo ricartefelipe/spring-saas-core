@@ -102,15 +102,18 @@ class ProblemDetailsConfigTest {
     @GetMapping("/not-readable")
     public void notReadable() {
       throw new HttpMessageNotReadableException(
-          "JSON parse error", new org.springframework.http.HttpInputMessage() {
-        @Override
-        public java.io.InputStream getBody() { return java.io.InputStream.nullInputStream(); }
+          "JSON parse error",
+          new org.springframework.http.HttpInputMessage() {
+            @Override
+            public java.io.InputStream getBody() {
+              return java.io.InputStream.nullInputStream();
+            }
 
-        @Override
-        public org.springframework.http.HttpHeaders getHeaders() {
-          return new org.springframework.http.HttpHeaders();
-        }
-      });
+            @Override
+            public org.springframework.http.HttpHeaders getHeaders() {
+              return new org.springframework.http.HttpHeaders();
+            }
+          });
     }
 
     @GetMapping("/not-found")

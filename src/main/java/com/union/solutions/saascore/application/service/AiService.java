@@ -58,24 +58,29 @@ public class AiService {
     this.auditRepo = auditRepo;
     this.tenantRepo = tenantRepo;
     this.analyticsService = analyticsService;
-    this.aiRequestCounter = Counter.builder("ai.requests.total")
-        .description("Total AI requests")
-        .register(meterRegistry);
-    this.aiFallbackCounter = Counter.builder("ai.fallback.total")
-        .description("Times AI fell back to rule-based")
-        .register(meterRegistry);
-    this.aiLatencyTimer = Timer.builder("ai.request.duration")
-        .description("AI request latency")
-        .register(meterRegistry);
+    this.aiRequestCounter =
+        Counter.builder("ai.requests.total")
+            .description("Total AI requests")
+            .register(meterRegistry);
+    this.aiFallbackCounter =
+        Counter.builder("ai.fallback.total")
+            .description("Times AI fell back to rule-based")
+            .register(meterRegistry);
+    this.aiLatencyTimer =
+        Timer.builder("ai.request.duration")
+            .description("AI request latency")
+            .register(meterRegistry);
   }
 
   @CircuitBreaker(name = "aiService", fallbackMethod = "analyzeAuditFallback")
   public AiResponse analyzeAudit(String tenantId, int hoursBack) {
     aiRequestCounter.increment();
-    return aiLatencyTimer.record(() -> {
-      var auditData = gatherAuditContext(tenantId, hoursBack);
-      String userPrompt = String.format(
-          """
+    return aiLatencyTimer.record(
+        () -> {
+          var auditData = gatherAuditContext(tenantId, hoursBack);
+          String userPrompt =
+              String.format(
+                  """
           Analyze the following audit log data for tenant '%s' (last %d hours):
 
           Total events: %d
@@ -90,29 +95,32 @@ public class AiService {
           3. Recommended actions (specific, implementable)
           4. Compliance status (LGPD/GDPR considerations)
           """,
-          tenantId, hoursBack,
-          auditData.get("totalEvents"),
-          auditData.get("actionBreakdown"),
-          auditData.get("accessDenied"),
-          auditData.get("uniqueUsers"),
-          auditData.get("anomalies"));
+                  tenantId,
+                  hoursBack,
+                  auditData.get("totalEvents"),
+                  auditData.get("actionBreakdown"),
+                  auditData.get("accessDenied"),
+                  auditData.get("uniqueUsers"),
+                  auditData.get("anomalies"));
 
-      if (!aiProperties.isEnabled()) {
-        return buildRuleBasedAuditAnalysis(auditData, tenantId);
-      }
+          if (!aiProperties.isEnabled()) {
+            return buildRuleBasedAuditAnalysis(auditData, tenantId);
+          }
 
-      String llmResponse = callLlm(SYSTEM_PROMPT, userPrompt);
-      return new AiResponse("llm", llmResponse, auditData);
-    });
+          String llmResponse = callLlm(SYSTEM_PROMPT, userPrompt);
+          return new AiResponse("llm", llmResponse, auditData);
+        });
   }
 
   @CircuitBreaker(name = "aiService", fallbackMethod = "getRecommendationsFallback")
   public AiResponse getRecommendations(String tenantId) {
     aiRequestCounter.increment();
-    return aiLatencyTimer.record(() -> {
-      var context = gatherGovernanceContext(tenantId);
-      String userPrompt = String.format(
-          """
+    return aiLatencyTimer.record(
+        () -> {
+          var context = gatherGovernanceContext(tenantId);
+          String userPrompt =
+              String.format(
+                  """
           Based on this tenant governance data:
 
           Tenant: %s (plan: %s, status: %s, region: %s)
@@ -128,29 +136,35 @@ public class AiService {
           4. Cost optimization (based on plan utilization)
           5. Compliance checklist items for this tenant
           """,
-          context.get("tenantName"), context.get("plan"),
-          context.get("status"), context.get("region"),
-          context.get("policyCount"), context.get("enabledFlags"),
-          context.get("totalFlags"), context.get("auditCount"),
-          context.get("deniedCount"));
+                  context.get("tenantName"),
+                  context.get("plan"),
+                  context.get("status"),
+                  context.get("region"),
+                  context.get("policyCount"),
+                  context.get("enabledFlags"),
+                  context.get("totalFlags"),
+                  context.get("auditCount"),
+                  context.get("deniedCount"));
 
-      if (!aiProperties.isEnabled()) {
-        return buildRuleBasedRecommendations(context, tenantId);
-      }
+          if (!aiProperties.isEnabled()) {
+            return buildRuleBasedRecommendations(context, tenantId);
+          }
 
-      String llmResponse = callLlm(SYSTEM_PROMPT, userPrompt);
-      return new AiResponse("llm", llmResponse, context);
-    });
+          String llmResponse = callLlm(SYSTEM_PROMPT, userPrompt);
+          return new AiResponse("llm", llmResponse, context);
+        });
   }
 
   @CircuitBreaker(name = "aiService", fallbackMethod = "chatFallback")
   public AiResponse chat(String message, String tenantId) {
     aiRequestCounter.increment();
-    return aiLatencyTimer.record(() -> {
-      var summary = analyticsService.getSummary();
-      long activeTenants = summary.tenants().byStatus().getOrDefault("ACTIVE", 0L);
-      String contextPrompt = String.format(
-          """
+    return aiLatencyTimer.record(
+        () -> {
+          var summary = analyticsService.getSummary();
+          long activeTenants = summary.tenants().byStatus().getOrDefault("ACTIVE", 0L);
+          String contextPrompt =
+              String.format(
+                  """
           Current system state:
           - Total tenants: %d (active: %d)
           - Total policies: %d
@@ -159,19 +173,20 @@ public class AiService {
 
           User question: %s
           """,
-          summary.tenants().total(), activeTenants,
-          summary.policies().total(),
-          summary.audit().last24h(),
-          tenantId != null ? tenantId : "global",
-          message);
+                  summary.tenants().total(),
+                  activeTenants,
+                  summary.policies().total(),
+                  summary.audit().last24h(),
+                  tenantId != null ? tenantId : "global",
+                  message);
 
-      if (!aiProperties.isEnabled()) {
-        return buildRuleBasedChatResponse(message, summary);
-      }
+          if (!aiProperties.isEnabled()) {
+            return buildRuleBasedChatResponse(message, summary);
+          }
 
-      String llmResponse = callLlm(SYSTEM_PROMPT, contextPrompt);
-      return new AiResponse("llm", llmResponse, Map.of("question", message));
-    });
+          String llmResponse = callLlm(SYSTEM_PROMPT, contextPrompt);
+          return new AiResponse("llm", llmResponse, Map.of("question", message));
+        });
   }
 
   public AiResponse getInsights() {
@@ -184,63 +199,89 @@ public class AiService {
     long activeTenants = summary.tenants().byStatus().getOrDefault("ACTIVE", 0L);
 
     if (activeTenants == 0) {
-      insights.add(new Insight("critical", "Nenhum tenant ativo",
-          "O sistema não possui tenants ativos. Configure ao menos um tenant para operação."));
+      insights.add(
+          new Insight(
+              "critical",
+              "Nenhum tenant ativo",
+              "O sistema não possui tenants ativos. Configure ao menos um tenant para operação."));
     }
 
     if (summary.policies().total() == 0) {
-      insights.add(new Insight("high", "Sem políticas de governança",
-          "Nenhuma política ABAC configurada. O sistema opera apenas com RBAC básico."));
+      insights.add(
+          new Insight(
+              "high",
+              "Sem políticas de governança",
+              "Nenhuma política ABAC configurada. O sistema opera apenas com RBAC básico."));
     }
 
     long inactiveTenants = summary.tenants().total() - activeTenants;
     if (inactiveTenants > activeTenants && summary.tenants().total() > 2) {
-      insights.add(new Insight("medium", "Alto índice de tenants inativos",
-          String.format("%d de %d tenants estão inativos (%.0f%%). Considere uma campanha de reativação.",
-              inactiveTenants, summary.tenants().total(),
-              (double) inactiveTenants / summary.tenants().total() * 100)));
+      insights.add(
+          new Insight(
+              "medium",
+              "Alto índice de tenants inativos",
+              String.format(
+                  "%d de %d tenants estão inativos (%.0f%%). Considere uma campanha de reativação.",
+                  inactiveTenants,
+                  summary.tenants().total(),
+                  (double) inactiveTenants / summary.tenants().total() * 100)));
     }
 
     if (!anomalies.anomalies().isEmpty()) {
-      insights.add(new Insight("high", "Anomalias detectadas",
-          String.format("%d anomalias identificadas: %s",
-              anomalies.anomalies().size(),
-              anomalies.anomalies().stream()
-                  .map(AnalyticsService.Anomaly::type)
-                  .distinct()
-                  .reduce((a, b) -> a + ", " + b)
-                  .orElse("N/A"))));
+      insights.add(
+          new Insight(
+              "high",
+              "Anomalias detectadas",
+              String.format(
+                  "%d anomalias identificadas: %s",
+                  anomalies.anomalies().size(),
+                  anomalies.anomalies().stream()
+                      .map(AnalyticsService.Anomaly::type)
+                      .distinct()
+                      .reduce((a, b) -> a + ", " + b)
+                      .orElse("N/A"))));
     }
 
     if (summary.flags().enabled() > 20) {
-      insights.add(new Insight("medium", "Feature flags em excesso",
-          String.format("%d flags ativas. Revise flags antigas que podem ser promovidas a permanentes.",
-              summary.flags().enabled())));
+      insights.add(
+          new Insight(
+              "medium",
+              "Feature flags em excesso",
+              String.format(
+                  "%d flags ativas. Revise flags antigas que podem ser promovidas a permanentes.",
+                  summary.flags().enabled())));
     }
 
     if (insights.isEmpty()) {
-      insights.add(new Insight("info", "Sistema saudável",
-          "Nenhuma anomalia ou problema de governança detectado no momento."));
+      insights.add(
+          new Insight(
+              "info",
+              "Sistema saudável",
+              "Nenhuma anomalia ou problema de governança detectado no momento."));
     }
 
-    return new AiResponse("rule-engine", null,
-        Map.of("insights", insights, "generatedAt", Instant.now().toString()));
+    return new AiResponse(
+        "rule-engine", null, Map.of("insights", insights, "generatedAt", Instant.now().toString()));
   }
 
   private String callLlm(String systemPrompt, String userPrompt) {
-    var requestBody = Map.of(
-        "model", aiProperties.getModel(),
-        "messages", List.of(
-            Map.of("role", "system", "content", systemPrompt),
-            Map.of("role", "user", "content", userPrompt)),
-        "max_tokens", aiProperties.getMaxTokens(),
-        "temperature", aiProperties.getTemperature());
+    var requestBody =
+        Map.of(
+            "model", aiProperties.getModel(),
+            "messages",
+                List.of(
+                    Map.of("role", "system", "content", systemPrompt),
+                    Map.of("role", "user", "content", userPrompt)),
+            "max_tokens", aiProperties.getMaxTokens(),
+            "temperature", aiProperties.getTemperature());
 
-    JsonNode response = aiRestClient.post()
-        .uri("/chat/completions")
-        .body(requestBody)
-        .retrieve()
-        .body(JsonNode.class);
+    JsonNode response =
+        aiRestClient
+            .post()
+            .uri("/chat/completions")
+            .body(requestBody)
+            .retrieve()
+            .body(JsonNode.class);
 
     if (response != null && response.has("choices") && !response.get("choices").isEmpty()) {
       return response.get("choices").get(0).get("message").get("content").asText();
@@ -302,7 +343,9 @@ public class AiService {
     int anomalyCount = (int) data.getOrDefault("anomalies", 0);
     String severity = anomalyCount > 5 ? "CRITICAL" : anomalyCount > 0 ? "WARNING" : "OK";
 
-    String analysis = String.format("""
+    String analysis =
+        String.format(
+            """
         ## Análise de Auditoria — %s
         **Motor**: Rule Engine (configure OPENAI_API_KEY para análise com IA)
 
@@ -316,13 +359,13 @@ public class AiService {
         3. Configure alertas para eventos ACCESS_DENIED frequentes
         4. Mantenha retenção de logs conforme política de compliance
         """,
-        tenantId != null ? tenantId : "global",
-        severity,
-        data.get("totalEvents"),
-        anomalyCount,
-        anomalyCount > 0
-            ? "**AÇÃO URGENTE**: Investigue as anomalias detectadas"
-            : "Nenhuma anomalia — sistema operando normalmente");
+            tenantId != null ? tenantId : "global",
+            severity,
+            data.get("totalEvents"),
+            anomalyCount,
+            anomalyCount > 0
+                ? "**AÇÃO URGENTE**: Investigue as anomalias detectadas"
+                : "Nenhuma anomalia — sistema operando normalmente");
 
     return new AiResponse("rule-engine", analysis, data);
   }
@@ -336,7 +379,9 @@ public class AiService {
       recommendations.add("CRITICAL: Configure ao menos uma política ABAC para segurança adequada");
     }
     if (enabledFlags > 20) {
-      recommendations.add("MEDIUM: Revise feature flags — %d ativas é acima do recomendado".formatted(enabledFlags));
+      recommendations.add(
+          "MEDIUM: Revise feature flags — %d ativas é acima do recomendado"
+              .formatted(enabledFlags));
     }
     if (policyCount > 0 && policyCount < 3) {
       recommendations.add("LOW: Considere políticas por região e por plano para granularidade");
@@ -345,8 +390,9 @@ public class AiService {
       recommendations.add("INFO: Governança adequada — mantenha revisões periódicas");
     }
 
-    String text = "## Recomendações de Governança\n**Motor**: Rule Engine\n\n"
-        + String.join("\n", recommendations.stream().map(r -> "- " + r).toList());
+    String text =
+        "## Recomendações de Governança\n**Motor**: Rule Engine\n\n"
+            + String.join("\n", recommendations.stream().map(r -> "- " + r).toList());
 
     return new AiResponse("rule-engine", text, context);
   }
@@ -354,7 +400,9 @@ public class AiService {
   private AiResponse buildRuleBasedChatResponse(
       String message, AnalyticsService.SummaryResponse summary) {
     long active = summary.tenants().byStatus().getOrDefault("ACTIVE", 0L);
-    String response = String.format("""
+    String response =
+        String.format(
+            """
         ## Assistente Fluxe B2B
 
         **Status do Sistema:**
@@ -372,17 +420,17 @@ public class AiService {
         - Recomendações de governança (`/v1/ai/recommendations`)
         - Insights do sistema (`/v1/ai/insights`)
         """,
-        active, summary.tenants().total(),
-        summary.policies().total(), summary.flags().enabled(),
-        message);
+            active,
+            summary.tenants().total(),
+            summary.policies().total(),
+            summary.flags().enabled(),
+            message);
 
     return new AiResponse("rule-engine", response, Map.of("question", message));
   }
 
   public record AiResponse(
-      String engine,
-      String content,
-      @JsonProperty("context") Map<String, Object> metadata) {}
+      String engine, String content, @JsonProperty("context") Map<String, Object> metadata) {}
 
   public record Insight(String severity, String title, String description) {}
 }

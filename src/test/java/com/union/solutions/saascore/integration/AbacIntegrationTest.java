@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -65,9 +64,12 @@ class AbacIntegrationTest {
             "00000000-0000-0000-0000-000000000099",
             List.of("admin"),
             List.of(
-                "tenants:read", "tenants:write",
-                "policies:read", "policies:write",
-                "flags:read", "flags:write",
+                "tenants:read",
+                "tenants:write",
+                "policies:read",
+                "policies:write",
+                "flags:read",
+                "flags:write",
                 "audit:read"),
             "enterprise",
             "us-east-1");
@@ -104,17 +106,13 @@ class AbacIntegrationTest {
 
   @Test
   void userWithCorrectPermissions_canAccessResource() throws Exception {
-    mvc.perform(
-            get("/v1/tenants")
-                .header("Authorization", "Bearer " + adminToken))
+    mvc.perform(get("/v1/tenants").header("Authorization", "Bearer " + adminToken))
         .andExpect(status().isOk());
   }
 
   @Test
   void userWithoutRequiredPermission_gets403() throws Exception {
-    mvc.perform(
-            get("/v1/tenants")
-                .header("Authorization", "Bearer " + noPermsToken))
+    mvc.perform(get("/v1/tenants").header("Authorization", "Bearer " + noPermsToken))
         .andExpect(status().isForbidden());
   }
 
@@ -132,10 +130,7 @@ class AbacIntegrationTest {
             .andExpect(status().isCreated())
             .andReturn();
     String policyId =
-        objectMapper
-            .readTree(createResult.getResponse().getContentAsString())
-            .get("id")
-            .asText();
+        objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText();
 
     mvc.perform(
             post("/v1/tenants")
@@ -153,9 +148,7 @@ class AbacIntegrationTest {
     JsonNode audit = objectMapper.readTree(auditResult.getResponse().getContentAsString());
     assertThat(audit.get("totalElements").asInt()).isGreaterThan(0);
 
-    mvc.perform(
-            delete("/v1/policies/" + policyId)
-                .header("Authorization", "Bearer " + adminToken))
+    mvc.perform(delete("/v1/policies/" + policyId).header("Authorization", "Bearer " + adminToken))
         .andExpect(status().isNoContent());
   }
 
@@ -173,19 +166,12 @@ class AbacIntegrationTest {
             .andExpect(status().isCreated())
             .andReturn();
     String policyId =
-        objectMapper
-            .readTree(createResult.getResponse().getContentAsString())
-            .get("id")
-            .asText();
+        objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText();
 
-    mvc.perform(
-            get("/v1/tenants")
-                .header("Authorization", "Bearer " + enterpriseUserToken))
+    mvc.perform(get("/v1/tenants").header("Authorization", "Bearer " + enterpriseUserToken))
         .andExpect(status().isOk());
 
-    mvc.perform(
-            delete("/v1/policies/" + policyId)
-                .header("Authorization", "Bearer " + adminToken))
+    mvc.perform(delete("/v1/policies/" + policyId).header("Authorization", "Bearer " + adminToken))
         .andExpect(status().isNoContent());
   }
 
@@ -211,24 +197,19 @@ class AbacIntegrationTest {
 
   @Test
   void auditAccess_withPermission_succeeds() throws Exception {
-    mvc.perform(
-            get("/v1/audit")
-                .header("Authorization", "Bearer " + adminToken))
+    mvc.perform(get("/v1/audit").header("Authorization", "Bearer " + adminToken))
         .andExpect(status().isOk());
   }
 
   @Test
   void auditAccess_withoutPermission_gets403() throws Exception {
-    mvc.perform(
-            get("/v1/audit")
-                .header("Authorization", "Bearer " + noPermsToken))
+    mvc.perform(get("/v1/audit").header("Authorization", "Bearer " + noPermsToken))
         .andExpect(status().isForbidden());
   }
 
   @Test
   void withoutToken_returns401() throws Exception {
-    mvc.perform(get("/v1/tenants"))
-        .andExpect(status().isUnauthorized());
+    mvc.perform(get("/v1/tenants")).andExpect(status().isUnauthorized());
   }
 
   @Test
@@ -245,19 +226,12 @@ class AbacIntegrationTest {
             .andExpect(status().isCreated())
             .andReturn();
     String policyId =
-        objectMapper
-            .readTree(createResult.getResponse().getContentAsString())
-            .get("id")
-            .asText();
+        objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText();
 
-    mvc.perform(
-            get("/v1/tenants")
-                .header("Authorization", "Bearer " + enterpriseUserToken))
+    mvc.perform(get("/v1/tenants").header("Authorization", "Bearer " + enterpriseUserToken))
         .andExpect(status().isOk());
 
-    mvc.perform(
-            delete("/v1/policies/" + policyId)
-                .header("Authorization", "Bearer " + adminToken))
+    mvc.perform(delete("/v1/policies/" + policyId).header("Authorization", "Bearer " + adminToken))
         .andExpect(status().isNoContent());
   }
 }
