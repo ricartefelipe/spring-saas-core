@@ -15,14 +15,14 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
-      - name: Build and test
-        run: |
-          chmod +x mvnw
-          ./mvnw -B -DskipTests package
+      - name: Compile
+        run: mvn -B compile test-compile
       - name: Spotless check
-        run: ./mvnw -B spotless:check
+        run: mvn -B spotless:check
+      - name: Package
+        run: mvn -B -DskipTests package
       - name: Unit tests
-        run: ./mvnw -B test -Dtest='com.union.solutions.saascore.unit.**' -DfailIfNoTests=false
+        run: mvn -B test -Dtest='com.union.solutions.saascore.unit.**' -DfailIfNoTests=false
       - name: Validate OpenAPI spec exists
         run: test -f docs/api/openapi.json && echo "OpenAPI present"
       - name: Upload OpenAPI
