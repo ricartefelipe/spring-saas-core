@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,7 +24,7 @@ public class OutboxPublisher {
   private static final Logger log = LoggerFactory.getLogger(OutboxPublisher.class);
 
   private final OutboxEventJpaRepository outboxRepo;
-  private final RabbitTemplate rabbitTemplate;
+  private final RabbitOutboxSender rabbitOutboxSender;
   private final ObjectMapper objectMapper;
   private final Counter publishedCounter;
   private final Counter failedCounter;
@@ -37,7 +36,7 @@ public class OutboxPublisher {
 
   public OutboxPublisher(
       OutboxEventJpaRepository outboxRepo,
-      RabbitTemplate rabbitTemplate,
+      RabbitOutboxSender rabbitOutboxSender,
       ObjectMapper objectMapper,
       @Qualifier("outboxPublishedCounter") Counter publishedCounter,
       @Qualifier("outboxFailedCounter") Counter failedCounter,
@@ -47,7 +46,7 @@ public class OutboxPublisher {
       @Value("${app.outbox.exchange:saas.events}") String exchange,
       @Value("${app.outbox.routing-key-prefix:saas}") String routingKeyPrefix) {
     this.outboxRepo = outboxRepo;
-    this.rabbitTemplate = rabbitTemplate;
+    this.rabbitOutboxSender = rabbitOutboxSender;
     this.objectMapper = objectMapper;
     this.publishedCounter = publishedCounter;
     this.failedCounter = failedCounter;
@@ -81,7 +80,7 @@ public class OutboxPublisher {
 
     try {
       String body = objectMapper.writeValueAsString(envelope);
-      rabbitTemplate.convertAndSend(exchange, routingKey, body);
+      rabbitOutboxSender.send(exchange, routingKey, body);
       e.setStatus("PUBLISHED");
       e.setUpdatedAt(Instant.now());
       outboxRepo.save(e);

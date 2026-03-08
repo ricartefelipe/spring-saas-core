@@ -66,8 +66,35 @@ app:
     free: 60
     pro: 300
     enterprise: 1000
+  ai:
+    enabled: ${AI_ENABLED:false}
+    provider: ${AI_PROVIDER:openai}
+    api-key: ${OPENAI_API_KEY:}
+    base-url: ${AI_BASE_URL:https://api.openai.com/v1}
+    model: ${AI_MODEL:gpt-4o-mini}
+    max-tokens: ${AI_MAX_TOKENS:2048}
+    temperature: ${AI_TEMPERATURE:0.3}
+    timeout-seconds: ${AI_TIMEOUT:30}
   dev:
     token-endpoint-enabled: false
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      aiService:
+        sliding-window-size: 10
+        minimum-number-of-calls: 3
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 2
+        slow-call-duration-threshold: 10s
+        slow-call-rate-threshold: 80
+      rabbitPublisher:
+        sliding-window-size: 10
+        minimum-number-of-calls: 3
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 2
 
 management:
   endpoints:
