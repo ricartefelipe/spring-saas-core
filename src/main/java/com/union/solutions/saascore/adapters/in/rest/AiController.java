@@ -4,7 +4,6 @@ import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.application.service.AiService;
-import com.union.solutions.saascore.application.service.AiService.AiResponse;
 import com.union.solutions.saascore.config.AiConfig.AiProperties;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,7 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/v1/ai")
-@Tag(name = "AI/LLM", description = "Intelligent governance analysis powered by LLM with rule-engine fallback")
+@Tag(
+    name = "AI/LLM",
+    description = "Intelligent governance analysis powered by LLM with rule-engine fallback")
 public class AiController {
 
   private final AiService aiService;
@@ -39,13 +40,18 @@ public class AiController {
   @GetMapping("/status")
   @Operation(summary = "AI engine status and capabilities")
   public ResponseEntity<Map<String, Object>> status() {
-    return ResponseEntity.ok(Map.of(
-        "engine", aiProperties.isEnabled() ? "llm" : "rule-engine",
-        "provider", aiProperties.isEnabled() ? aiProperties.getProvider() : "built-in",
-        "model", aiProperties.isEnabled() ? aiProperties.getModel() : "rule-based-v1",
-        "capabilities", java.util.List.of(
-            "audit-analysis", "governance-recommendations",
-            "chat-assistant", "system-insights", "anomaly-detection")));
+    return ResponseEntity.ok(
+        Map.of(
+            "engine", aiProperties.isEnabled() ? "llm" : "rule-engine",
+            "provider", aiProperties.isEnabled() ? aiProperties.getProvider() : "built-in",
+            "model", aiProperties.isEnabled() ? aiProperties.getModel() : "rule-based-v1",
+            "capabilities",
+                java.util.List.of(
+                    "audit-analysis",
+                    "governance-recommendations",
+                    "chat-assistant",
+                    "system-insights",
+                    "anomaly-detection")));
   }
 
   @PostMapping("/analyze-audit")
@@ -62,8 +68,7 @@ public class AiController {
 
   @PostMapping("/recommendations")
   @Operation(summary = "AI governance recommendations for a tenant")
-  public ResponseEntity<?> recommendations(
-      @RequestParam(required = false) String tenantId) {
+  public ResponseEntity<?> recommendations(@RequestParam(required = false) String tenantId) {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("analytics:read"));
     if (!abac.allowed()) {
       return forbidden(abac, "/v1/ai/recommendations");
@@ -96,7 +101,5 @@ public class AiController {
         .body(ProblemDetails.of(403, "Forbidden", abac.reason(), instance, null));
   }
 
-  public record ChatRequest(
-      @NotBlank String message,
-      String tenantId) {}
+  public record ChatRequest(@NotBlank String message, String tenantId) {}
 }

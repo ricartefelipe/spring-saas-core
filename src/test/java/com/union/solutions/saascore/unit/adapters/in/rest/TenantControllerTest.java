@@ -5,14 +5,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.union.solutions.saascore.adapters.in.rest.TenantController;
 import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.application.tenant.TenantUseCase;
-import com.union.solutions.saascore.adapters.in.rest.TenantController;
 import com.union.solutions.saascore.domain.Tenant;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,10 +39,19 @@ class TenantControllerTest {
   @Test
   void getById_found_returns200AndBody() throws Exception {
     UUID id = UUID.randomUUID();
-    Tenant t = new Tenant(id, "Acme", "pro", "us-east-1", Tenant.TenantStatus.ACTIVE, Instant.now(), Instant.now());
+    Tenant t =
+        new Tenant(
+            id,
+            "Acme",
+            "pro",
+            "us-east-1",
+            Tenant.TenantStatus.ACTIVE,
+            Instant.now(),
+            Instant.now());
     org.mockito.Mockito.when(tenantUseCase.getById(id)).thenReturn(Optional.of(t));
 
-    MockMvc mvc = MockMvcBuilders.standaloneSetup(new TenantController(tenantUseCase, abacEvaluator)).build();
+    MockMvc mvc =
+        MockMvcBuilders.standaloneSetup(new TenantController(tenantUseCase, abacEvaluator)).build();
 
     mvc.perform(get("/v1/tenants/{id}", id))
         .andExpect(status().isOk())
@@ -57,25 +65,28 @@ class TenantControllerTest {
     UUID id = UUID.randomUUID();
     org.mockito.Mockito.when(tenantUseCase.getById(id)).thenReturn(Optional.empty());
 
-    MockMvc mvc = MockMvcBuilders.standaloneSetup(new TenantController(tenantUseCase, abacEvaluator)).build();
+    MockMvc mvc =
+        MockMvcBuilders.standaloneSetup(new TenantController(tenantUseCase, abacEvaluator)).build();
 
     mvc.perform(get("/v1/tenants/{id}", id)).andExpect(status().isNotFound());
   }
 
   @Test
   void list_invalidStatus_returns400() throws Exception {
-    MockMvc mvc = MockMvcBuilders.standaloneSetup(new TenantController(tenantUseCase, abacEvaluator)).build();
+    MockMvc mvc =
+        MockMvcBuilders.standaloneSetup(new TenantController(tenantUseCase, abacEvaluator)).build();
 
-    mvc.perform(get("/v1/tenants").param("status", "INVALID"))
-        .andExpect(status().isBadRequest());
+    mvc.perform(get("/v1/tenants").param("status", "INVALID")).andExpect(status().isBadRequest());
   }
 
   @Test
   void create_abacDeny_returns403() throws Exception {
-    org.mockito.Mockito.when(abacEvaluator.evaluate(org.mockito.ArgumentMatchers.any(AbacContext.class)))
+    org.mockito.Mockito.when(
+            abacEvaluator.evaluate(org.mockito.ArgumentMatchers.any(AbacContext.class)))
         .thenReturn(AbacResult.deny(null, "denied_by_policy"));
 
-    MockMvc mvc = MockMvcBuilders.standaloneSetup(new TenantController(tenantUseCase, abacEvaluator)).build();
+    MockMvc mvc =
+        MockMvcBuilders.standaloneSetup(new TenantController(tenantUseCase, abacEvaluator)).build();
 
     mvc.perform(
             post("/v1/tenants")
