@@ -103,47 +103,51 @@ public class AnalyticsService {
     List<Anomaly> anomalies = new ArrayList<>();
 
     for (Object[] row : auditRepo.findBurstAccess(since, burstThreshold)) {
-      anomalies.add(new Anomaly(
-          "burst_access",
-          "high",
-          (String) row[0],
-          (String) row[1],
-          ((Number) row[2]).longValue(),
-          "5m",
-          toInstant(row[4])));
+      anomalies.add(
+          new Anomaly(
+              "burst_access",
+              "high",
+              (String) row[0],
+              (String) row[1],
+              ((Number) row[2]).longValue(),
+              "5m",
+              toInstant(row[4])));
     }
 
     for (Object[] row : auditRepo.findAccessDeniedSpikes(since, deniedThreshold)) {
-      anomalies.add(new Anomaly(
-          "access_denied_spike",
-          "high",
-          (String) row[0],
-          null,
-          ((Number) row[1]).longValue(),
-          "1h",
-          toInstant(row[3])));
+      anomalies.add(
+          new Anomaly(
+              "access_denied_spike",
+              "high",
+              (String) row[0],
+              null,
+              ((Number) row[1]).longValue(),
+              "1h",
+              toInstant(row[3])));
     }
 
     for (Object[] row : auditRepo.findOffHoursActivity(since, offHoursStart, offHoursEnd)) {
-      anomalies.add(new Anomaly(
-          "off_hours_activity",
-          "medium",
-          (String) row[0],
-          (String) row[1],
-          ((Number) row[2]).longValue(),
-          offHoursStart + ":00-" + offHoursEnd + ":00 UTC",
-          toInstant(row[4])));
+      anomalies.add(
+          new Anomaly(
+              "off_hours_activity",
+              "medium",
+              (String) row[0],
+              (String) row[1],
+              ((Number) row[2]).longValue(),
+              offHoursStart + ":00-" + offHoursEnd + ":00 UTC",
+              toInstant(row[4])));
     }
 
     for (Object[] row : auditRepo.findUnusualTenantSwitching(since, tenantSwitchThreshold)) {
-      anomalies.add(new Anomaly(
-          "unusual_tenant_switching",
-          "medium",
-          (String) row[0],
-          null,
-          ((Number) row[1]).longValue(),
-          "1h",
-          toInstant(row[3])));
+      anomalies.add(
+          new Anomaly(
+              "unusual_tenant_switching",
+              "medium",
+              (String) row[0],
+              null,
+              ((Number) row[1]).longValue(),
+              "1h",
+              toInstant(row[3])));
     }
 
     long totalEvents = auditRepo.countSince(since);
@@ -157,10 +161,7 @@ public class AnalyticsService {
   }
 
   public record SummaryResponse(
-      TenantSummary tenants,
-      PolicySummary policies,
-      FlagSummary flags,
-      AuditSummary audit) {}
+      TenantSummary tenants, PolicySummary policies, FlagSummary flags, AuditSummary audit) {}
 
   public record TenantSummary(
       long total,
@@ -176,8 +177,7 @@ public class AnalyticsService {
 
   public record ActionCount(String action, long count) {}
 
-  public record AnomalyResponse(
-      List<Anomaly> anomalies, String scannedPeriod, long totalEvents) {}
+  public record AnomalyResponse(List<Anomaly> anomalies, String scannedPeriod, long totalEvents) {}
 
   public record Anomaly(
       String type,

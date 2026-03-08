@@ -34,7 +34,11 @@ class PolicyServiceTest {
   void setUp() {
     service =
         new PolicyService(
-            policyRepo, outboxPublisher, auditLogger, new com.fasterxml.jackson.databind.ObjectMapper(), policiesUpdatedCounter);
+            policyRepo,
+            outboxPublisher,
+            auditLogger,
+            new com.fasterxml.jackson.databind.ObjectMapper(),
+            policiesUpdatedCounter);
   }
 
   @Test
@@ -114,6 +118,14 @@ class PolicyServiceTest {
 
   private Policy makePolicy(UUID id, String permCode) {
     return new Policy(
-        id, permCode, Policy.Effect.ALLOW, List.of(), List.of(), true, "test", Instant.now(), Instant.now());
+        id,
+        permCode,
+        Policy.Effect.ALLOW,
+        List.of(),
+        List.of(),
+        true,
+        "test",
+        Instant.now(),
+        Instant.now());
   }
 }

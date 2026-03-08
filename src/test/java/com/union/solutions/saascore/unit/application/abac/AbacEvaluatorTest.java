@@ -48,7 +48,8 @@ class AbacEvaluatorTest {
   @Test
   void evaluate_denyPolicyMatchesPlan_returnsDeny() {
     UUID policyId = UUID.randomUUID();
-    Policy deny = makePolicy(policyId, "admin:write", Policy.Effect.DENY, List.of("free"), List.of());
+    Policy deny =
+        makePolicy(policyId, "admin:write", Policy.Effect.DENY, List.of("free"), List.of());
     when(policyRepo.findByPermissionCodeAndEnabledTrue("admin:write")).thenReturn(List.of(deny));
 
     AbacContext ctx =
@@ -64,8 +65,11 @@ class AbacEvaluatorTest {
 
   @Test
   void evaluate_denyPolicyDoesNotMatchPlan_returnsAllow() {
-    Policy deny = makePolicy(UUID.randomUUID(), "admin:write", Policy.Effect.DENY, List.of("free"), List.of());
-    Policy allow = makePolicy(UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, List.of(), List.of());
+    Policy deny =
+        makePolicy(
+            UUID.randomUUID(), "admin:write", Policy.Effect.DENY, List.of("free"), List.of());
+    Policy allow =
+        makePolicy(UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, List.of(), List.of());
     when(policyRepo.findByPermissionCodeAndEnabledTrue("admin:write"))
         .thenReturn(List.of(deny, allow));
 
@@ -81,7 +85,8 @@ class AbacEvaluatorTest {
   void evaluate_denyTakesPrecedenceOverAllow() {
     UUID denyId = UUID.randomUUID();
     Policy deny = makePolicy(denyId, "admin:write", Policy.Effect.DENY, List.of(), List.of());
-    Policy allow = makePolicy(UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, List.of(), List.of());
+    Policy allow =
+        makePolicy(UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, List.of(), List.of());
     when(policyRepo.findByPermissionCodeAndEnabledTrue("admin:write"))
         .thenReturn(List.of(deny, allow));
 
@@ -96,7 +101,13 @@ class AbacEvaluatorTest {
 
   @Test
   void evaluate_noMatchingAllowPolicy_returnsDeny() {
-    Policy allow = makePolicy(UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, List.of("enterprise"), List.of());
+    Policy allow =
+        makePolicy(
+            UUID.randomUUID(),
+            "admin:write",
+            Policy.Effect.ALLOW,
+            List.of("enterprise"),
+            List.of());
     when(policyRepo.findByPermissionCodeAndEnabledTrue("admin:write")).thenReturn(List.of(allow));
 
     AbacContext ctx =
@@ -110,7 +121,9 @@ class AbacEvaluatorTest {
 
   @Test
   void evaluate_regionFilter_worksCorrectly() {
-    Policy allow = makePolicy(UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, List.of(), List.of("eu-west-1"));
+    Policy allow =
+        makePolicy(
+            UUID.randomUUID(), "admin:write", Policy.Effect.ALLOW, List.of(), List.of("eu-west-1"));
     when(policyRepo.findByPermissionCodeAndEnabledTrue("admin:write")).thenReturn(List.of(allow));
 
     AbacContext euCtx =
@@ -125,8 +138,20 @@ class AbacEvaluatorTest {
   }
 
   private Policy makePolicy(
-      UUID id, String permCode, Policy.Effect effect, List<String> allowedPlans, List<String> allowedRegions) {
+      UUID id,
+      String permCode,
+      Policy.Effect effect,
+      List<String> allowedPlans,
+      List<String> allowedRegions) {
     return new Policy(
-        id, permCode, effect, allowedPlans, allowedRegions, true, null, java.time.Instant.now(), java.time.Instant.now());
+        id,
+        permCode,
+        effect,
+        allowedPlans,
+        allowedRegions,
+        true,
+        null,
+        java.time.Instant.now(),
+        java.time.Instant.now());
   }
 }
