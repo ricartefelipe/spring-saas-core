@@ -56,7 +56,13 @@ class AuditLogControllerTest {
 
     AuditLogEntity entity = makeAuditEntity("TENANT_CREATED");
     when(auditRepo.search(
-            isNull(), eq(""), eq(""), eq(""), any(Instant.class), any(Instant.class), any(Pageable.class)))
+            isNull(),
+            eq(""),
+            eq(""),
+            eq(""),
+            any(Instant.class),
+            any(Instant.class),
+            any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(entity)));
 
     mvc.perform(get("/v1/audit"))
@@ -79,7 +85,13 @@ class AuditLogControllerTest {
 
     AuditLogEntity entity = makeAuditEntity("POLICY_CREATED");
     when(auditRepo.search(
-            isNull(), eq(""), eq(""), eq(""), any(Instant.class), any(Instant.class), any(Pageable.class)))
+            isNull(),
+            eq(""),
+            eq(""),
+            eq(""),
+            any(Instant.class),
+            any(Instant.class),
+            any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(entity)));
 
     Instant from = Instant.parse("2025-01-01T00:00:00Z");
@@ -104,7 +116,13 @@ class AuditLogControllerTest {
 
     AuditLogEntity entity = makeAuditEntity("FLAG_CREATED");
     when(auditRepo.search(
-            isNull(), eq(""), eq(""), eq(""), any(Instant.class), any(Instant.class), any(Pageable.class)))
+            isNull(),
+            eq(""),
+            eq(""),
+            eq(""),
+            any(Instant.class),
+            any(Instant.class),
+            any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(entity)));
 
     Instant from = Instant.parse("2025-01-01T00:00:00Z");
@@ -112,8 +130,7 @@ class AuditLogControllerTest {
 
     ResponseEntity<?> response = controller.export(null, null, from, to, "csv", 10000);
     assertThat(response.getStatusCode().value()).isEqualTo(200);
-    assertThat(response.getHeaders().getFirst("Content-Disposition"))
-        .contains("audit-export.csv");
+    assertThat(response.getHeaders().getFirst("Content-Disposition")).contains("audit-export.csv");
 
     StreamingResponseBody body = (StreamingResponseBody) response.getBody();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
