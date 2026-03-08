@@ -14,6 +14,11 @@ services:
       retries: 5
     volumes:
       - pgdata:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
 
   redis:
     image: redis:7-alpine
@@ -24,6 +29,11 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
 
   rabbitmq:
     container_name: fluxe-rabbitmq
@@ -39,6 +49,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
     networks:
       - default
       - fluxe_shared
@@ -64,6 +79,9 @@ services:
       REDIS_PORT: "6379"
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: "5672"
+      AI_ENABLED: ${AI_ENABLED:-false}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
     depends_on:
       postgres:
         condition: service_healthy
@@ -77,6 +95,11 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.0"
 
   prometheus:
     image: prom/prometheus:latest
@@ -88,6 +111,11 @@ services:
       - "--config.file=/etc/prometheus/prometheus.yml"
     depends_on:
       - app
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
 
   grafana:
     image: grafana/grafana:latest
@@ -101,6 +129,11 @@ services:
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
 
 networks:
   fluxe_shared:
