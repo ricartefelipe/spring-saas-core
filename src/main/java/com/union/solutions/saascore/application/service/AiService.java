@@ -400,33 +400,137 @@ public class AiService {
   private AiResponse buildRuleBasedChatResponse(
       String message, AnalyticsService.SummaryResponse summary) {
     long active = summary.tenants().byStatus().getOrDefault("ACTIVE", 0L);
-    String response =
-        String.format(
-            """
-        ## Assistente Fluxe B2B
+    long totalTenants = summary.tenants().total();
+    long totalPolicies = summary.policies().total();
+    long enabledFlags = summary.flags().enabled();
+    long totalFlags = summary.flags().total();
+    long audit24h = summary.audit().last24h();
+    long audit7d = summary.audit().last7d();
 
-        **Status do Sistema:**
-        - Tenants: %d ativos / %d total
-        - Políticas: %d
-        - Feature flags: %d ativas
+    String lower = message.toLowerCase();
+    String answer;
 
-        **Sua pergunta:** %s
+    if (matchesAny(lower, "olá", "ola", "oi", "hey", "como vai", "bom dia", "boa tarde", "boa noite", "hello", "hi")) {
+      answer = String.format(
+          "Olá! Sou o assistente de governança do Fluxe B2B Suite.\n\n"
+          + "**Resumo rápido do sistema:**\n"
+          + "- %d tenants ativos de %d cadastrados\n"
+          + "- %d políticas ABAC configuradas\n"
+          + "- %d feature flags ativas de %d\n"
+          + "- %d eventos de auditoria nas últimas 24h\n\n"
+          + "Como posso ajudar? Pergunte sobre tenants, políticas, auditoria, segurança ou flags.",
+          active, totalTenants, totalPolicies, enabledFlags, totalFlags, audit24h);
 
-        > Para respostas inteligentes com IA generativa, configure a variável `OPENAI_API_KEY`.
-        > O motor atual é baseado em regras e dados do sistema.
+    } else if (matchesAny(lower, "tenant", "inquilino", "cliente", "locatário")) {
+      var byPlan = summary.tenants().byPlan();
+      var byRegion = summary.tenants().byRegion();
+      answer = String.format(
+          "**Tenants — Visão Geral**\n\n"
+          + "- Total: %d | Ativos: %d | Inativos: %d\n"
+          + "- Por plano: %s\n"
+          + "- Por região: %s\n\n"
+          + "%s",
+          totalTenants, active, totalTenants - active,
+          byPlan.isEmpty() ? "N/A" : byPlan.toString(),
+          byRegion.isEmpty() ? "N/A" : byRegion.toString(),
+          active < totalTenants
+              ? "⚠ Existem tenants inativos. Considere uma campanha de reativação."
+              : "Todos os tenants estão ativos.");
 
-        Posso ajudar com:
-        - Análise de auditoria (`/v1/ai/analyze-audit`)
-        - Recomendações de governança (`/v1/ai/recommendations`)
-        - Insights do sistema (`/v1/ai/insights`)
-        """,
-            active,
-            summary.tenants().total(),
-            summary.policies().total(),
-            summary.flags().enabled(),
-            message);
+    } else if (matchesAny(lower, "politic", "policy", "abac", "rbac", "permiss", "acesso")) {
+      var byEffect = summary.policies().byEffect();
+      answer = String.format(
+          "**Políticas de Governança**\n\n"
+          + "- Total ativas: %d\n"
+          + "- Por efeito: %s\n\n"
+          + "%s",
+          totalPolicies,
+          byEffect.isEmpty() ? "N/A" : byEffect.toString(),
+          totalPolicies == 0
+              ? "⚠ ATENÇÃO: Nenhuma política ABAC configurada. O sistema opera com RBAC básico."
+              : totalPolicies < 3
+                  ? "💡 Considere criar políticas por região e plano para maior granularidade."
+                  : "Governança configurada adequadamente.");
 
-    return new AiResponse("rule-engine", response, Map.of("question", message));
+    } else if (matchesAny(lower, "audit", "log", "evento", "rastreamento", "trilha")) {
+      var topActions = summary.audit().topActions();
+      StringBuilder sb = new StringBuilder();
+      sb.append("**Auditoria**\n\n");
+      sb.append(String.format("- Últimas 24h: %d eventos\n", audit24h));
+      sb.append(String.format("- Últimos 7 dias: %d eventos\n\n", audit7d));
+      if (!topActions.isEmpty()) {
+        sb.append("**Top ações (7d):**\n");
+        topActions.forEach(a -> sb.append(String.format("- `%s`: %d\n", a.action(), a.count())));
+      }
+      answer = sb.toString();
+
+    } else if (matchesAny(lower, "flag", "feature", "toggle", "funcionalidade")) {
+      answer = String.format(
+          "**Feature Flags**\n\n"
+          + "- Total: %d | Ativas: %d | Desativadas: %d\n\n"
+          + "%s",
+          totalFlags, enabledFlags, summary.flags().disabled(),
+          enabledFlags > 20
+              ? "⚠ Muitas flags ativas. Revise flags antigas que podem virar permanentes."
+              : "Número de flags dentro do esperado.");
+
+    } else if (matchesAny(lower, "segur", "security", "risco", "ameaça", "vulnerab", "ataque")) {
+      answer = String.format(
+          "**Segurança — Resumo**\n\n"
+          + "- Políticas ABAC: %d %s\n"
+          + "- Eventos de auditoria (24h): %d\n"
+          + "- Tenants ativos: %d\n\n"
+          + "Para análise detalhada de segurança, use o botão **Analisar Auditoria** "
+          + "ou pergunte sobre anomalias.",
+          totalPolicies,
+          totalPolicies == 0 ? "(⚠ configure políticas)" : "(OK)",
+          audit24h, active);
+
+    } else if (matchesAny(lower, "anomal", "suspeito", "estranho", "irregular")) {
+      var anomalies = analyticsService.detectAnomalies();
+      if (anomalies.anomalies().isEmpty()) {
+        answer = "Nenhuma anomalia detectada nas últimas 24 horas. Sistema operando normalmente.";
+      } else {
+        StringBuilder sb = new StringBuilder("**Anomalias Detectadas**\n\n");
+        anomalies.anomalies().forEach(a ->
+            sb.append(String.format("- [%s] %s — ator: `%s`, %d ocorrências em %s\n",
+                a.severity().toUpperCase(), a.type(), a.actor(), a.count(), a.window())));
+        answer = sb.toString();
+      }
+
+    } else if (matchesAny(lower, "ajuda", "help", "o que", "pode fazer", "comando", "funciona")) {
+      answer = "**O que posso fazer:**\n\n"
+          + "- **Tenants** — status, planos, regiões\n"
+          + "- **Políticas** — ABAC/RBAC, efeitos, recomendações\n"
+          + "- **Auditoria** — eventos recentes, top ações\n"
+          + "- **Feature Flags** — ativas, desativadas, higiene\n"
+          + "- **Segurança** — avaliação, anomalias, riscos\n"
+          + "- **Anomalias** — detecção em tempo real\n\n"
+          + "Também pode usar os botões ao lado: **Analisar Auditoria**, **Recomendações** e **Insights**.";
+
+    } else {
+      answer = String.format(
+          "Entendi sua pergunta: *\"%s\"*\n\n"
+          + "No modo Rule Engine, respondo sobre dados do sistema. "
+          + "Aqui está o que sei agora:\n\n"
+          + "- %d tenants (%d ativos)\n"
+          + "- %d políticas ABAC\n"
+          + "- %d flags ativas\n"
+          + "- %d eventos de auditoria (24h)\n\n"
+          + "Pergunte sobre: **tenants**, **políticas**, **auditoria**, **flags**, "
+          + "**segurança** ou **anomalias**.\n\n"
+          + "> Para respostas livres com linguagem natural, configure `OPENAI_API_KEY`.",
+          message, totalTenants, active, totalPolicies, enabledFlags, audit24h);
+    }
+
+    return new AiResponse("rule-engine", answer, Map.of("question", message));
+  }
+
+  private static boolean matchesAny(String text, String... keywords) {
+    for (String kw : keywords) {
+      if (text.contains(kw)) return true;
+    }
+    return false;
   }
 
   public record AiResponse(
