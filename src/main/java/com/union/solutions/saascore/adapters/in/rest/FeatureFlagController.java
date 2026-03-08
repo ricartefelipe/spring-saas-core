@@ -32,8 +32,9 @@ public class FeatureFlagController {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("flags:write"));
     if (!abac.allowed())
       return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(),
-              "/v1/tenants/" + tenantId + "/flags", null));
+          .body(
+              ProblemDetails.of(
+                  403, "Forbidden", abac.reason(), "/v1/tenants/" + tenantId + "/flags", null));
     enforceTenantAccess(tenantId);
     FeatureFlag flag =
         flagService.create(
@@ -50,8 +51,9 @@ public class FeatureFlagController {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("flags:read"));
     if (!abac.allowed())
       return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(),
-              "/v1/tenants/" + tenantId + "/flags", null));
+          .body(
+              ProblemDetails.of(
+                  403, "Forbidden", abac.reason(), "/v1/tenants/" + tenantId + "/flags", null));
     enforceTenantAccess(tenantId);
     List<FlagDto> flags = flagService.listByTenant(tenantId).stream().map(FlagDto::from).toList();
     return ResponseEntity.ok(flags);
@@ -65,8 +67,13 @@ public class FeatureFlagController {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("flags:write"));
     if (!abac.allowed())
       return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(),
-              "/v1/tenants/" + tenantId + "/flags/" + flagName, null));
+          .body(
+              ProblemDetails.of(
+                  403,
+                  "Forbidden",
+                  abac.reason(),
+                  "/v1/tenants/" + tenantId + "/flags/" + flagName,
+                  null));
     enforceTenantAccess(tenantId);
     return flagService
         .update(
@@ -80,8 +87,13 @@ public class FeatureFlagController {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("flags:write"));
     if (!abac.allowed())
       return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(),
-              "/v1/tenants/" + tenantId + "/flags/" + flagName, null));
+          .body(
+              ProblemDetails.of(
+                  403,
+                  "Forbidden",
+                  abac.reason(),
+                  "/v1/tenants/" + tenantId + "/flags/" + flagName,
+                  null));
     enforceTenantAccess(tenantId);
     return flagService.softDelete(tenantId, flagName)
         ? ResponseEntity.noContent().build()
