@@ -340,7 +340,7 @@ public class AiService {
   }
 
   private AiResponse buildRuleBasedAuditAnalysis(Map<String, Object> data, String tenantId) {
-    int anomalyCount = (int) data.getOrDefault("anomalies", 0);
+    int anomalyCount = ((Number) data.getOrDefault("anomalies", 0)).intValue();
     String severity = anomalyCount > 5 ? "CRITICAL" : anomalyCount > 0 ? "WARNING" : "OK";
 
     String analysis =
@@ -372,8 +372,8 @@ public class AiService {
 
   private AiResponse buildRuleBasedRecommendations(Map<String, Object> context, String tenantId) {
     List<String> recommendations = new ArrayList<>();
-    int policyCount = (int) context.getOrDefault("policyCount", 0);
-    int enabledFlags = (int) context.getOrDefault("enabledFlags", 0);
+    int policyCount = ((Number) context.getOrDefault("policyCount", 0)).intValue();
+    int enabledFlags = ((Number) context.getOrDefault("enabledFlags", 0)).intValue();
 
     if (policyCount == 0) {
       recommendations.add("CRITICAL: Configure ao menos uma política ABAC para segurança adequada");
