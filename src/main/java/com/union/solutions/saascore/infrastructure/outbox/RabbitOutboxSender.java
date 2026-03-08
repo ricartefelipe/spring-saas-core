@@ -8,8 +8,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * Delegates RabbitMQ publish with circuit breaker protection. Used by OutboxPublisher to
- * fail-fast when Rabbit is unavailable.
+ * Delegates RabbitMQ publish with circuit breaker protection. Used by OutboxPublisher to fail-fast
+ * when Rabbit is unavailable.
  */
 @Component
 @ConditionalOnProperty(name = "app.outbox.publish-enabled", havingValue = "true")
