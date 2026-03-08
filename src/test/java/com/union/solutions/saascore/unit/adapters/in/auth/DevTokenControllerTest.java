@@ -38,15 +38,14 @@ class DevTokenControllerTest {
 
   @Test
   void issueDevToken_inDevProfile_returnsToken() throws Exception {
-    when(tokenIssuer.issue(anyString(), anyString(), anyList(), anyList(), anyString(), anyString()))
+    when(tokenIssuer.issue(
+            anyString(), anyString(), anyList(), anyList(), anyString(), anyString()))
         .thenReturn("mock-jwt-token");
 
     MockMvc mvc = MockMvcBuilders.standaloneSetup(buildController(false)).build();
 
     mvc.perform(
-            post("/v1/dev/token")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(VALID_REQUEST))
+            post("/v1/dev/token").contentType(MediaType.APPLICATION_JSON).content(VALID_REQUEST))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.access_token").value("mock-jwt-token"))
         .andExpect(jsonPath("$.token_type").value("Bearer"))
@@ -58,9 +57,7 @@ class DevTokenControllerTest {
     MockMvc mvc = MockMvcBuilders.standaloneSetup(buildController(true)).build();
 
     mvc.perform(
-            post("/v1/dev/token")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(VALID_REQUEST))
+            post("/v1/dev/token").contentType(MediaType.APPLICATION_JSON).content(VALID_REQUEST))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.error").value("dev_token_disabled"));
   }

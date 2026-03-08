@@ -55,7 +55,9 @@ public class TenantController {
         statusEnum = Tenant.TenantStatus.valueOf(status);
       } catch (IllegalArgumentException e) {
         return ResponseEntity.badRequest()
-            .body(ProblemDetails.of(400, "Bad Request", "Invalid status: " + status, "/v1/tenants", null));
+            .body(
+                ProblemDetails.of(
+                    400, "Bad Request", "Invalid status: " + status, "/v1/tenants", null));
       }
     }
 
@@ -65,7 +67,9 @@ public class TenantController {
       // Sem cursor: retorna primeira página como CursorPage (evita serialização de Page)
       Instant cursorInstant = Instant.EPOCH;
       List<TenantDto> items =
-          tenantUseCase.searchCursor(statusEnum, plan, region, name, cursorInstant, safeLimit).stream()
+          tenantUseCase
+              .searchCursor(statusEnum, plan, region, name, cursorInstant, safeLimit)
+              .stream()
               .map(TenantDto::from)
               .toList();
       boolean hasMore = items.size() == safeLimit;
@@ -75,7 +79,9 @@ public class TenantController {
 
     Instant cursorInstant = decodeCursor(effectiveCursor);
     List<TenantDto> items =
-        tenantUseCase.searchCursor(statusEnum, plan, region, name, cursorInstant, safeLimit).stream()
+        tenantUseCase
+            .searchCursor(statusEnum, plan, region, name, cursorInstant, safeLimit)
+            .stream()
             .map(TenantDto::from)
             .toList();
     boolean hasMore = items.size() == safeLimit;

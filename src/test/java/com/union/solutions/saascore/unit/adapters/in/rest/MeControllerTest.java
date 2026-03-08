@@ -16,8 +16,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class MeControllerTest {
 
-  private final MockMvc mvc =
-      MockMvcBuilders.standaloneSetup(new MeController()).build();
+  private final MockMvc mvc = MockMvcBuilders.standaloneSetup(new MeController()).build();
 
   @AfterEach
   void tearDown() {
@@ -34,9 +33,7 @@ class MeControllerTest {
     TenantContext.setPerms(List.of("tenant:read", "tenant:write"));
     TenantContext.setCorrelationId("corr-abc");
 
-    mvc.perform(
-            get("/v1/me")
-                .principal(new TestingAuthenticationToken("user@test.com", null)))
+    mvc.perform(get("/v1/me").principal(new TestingAuthenticationToken("user@test.com", null)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.sub").value("user@test.com"))
         .andExpect(jsonPath("$.tenant_id").value(tenantId.toString()))
@@ -53,16 +50,12 @@ class MeControllerTest {
     TenantContext.setPlan("");
     TenantContext.setRegion("");
 
-    mvc.perform(get("/v1/me"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.sub").value(""));
+    mvc.perform(get("/v1/me")).andExpect(status().isOk()).andExpect(jsonPath("$.sub").value(""));
   }
 
   @Test
   void me_withEmptyContext_returnsDefaults() throws Exception {
-    mvc.perform(
-            get("/v1/me")
-                .principal(new TestingAuthenticationToken("admin", null)))
+    mvc.perform(get("/v1/me").principal(new TestingAuthenticationToken("admin", null)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.sub").value("admin"))
         .andExpect(jsonPath("$.tenant_id").value(""))
