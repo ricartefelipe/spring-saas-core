@@ -36,12 +36,13 @@ public class TenantSnapshotController {
 
   @GetMapping("/snapshot")
   public ResponseEntity<?> snapshot(
-      @PathVariable @NonNull UUID id,
-      @RequestParam(required = false) String include) {
+      @PathVariable @NonNull UUID id, @RequestParam(required = false) String include) {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:read"));
     if (!abac.allowed())
       return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/tenants/" + id + "/snapshot", null));
+          .body(
+              ProblemDetails.of(
+                  403, "Forbidden", abac.reason(), "/v1/tenants/" + id + "/snapshot", null));
     return tenantUseCase
         .getById(id)
         .map(
@@ -91,7 +92,9 @@ public class TenantSnapshotController {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:read"));
     if (!abac.allowed())
       return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/tenants/" + id + "/policies", null));
+          .body(
+              ProblemDetails.of(
+                  403, "Forbidden", abac.reason(), "/v1/tenants/" + id + "/policies", null));
     return tenantUseCase
         .getById(id)
         .map(

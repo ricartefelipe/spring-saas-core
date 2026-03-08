@@ -91,17 +91,14 @@ public class ProblemDetailsConfig {
   @ExceptionHandler(ConstraintViolationException.class)
   public ResponseEntity<ProblemDetails> handleConstraintViolation(
       ConstraintViolationException ex, HttpServletRequest req) {
-    String detail = ex.getConstraintViolations().stream()
-        .map(v -> v.getPropertyPath() + ": " + v.getMessage())
-        .collect(Collectors.joining("; "));
+    String detail =
+        ex.getConstraintViolations().stream()
+            .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+            .collect(Collectors.joining("; "));
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(
             ProblemDetails.of(
-                400,
-                "Bad Request",
-                detail,
-                req.getRequestURI(),
-                TenantContext.getCorrelationId()));
+                400, "Bad Request", detail, req.getRequestURI(), TenantContext.getCorrelationId()));
   }
 
   @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -118,8 +115,7 @@ public class ProblemDetailsConfig {
   }
 
   @ExceptionHandler({EntityNotFoundException.class, NoSuchElementException.class})
-  public ResponseEntity<ProblemDetails> handleNotFound(
-      Exception ex, HttpServletRequest req) {
+  public ResponseEntity<ProblemDetails> handleNotFound(Exception ex, HttpServletRequest req) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(
             ProblemDetails.of(

@@ -54,10 +54,8 @@ public class PolicyController {
     if (!abac.allowed())
       return ResponseEntity.status(403)
           .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/policies", null));
-    var page =
-        policyService.search(permissionCode, effect, enabled, pageable).map(PolicyDto::from);
-    return ResponseEntity.ok(
-        new PolicyPageResponse(page.getContent(), page.getTotalElements()));
+    var page = policyService.search(permissionCode, effect, enabled, pageable).map(PolicyDto::from);
+    return ResponseEntity.ok(new PolicyPageResponse(page.getContent(), page.getTotalElements()));
   }
 
   @GetMapping("/{id}")

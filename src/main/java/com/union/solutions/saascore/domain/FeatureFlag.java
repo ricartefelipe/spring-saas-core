@@ -40,20 +40,67 @@ public class FeatureFlag {
     this.updatedAt = updatedAt != null ? updatedAt : Instant.now();
   }
 
-  public UUID getId() { return id; }
-  public void setId(UUID id) { this.id = id; }
-  public UUID getTenantId() { return tenantId; }
-  public void setTenantId(UUID tenantId) { this.tenantId = tenantId; }
-  public String getName() { return name; }
-  public void setName(String name) { this.name = name; }
-  public boolean isEnabled() { return enabled; }
-  public void setEnabled(boolean enabled) { this.enabled = enabled; }
-  public int getRolloutPercent() { return rolloutPercent; }
-  public void setRolloutPercent(int rolloutPercent) { this.rolloutPercent = Math.max(0, Math.min(100, rolloutPercent)); }
-  public List<String> getAllowedRoles() { return allowedRoles; }
-  public void setAllowedRoles(List<String> allowedRoles) { this.allowedRoles = allowedRoles != null ? allowedRoles : List.of(); }
-  public Instant getCreatedAt() { return createdAt; }
-  public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
-  public Instant getUpdatedAt() { return updatedAt; }
-  public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+  public UUID getId() {
+    return id;
+  }
+
+  public void setId(UUID id) {
+    this.id = id;
+  }
+
+  public UUID getTenantId() {
+    return tenantId;
+  }
+
+  public void setTenantId(UUID tenantId) {
+    this.tenantId = tenantId;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  public int getRolloutPercent() {
+    return rolloutPercent;
+  }
+
+  public void setRolloutPercent(int rolloutPercent) {
+    this.rolloutPercent = Math.max(0, Math.min(100, rolloutPercent));
+  }
+
+  public List<String> getAllowedRoles() {
+    return allowedRoles;
+  }
+
+  public void setAllowedRoles(List<String> allowedRoles) {
+    this.allowedRoles = allowedRoles != null ? allowedRoles : List.of();
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(Instant createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  public Instant getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(Instant updatedAt) {
+    this.updatedAt = updatedAt;
+  }
 }

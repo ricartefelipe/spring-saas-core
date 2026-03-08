@@ -45,8 +45,7 @@ class PolicyControllerTest {
   @BeforeEach
   void setUp() {
     mvc =
-        MockMvcBuilders.standaloneSetup(
-                new PolicyController(policyService, abacEvaluator))
+        MockMvcBuilders.standaloneSetup(new PolicyController(policyService, abacEvaluator))
             .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
             .build();
     policyId = UUID.randomUUID();
@@ -58,7 +57,13 @@ class PolicyControllerTest {
 
     Policy created =
         makePolicy(
-            policyId, "orders:read", Policy.Effect.ALLOW, List.of("pro"), List.of("us-east-1"), true, "test");
+            policyId,
+            "orders:read",
+            Policy.Effect.ALLOW,
+            List.of("pro"),
+            List.of("us-east-1"),
+            true,
+            "test");
     when(policyService.create(
             eq("orders:read"),
             eq(Policy.Effect.ALLOW),
@@ -103,7 +108,13 @@ class PolicyControllerTest {
 
     Policy policy =
         makePolicy(
-            policyId, "orders:read", Policy.Effect.ALLOW, List.of("pro"), List.of("us-east-1"), true, null);
+            policyId,
+            "orders:read",
+            Policy.Effect.ALLOW,
+            List.of("pro"),
+            List.of("us-east-1"),
+            true,
+            null);
     when(policyService.search(isNull(), isNull(), isNull(), any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(policy)));
 
@@ -120,7 +131,13 @@ class PolicyControllerTest {
 
     Policy policy =
         makePolicy(
-            policyId, "orders:read", Policy.Effect.ALLOW, List.of("pro"), List.of("us-east-1"), true, null);
+            policyId,
+            "orders:read",
+            Policy.Effect.ALLOW,
+            List.of("pro"),
+            List.of("us-east-1"),
+            true,
+            null);
     when(policyService.getById(policyId)).thenReturn(Optional.of(policy));
 
     mvc.perform(get("/v1/policies/{id}", policyId))
@@ -143,7 +160,13 @@ class PolicyControllerTest {
 
     Policy updated =
         makePolicy(
-            policyId, "orders:write", Policy.Effect.ALLOW, List.of("pro"), List.of("us-east-1"), false, "updated");
+            policyId,
+            "orders:write",
+            Policy.Effect.ALLOW,
+            List.of("pro"),
+            List.of("us-east-1"),
+            false,
+            "updated");
     when(policyService.update(
             eq(policyId),
             eq("orders:write"),
@@ -191,6 +214,14 @@ class PolicyControllerTest {
       boolean enabled,
       String notes) {
     return new Policy(
-        id, permissionCode, effect, allowedPlans, allowedRegions, enabled, notes, Instant.now(), Instant.now());
+        id,
+        permissionCode,
+        effect,
+        allowedPlans,
+        allowedRegions,
+        enabled,
+        notes,
+        Instant.now(),
+        Instant.now());
   }
 }
