@@ -83,10 +83,10 @@ public class AiService {
                   """
           Analyze the following audit log data for tenant '%s' (last %d hours):
 
-          Total events: %d
+          Total events: %s
           Actions breakdown: %s
-          Access denied events: %d
-          Unique users: %d
+          Access denied events: %s
+          Unique users: %s
           Anomalies detected (rule-based): %s
 
           Provide:
@@ -124,10 +124,10 @@ public class AiService {
           Based on this tenant governance data:
 
           Tenant: %s (plan: %s, status: %s, region: %s)
-          Active policies: %d
-          Feature flags: %d enabled / %d total
-          Audit events (30d): %d
-          Access denied (30d): %d
+          Active policies: %s
+          Feature flags: %s enabled / %s total
+          Audit events (30d): %s
+          Access denied (30d): %s
 
           Generate governance recommendations:
           1. Policy optimization (are there redundant or missing policies?)
