@@ -41,8 +41,7 @@ class FeatureFlagControllerTest {
   @BeforeEach
   void setUp() {
     mvc =
-        MockMvcBuilders.standaloneSetup(
-                new FeatureFlagController(flagService, abacEvaluator))
+        MockMvcBuilders.standaloneSetup(new FeatureFlagController(flagService, abacEvaluator))
             .build();
   }
 
@@ -161,7 +160,13 @@ class FeatureFlagControllerTest {
 
   private FeatureFlag makeFlag(String name, boolean enabled, int rolloutPercent) {
     return new FeatureFlag(
-        UUID.randomUUID(), tenantId, name, enabled, rolloutPercent,
-        List.of("admin"), Instant.now(), Instant.now());
+        UUID.randomUUID(),
+        tenantId,
+        name,
+        enabled,
+        rolloutPercent,
+        List.of("admin"),
+        Instant.now(),
+        Instant.now());
   }
 }
