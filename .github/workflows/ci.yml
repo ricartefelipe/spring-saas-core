@@ -15,10 +15,17 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
-      - name: Verify Maven
-        run: mvn --version
       - name: Build
-        run: mvn -B -e -DskipTests package
+        run: |
+          mvn --version
+          mvn -B -e -DskipTests package 2>&1 | tee build-output.txt
+          exit ${PIPESTATUS[0]}
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build-output.txt
       - name: Spotless check
         run: mvn -B spotless:check
       - name: Validate OpenAPI spec exists
@@ -28,9 +35,3 @@ jobs:
         with:
           name: openapi
           path: docs/api/openapi.json
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-report
-          path: target/site/jacoco/
-          if-no-files-found: ignore
