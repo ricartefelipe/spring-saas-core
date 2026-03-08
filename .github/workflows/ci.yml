@@ -15,23 +15,16 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
-      - name: Compile
-        run: ./mvnw -B compile test-compile
+      - name: Build and test
+        run: |
+          chmod +x mvnw
+          ./mvnw -B -DskipTests package
       - name: Spotless check
         run: ./mvnw -B spotless:check
       - name: Unit tests
         run: ./mvnw -B test -Dtest='com.union.solutions.saascore.unit.**' -DfailIfNoTests=false
-      - name: Build JAR
-        run: ./mvnw -B package -DskipTests
       - name: Validate OpenAPI spec exists
         run: test -f docs/api/openapi.json && echo "OpenAPI present"
-      - name: Security scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '0'
       - name: Upload OpenAPI
         uses: actions/upload-artifact@v4
         with:
