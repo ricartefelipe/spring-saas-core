@@ -37,7 +37,8 @@ public class FeatureFlagService {
   @Transactional
   public FeatureFlag create(
       UUID tenantId, String name, boolean enabled, int rolloutPercent, List<String> allowedRoles) {
-    FeatureFlag saved = repo.createOrResurrect(tenantId, name, enabled, rolloutPercent, allowedRoles);
+    FeatureFlag saved =
+        repo.createOrResurrect(tenantId, name, enabled, rolloutPercent, allowedRoles);
     outboxPublisher.publish(
         "FLAG",
         saved.getId().toString(),
