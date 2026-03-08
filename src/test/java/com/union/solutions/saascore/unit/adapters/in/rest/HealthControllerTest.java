@@ -26,9 +26,7 @@ class HealthControllerTest {
     HealthController controller = new HealthController(dataSource, null, null);
     MockMvc mvc = MockMvcBuilders.standaloneSetup(controller).build();
 
-    mvc.perform(get("/healthz"))
-        .andExpect(status().isOk())
-        .andExpect(content().string("OK"));
+    mvc.perform(get("/healthz")).andExpect(status().isOk()).andExpect(content().string("OK"));
   }
 
   @Test
@@ -51,7 +49,8 @@ class HealthControllerTest {
 
   @Test
   void readyz_whenDbDown_returns503WithDown() throws Exception {
-    org.mockito.Mockito.when(dataSource.getConnection()).thenThrow(new RuntimeException("DB unreachable"));
+    org.mockito.Mockito.when(dataSource.getConnection())
+        .thenThrow(new RuntimeException("DB unreachable"));
 
     HealthController controller = new HealthController(dataSource, null, null);
     MockMvc mvc = MockMvcBuilders.standaloneSetup(controller).build();
