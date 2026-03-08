@@ -45,13 +45,19 @@ class TenantSnapshotControllerTest {
     when(abacEvaluator.evaluate(any(AbacContext.class))).thenReturn(AbacResult.allow());
     mvc =
         MockMvcBuilders.standaloneSetup(
-                new TenantSnapshotController(tenantUseCase, policyService, flagService, abacEvaluator))
+                new TenantSnapshotController(
+                    tenantUseCase, policyService, flagService, abacEvaluator))
             .build();
     tenantId = UUID.randomUUID();
     tenant =
         new Tenant(
-            tenantId, "Acme", "pro", "us-east-1", Tenant.TenantStatus.ACTIVE,
-            Instant.now(), Instant.now());
+            tenantId,
+            "Acme",
+            "pro",
+            "us-east-1",
+            Tenant.TenantStatus.ACTIVE,
+            Instant.now(),
+            Instant.now());
   }
 
   @Test
@@ -72,20 +78,30 @@ class TenantSnapshotControllerTest {
 
     Policy policy =
         new Policy(
-            UUID.randomUUID(), "tenants:read", Policy.Effect.ALLOW,
-            List.of("pro"), List.of(), true, "note",
-            Instant.now(), Instant.now());
-    when(policyService.getApplicablePolicies("pro", "us-east-1"))
-        .thenReturn(List.of(policy));
+            UUID.randomUUID(),
+            "tenants:read",
+            Policy.Effect.ALLOW,
+            List.of("pro"),
+            List.of(),
+            true,
+            "note",
+            Instant.now(),
+            Instant.now());
+    when(policyService.getApplicablePolicies("pro", "us-east-1")).thenReturn(List.of(policy));
 
     FeatureFlag flag =
         new FeatureFlag(
-            UUID.randomUUID(), tenantId, "dark_mode", true, 100,
-            List.of("admin"), Instant.now(), Instant.now());
+            UUID.randomUUID(),
+            tenantId,
+            "dark_mode",
+            true,
+            100,
+            List.of("admin"),
+            Instant.now(),
+            Instant.now());
     when(flagService.listByTenant(tenantId)).thenReturn(List.of(flag));
 
-    mvc.perform(
-            get("/v1/tenants/{id}/snapshot", tenantId).param("include", "policies,flags"))
+    mvc.perform(get("/v1/tenants/{id}/snapshot", tenantId).param("include", "policies,flags"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(tenantId.toString()))
         .andExpect(jsonPath("$.policies").isArray())
@@ -99,8 +115,7 @@ class TenantSnapshotControllerTest {
     UUID missingId = UUID.randomUUID();
     when(tenantUseCase.getById(missingId)).thenReturn(Optional.empty());
 
-    mvc.perform(get("/v1/tenants/{id}/snapshot", missingId))
-        .andExpect(status().isNotFound());
+    mvc.perform(get("/v1/tenants/{id}/snapshot", missingId)).andExpect(status().isNotFound());
   }
 
   @Test
@@ -109,11 +124,16 @@ class TenantSnapshotControllerTest {
 
     Policy policy =
         new Policy(
-            UUID.randomUUID(), "flags:write", Policy.Effect.ALLOW,
-            List.of(), List.of(), true, null,
-            Instant.now(), Instant.now());
-    when(policyService.getApplicablePolicies("pro", "us-east-1"))
-        .thenReturn(List.of(policy));
+            UUID.randomUUID(),
+            "flags:write",
+            Policy.Effect.ALLOW,
+            List.of(),
+            List.of(),
+            true,
+            null,
+            Instant.now(),
+            Instant.now());
+    when(policyService.getApplicablePolicies("pro", "us-east-1")).thenReturn(List.of(policy));
 
     mvc.perform(get("/v1/tenants/{id}/policies", tenantId))
         .andExpect(status().isOk())
@@ -127,8 +147,7 @@ class TenantSnapshotControllerTest {
     UUID missingId = UUID.randomUUID();
     when(tenantUseCase.getById(missingId)).thenReturn(Optional.empty());
 
-    mvc.perform(get("/v1/tenants/{id}/policies", missingId))
-        .andExpect(status().isNotFound());
+    mvc.perform(get("/v1/tenants/{id}/policies", missingId)).andExpect(status().isNotFound());
   }
 
   @Test
@@ -137,12 +156,17 @@ class TenantSnapshotControllerTest {
 
     FeatureFlag flag =
         new FeatureFlag(
-            UUID.randomUUID(), tenantId, "beta_ui", true, 50,
-            List.of("admin"), Instant.now(), Instant.now());
+            UUID.randomUUID(),
+            tenantId,
+            "beta_ui",
+            true,
+            50,
+            List.of("admin"),
+            Instant.now(),
+            Instant.now());
     when(flagService.listByTenant(tenantId)).thenReturn(List.of(flag));
 
-    mvc.perform(
-            get("/v1/tenants/{id}/snapshot", tenantId).param("include", "flags"))
+    mvc.perform(get("/v1/tenants/{id}/snapshot", tenantId).param("include", "flags"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.flags").isArray())
         .andExpect(jsonPath("$.flags[0].name").value("beta_ui"))

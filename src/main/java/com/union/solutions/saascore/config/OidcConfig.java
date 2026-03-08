@@ -36,9 +36,7 @@ public class OidcConfig {
 
     OAuth2TokenValidator<Jwt> audienceValidator =
         token -> {
-          if (audience != null
-              && !audience.isBlank()
-              && !token.getAudience().contains(audience)) {
+          if (audience != null && !audience.isBlank() && !token.getAudience().contains(audience)) {
             return OAuth2TokenValidatorResult.failure(
                 new OAuth2Error(
                     "invalid_token", "Required audience " + audience + " not found", null));

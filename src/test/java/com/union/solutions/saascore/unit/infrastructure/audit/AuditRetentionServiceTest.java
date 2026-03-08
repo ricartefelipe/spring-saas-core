@@ -13,7 +13,6 @@ import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class AuditRetentionServiceTest {
@@ -56,8 +55,7 @@ class AuditRetentionServiceTest {
   void purge_singleBatch_whenFewerThanBatchSize() {
     AuditRetentionService service = new AuditRetentionService(auditRepo, 30);
 
-    when(auditRepo.deleteBatchOlderThan(any(Instant.class), eq(1000)))
-        .thenReturn(500);
+    when(auditRepo.deleteBatchOlderThan(any(Instant.class), eq(1000))).thenReturn(500);
 
     service.purgeExpiredLogs();
 
@@ -68,8 +66,7 @@ class AuditRetentionServiceTest {
   void purge_noop_whenNoExpiredRecords() {
     AuditRetentionService service = new AuditRetentionService(auditRepo, 90);
 
-    when(auditRepo.deleteBatchOlderThan(any(Instant.class), eq(1000)))
-        .thenReturn(0);
+    when(auditRepo.deleteBatchOlderThan(any(Instant.class), eq(1000))).thenReturn(0);
 
     service.purgeExpiredLogs();
 

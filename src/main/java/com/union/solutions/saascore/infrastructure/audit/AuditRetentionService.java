@@ -20,8 +20,7 @@ public class AuditRetentionService {
   private final int retentionDays;
 
   public AuditRetentionService(
-      AuditLogJpaRepository auditRepo,
-      @Value("${app.audit.retention-days:90}") int retentionDays) {
+      AuditLogJpaRepository auditRepo, @Value("${app.audit.retention-days:90}") int retentionDays) {
     this.auditRepo = auditRepo;
     this.retentionDays = retentionDays;
   }
@@ -34,7 +33,8 @@ public class AuditRetentionService {
     }
 
     Instant cutoff = Instant.now().minus(retentionDays, ChronoUnit.DAYS);
-    log.info("Starting audit log retention purge cutoff={} retention_days={}", cutoff, retentionDays);
+    log.info(
+        "Starting audit log retention purge cutoff={} retention_days={}", cutoff, retentionDays);
 
     int totalDeleted = 0;
     int deleted;
@@ -43,7 +43,8 @@ public class AuditRetentionService {
       totalDeleted += deleted;
     } while (deleted >= BATCH_SIZE);
 
-    log.info("Audit log retention purge completed total_deleted={} cutoff={}", totalDeleted, cutoff);
+    log.info(
+        "Audit log retention purge completed total_deleted={} cutoff={}", totalDeleted, cutoff);
   }
 
   @Transactional

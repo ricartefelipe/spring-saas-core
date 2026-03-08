@@ -1,6 +1,5 @@
 package com.union.solutions.saascore.application.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.union.solutions.saascore.application.abac.AuditLogger;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
@@ -167,9 +166,7 @@ public class PolicyService {
 
   @Transactional(readOnly = true)
   public List<Policy> getApplicablePolicies(String plan, String region) {
-    return repo.findByEnabledTrue().stream()
-        .filter(p -> p.appliesTo(plan, region))
-        .toList();
+    return repo.findByEnabledTrue().stream().filter(p -> p.appliesTo(plan, region)).toList();
   }
 
   @Transactional(readOnly = true)
