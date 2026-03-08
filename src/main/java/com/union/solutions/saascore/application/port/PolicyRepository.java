@@ -14,7 +14,8 @@ public interface PolicyRepository {
 
   Optional<Policy> findActiveById(UUID id);
 
-  Page<Policy> search(String permissionCode, Policy.Effect effect, Boolean enabled, Pageable pageable);
+  Page<Policy> search(
+      String permissionCode, Policy.Effect effect, Boolean enabled, Pageable pageable);
 
   List<Policy> findByEnabledTrue();
 
