@@ -26,8 +26,7 @@ public class AnalyticsController {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("analytics:read"));
     if (!abac.allowed())
       return ResponseEntity.status(403)
-          .body(ProblemDetails.of(
-              403, "Forbidden", abac.reason(), "/v1/analytics/summary", null));
+          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/analytics/summary", null));
 
     return ResponseEntity.ok(analyticsService.getSummary());
   }
@@ -37,8 +36,8 @@ public class AnalyticsController {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("analytics:read"));
     if (!abac.allowed())
       return ResponseEntity.status(403)
-          .body(ProblemDetails.of(
-              403, "Forbidden", abac.reason(), "/v1/analytics/anomalies", null));
+          .body(
+              ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/analytics/anomalies", null));
 
     return ResponseEntity.ok(analyticsService.detectAnomalies());
   }
