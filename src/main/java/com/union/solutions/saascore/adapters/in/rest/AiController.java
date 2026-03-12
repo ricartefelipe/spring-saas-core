@@ -3,6 +3,7 @@ package com.union.solutions.saascore.adapters.in.rest;
 import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
+import com.union.solutions.saascore.application.service.AiDocsService;
 import com.union.solutions.saascore.application.service.AiService;
 import com.union.solutions.saascore.config.AiConfig.AiProperties;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,7 +14,9 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,11 +31,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class AiController {
 
   private final AiService aiService;
+  private final AiDocsService aiDocsService;
   private final AbacEvaluator abacEvaluator;
   private final AiProperties aiProperties;
 
-  public AiController(AiService aiService, AbacEvaluator abacEvaluator, AiProperties aiProperties) {
+  public AiController(
+      AiService aiService,
+      AiDocsService aiDocsService,
+      AbacEvaluator abacEvaluator,
+      AiProperties aiProperties) {
     this.aiService = aiService;
+    this.aiDocsService = aiDocsService;
     this.abacEvaluator = abacEvaluator;
     this.aiProperties = aiProperties;
   }
@@ -94,6 +103,35 @@ public class AiController {
       return forbidden(abac, "/v1/ai/insights");
     }
     return ResponseEntity.ok(aiService.getInsights());
+  }
+
+  @GetMapping("/docs")
+  @Operation(
+      summary = "Live API documentation summary",
+      description =
+          "Structured JSON summary of tenants, policies, flags, audit and API surface for LLM consumption")
+  public ResponseEntity<?> liveDocs() {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("analytics:read"));
+    if (!abac.allowed()) {
+      return forbidden(abac, "/v1/ai/docs");
+    }
+    return ResponseEntity.ok(aiDocsService.buildLiveDocs());
+  }
+
+  @GetMapping("/docs/tenant/{id}")
+  @Operation(
+      summary = "Tenant-specific live documentation",
+      description =
+          "Tenant details, applicable policies, feature flags and recent audit activity for LLM consumption")
+  public ResponseEntity<?> tenantDocs(@PathVariable UUID id) {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("analytics:read"));
+    if (!abac.allowed()) {
+      return forbidden(abac, "/v1/ai/docs/tenant/" + id);
+    }
+    return aiDocsService
+        .buildTenantDocs(id)
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
   }
 
   private ResponseEntity<ProblemDetails> forbidden(AbacResult abac, String instance) {

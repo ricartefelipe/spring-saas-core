@@ -33,4 +33,12 @@ public interface FeatureFlagJpaRepository extends JpaRepository<FeatureFlagEntit
 
   @Query("SELECT COUNT(f) FROM FeatureFlagEntity f WHERE f.enabled = false AND f.deleted = false")
   long countDisabledFlags();
+
+  @Query(
+      value =
+          "SELECT COALESCE(AVG(rollout_percent), 0), COUNT(*) FROM feature_flags"
+              + " WHERE deleted = false AND enabled = true AND rollout_percent > 0"
+              + " AND rollout_percent < 100",
+      nativeQuery = true)
+  Object[] rolloutStats();
 }
