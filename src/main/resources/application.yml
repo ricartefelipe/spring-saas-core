@@ -124,9 +124,12 @@ management:
       enabled: true
     readinessstate:
       enabled: true
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
   tracing:
     sampling:
-      probability: 1.0
+      probability: ${OTEL_TRACES_SAMPLER_ARG:1.0}
   prometheus:
     metrics:
       export:
@@ -144,4 +147,4 @@ logging:
     com.union.solutions: DEBUG
     org.springframework.security: INFO
   pattern:
-    console: "%d{ISO8601} [%thread] %-5level %logger{36} [%X{correlationId:-}] [%X{tenantId:-}] - %msg%n"
+    console: "%d{ISO8601} [%thread] %-5level %logger{36} [cid=%X{correlationId:-}] [tid=%X{tenantId:-}] [traceId=%X{traceId:-}] [spanId=%X{spanId:-}] - %msg%n"
