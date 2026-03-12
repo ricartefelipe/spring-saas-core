@@ -1,0 +1,79 @@
+databaseChangeLog:
+  - changeSet:
+      id: phase2-001-users
+      author: saascore
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(320)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: roles
+                  type: text
+                  defaultValue: "[]"
+              - column:
+                  name: status
+                  type: varchar(32)
+                  constraints:
+                    nullable: false
+                  defaultValue: PENDING
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: tenant_id, email
+            constraintName: uk_users_tenant_email
+        - createIndex:
+            indexName: idx_users_tenant_id
+            tableName: users
+            columns:
+              - column:
+                  name: tenant_id
+        - createIndex:
+            indexName: idx_users_status
+            tableName: users
+            columns:
+              - column:
+                  name: status
+        - createIndex:
+            indexName: idx_users_email
+            tableName: users
+            columns:
+              - column:
+                  name: email
+        - addForeignKeyConstraint:
+            baseTableName: users
+            baseColumnNames: tenant_id
+            referencedTableName: tenants
+            referencedColumnNames: id
+            constraintName: fk_users_tenant
