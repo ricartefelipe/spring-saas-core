@@ -50,4 +50,9 @@ public interface PolicyJpaRepository extends JpaRepository<PolicyEntity, UUID> {
 
   @Query("SELECT p.effect, COUNT(p) FROM PolicyEntity p WHERE p.deleted = false GROUP BY p.effect")
   List<Object[]> countActiveGroupByEffect();
+
+  @Query(
+      "SELECT p.permissionCode, COUNT(p) FROM PolicyEntity p WHERE p.deleted = false"
+          + " GROUP BY p.permissionCode ORDER BY COUNT(p) DESC")
+  List<Object[]> countActiveGroupByPermissionCode();
 }
