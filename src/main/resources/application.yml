@@ -39,19 +39,24 @@ server:
   shutdown: graceful
 
 app:
+  version: ${APP_VERSION:1.0.0-SNAPSHOT}
   cors:
     allowed-origins: "*"
   auth:
     mode: ${AUTH_MODE:hs256}
     jwt:
       issuer: ${JWT_ISSUER:spring-saas-core}
-      hs256-secret: ${JWT_HS256_SECRET:local-dev-secret-min-32-chars-for-hs256-signing}
+      hs256-secret: ${JWT_SECRET:${JWT_HS256_SECRET:local-dev-secret-min-32-chars-for-hs256-signing}}
+      hs256-secret-previous: ${JWT_SECRET_PREVIOUS:${JWT_HS256_SECRET_PREVIOUS:}}
       expiration-seconds: 3600
     oidc:
       issuer-uri: ${OIDC_ISSUER_URI:}
       jwk-set-uri: ${OIDC_JWK_SET_URI:}
       client-id: ${OIDC_CLIENT_ID:spring-saas-core}
       audience: ${OIDC_AUDIENCE:}
+  webhook:
+    max-attempts: 5
+    dispatch-interval-ms: 10000
   outbox:
     publish-enabled: ${OUTBOX_PUBLISH_ENABLED:false}
     batch-size: 50

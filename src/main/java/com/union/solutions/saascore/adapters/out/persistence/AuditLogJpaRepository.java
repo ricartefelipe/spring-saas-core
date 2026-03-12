@@ -127,4 +127,34 @@ public interface AuditLogJpaRepository extends JpaRepository<AuditLogEntity, UUI
       nativeQuery = true)
   List<Object[]> findUnusualTenantSwitching(
       @Param("since") Instant since, @Param("threshold") int threshold);
+
+  @Query(
+      value =
+          "SELECT actor_sub, COUNT(*) as cnt FROM audit_log"
+              + " WHERE created_at >= :since"
+              + " GROUP BY actor_sub ORDER BY cnt DESC LIMIT :limit",
+      nativeQuery = true)
+  List<Object[]> topActorsSince(@Param("since") Instant since, @Param("limit") int limit);
+
+  @Query(
+      value =
+          "SELECT a.action, COUNT(*) as cnt FROM audit_log a"
+              + " WHERE a.created_at >= :since AND a.tenant_id = :tenantId"
+              + " GROUP BY a.action ORDER BY cnt DESC LIMIT :limit",
+      nativeQuery = true)
+  List<Object[]> topActionsForTenantSince(
+      @Param("since") Instant since,
+      @Param("tenantId") java.util.UUID tenantId,
+      @Param("limit") int limit);
+
+  @Query(
+      value =
+          "SELECT actor_sub, COUNT(*) as cnt FROM audit_log"
+              + " WHERE created_at >= :since AND tenant_id = :tenantId"
+              + " GROUP BY actor_sub ORDER BY cnt DESC LIMIT :limit",
+      nativeQuery = true)
+  List<Object[]> topActorsForTenantSince(
+      @Param("since") Instant since,
+      @Param("tenantId") java.util.UUID tenantId,
+      @Param("limit") int limit);
 }

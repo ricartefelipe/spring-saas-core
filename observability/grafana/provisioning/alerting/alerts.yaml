@@ -1,0 +1,144 @@
+# Grafana 9+ provisioning - spring-saas-core alert rules
+# Place in provisioning/alerting/ and ensure Grafana is configured with provisioning path
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: spring-saas-core-common
+    folder: spring-saas-core
+    interval: 1m
+    rules:
+      - uid: saascore-high-error-rate
+        title: High Error Rate
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: |
+                (sum(rate(http_server_requests_seconds_count{job="spring-saas-core", status=~"5.."}[5m]))
+                / sum(rate(http_server_requests_seconds_count{job="spring-saas-core"}[5m]))) > 0.05
+              refId: A
+              instant: true
+        for: 5m
+        annotations:
+          summary: HTTP 5xx error rate above 5%
+          description: "More than 5% of requests are returning 5xx over the last 5 minutes."
+        labels:
+          severity: critical
+
+      - uid: saascore-high-latency
+        title: High Latency
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: |
+                histogram_quantile(0.95,
+                  sum(rate(http_server_requests_seconds_bucket{job="spring-saas-core"}[5m])) by (le)
+                ) > 2
+              refId: A
+              instant: true
+        for: 5m
+        annotations:
+          summary: p95 latency above 2 seconds
+          description: "95th percentile response time exceeds 2s over the last 5 minutes."
+        labels:
+          severity: warning
+
+      - uid: saascore-health-check-down
+        title: Health Check Down
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 120
+              to: 0
+            model:
+              expr: up{job="spring-saas-core"} == 0
+              refId: A
+              instant: true
+        for: 1m
+        annotations:
+          summary: Health check failing
+          description: "spring-saas-core instance has been unreachable for more than 1 minute."
+        labels:
+          severity: critical
+
+      - uid: saascore-high-memory
+        title: High Memory Usage
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: sum(jvm_memory_used_bytes{job="spring-saas-core", area="heap"}) > 536870912
+              refId: A
+              instant: true
+        for: 5m
+        annotations:
+          summary: Process memory above 512MB
+          description: "JVM heap memory usage exceeds 512MB."
+        labels:
+          severity: warning
+
+  - orgId: 1
+    name: spring-saas-core-specific
+    folder: spring-saas-core
+    interval: 1m
+    rules:
+      - uid: saascore-audit-log-growth
+        title: Audit Log Growth
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            model:
+              expr: |
+                (sum(increase(saas_outbox_published_total{job="spring-saas-core"}[1h]))
+                + sum(increase(saas_access_denied_total{job="spring-saas-core"}[1h]))
+                + sum(increase(saas_tenants_created_total{job="spring-saas-core"}[1h]))
+                + sum(increase(saas_policies_updated_total{job="spring-saas-core"}[1h]))
+                + sum(increase(saas_flags_toggled_total{job="spring-saas-core"}[1h]))) > 10000
+              refId: A
+              instant: true
+        for: 5m
+        annotations:
+          summary: Audit-related activity above 10k/hour
+          description: "Audit-related events (outbox, access denied, tenants, policies, flags) exceeded 10k in the last hour."
+        labels:
+          severity: warning
+
+      - uid: saascore-outbox-backlog
+        title: Outbox Queue Backlog
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: saas_outbox_pending{job="spring-saas-core"} > 100
+              refId: A
+              instant: true
+        for: 5m
+        annotations:
+          summary: Outbox has more than 100 pending events
+          description: "Outbox queue has over 100 pending events for more than 5 minutes."
+        labels:
+          severity: warning

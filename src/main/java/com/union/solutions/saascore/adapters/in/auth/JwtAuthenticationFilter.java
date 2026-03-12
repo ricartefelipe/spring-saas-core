@@ -1,5 +1,6 @@
 package com.union.solutions.saascore.adapters.in.auth;
 
+import com.union.solutions.saascore.application.abac.AuditLogger;
 import com.union.solutions.saascore.config.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,10 +22,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-  private final TokenParser tokenParser;
+  private static final String ACTION_JWT_VERIFIED_PREVIOUS_KEY = "JWT_VERIFIED_WITH_PREVIOUS_KEY";
 
-  public JwtAuthenticationFilter(TokenParser tokenParser) {
+  private final TokenParser tokenParser;
+  private final AuditLogger auditLogger;
+
+  public JwtAuthenticationFilter(TokenParser tokenParser, AuditLogger auditLogger) {
     this.tokenParser = tokenParser;
+    this.auditLogger = auditLogger;
   }
 
   @Override
@@ -39,7 +44,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       tokenParser
           .parse(token)
           .ifPresent(
-              claims -> {
+              parseResult -> {
+                TokenClaims claims = parseResult.claims();
+                if (parseResult.verifiedWithPreviousKey()) {
+                  auditLogger.log(
+                      parseUuidOrNull(claims.tid()),
+                      claims.sub(),
+                      claims.roles().toString(),
+                      claims.perms().toString(),
+                      ACTION_JWT_VERIFIED_PREVIOUS_KEY,
+                      "jwt",
+                      null,
+                      request.getMethod(),
+                      request.getRequestURI(),
+                      200,
+                      request.getHeader("X-Correlation-Id"),
+                      "JWT verified with previous/rotated key during secret rotation");
+                }
                 String sub = claims.sub();
                 String tid = claims.tid();
                 String plan = claims.plan();
@@ -91,6 +112,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       filterChain.doFilter(request, response);
     } finally {
       TenantContext.clear();
+    }
+  }
+
+  private static UUID parseUuidOrNull(String tid) {
+    if (tid == null || tid.isBlank()) {
+      return null;
+    }
+    try {
+      return UUID.fromString(tid);
+    } catch (IllegalArgumentException e) {
+      return null;
     }
   }
 }
