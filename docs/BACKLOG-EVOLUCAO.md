@@ -42,6 +42,8 @@ Estado atual por critério de "pronto para venda".
 - [x] Scripts: up, migrate, seed
 - [x] Script de smoke test
 - [x] Alertas Grafana pré-configurados
+- [x] Rede Docker `fluxe_shared` com `external: true` para orquestração multi-serviço
+- [x] Script `up-all.sh` (fluxe-b2b-suite) integra os 3 backends com RabbitMQ compartilhado
 
 ---
 
