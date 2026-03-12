@@ -1,0 +1,149 @@
+databaseChangeLog:
+  - changeSet:
+      id: webhooks-001-endpoints
+      author: saascore
+      changes:
+        - createTable:
+            tableName: webhook_endpoints
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: url
+                  type: varchar(2048)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: secret
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: events
+                  type: varchar(1024)
+                  defaultValue: "[]"
+              - column:
+                  name: is_active
+                  type: boolean
+                  defaultValueBoolean: true
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - createIndex:
+            indexName: idx_webhook_endpoints_tenant_id
+            tableName: webhook_endpoints
+            columns:
+              - column:
+                  name: tenant_id
+        - addForeignKeyConstraint:
+            constraintName: fk_webhook_endpoints_tenant
+            baseTableName: webhook_endpoints
+            baseColumnNames: tenant_id
+            referencedTableName: tenants
+            referencedColumnNames: id
+
+  - changeSet:
+      id: webhooks-002-deliveries
+      author: saascore
+      changes:
+        - createTable:
+            tableName: webhook_deliveries
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: endpoint_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_type
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: payload
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(32)
+                  defaultValue: PENDING
+              - column:
+                  name: attempts
+                  type: int
+                  defaultValueNumeric: 0
+              - column:
+                  name: response_code
+                  type: int
+              - column:
+                  name: next_attempt_at
+                  type: timestamp with time zone
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - createIndex:
+            indexName: idx_webhook_deliveries_status
+            tableName: webhook_deliveries
+            columns:
+              - column:
+                  name: status
+        - createIndex:
+            indexName: idx_webhook_deliveries_next_attempt
+            tableName: webhook_deliveries
+            columns:
+              - column:
+                  name: next_attempt_at
+        - addForeignKeyConstraint:
+            constraintName: fk_webhook_deliveries_endpoint
+            baseTableName: webhook_deliveries
+            baseColumnNames: endpoint_id
+            referencedTableName: webhook_endpoints
+            referencedColumnNames: id
+
+  - changeSet:
+      id: webhooks-003-policy
+      author: saascore
+      changes:
+        - insert:
+            tableName: policies
+            columns:
+              - column: { name: id, value: "10000000-0000-0000-0000-000000000010" }
+              - column: { name: permission_code, value: "webhooks:manage" }
+              - column: { name: effect, value: "ALLOW" }
+              - column: { name: allowed_plans, value: '["pro","enterprise"]' }
+              - column: { name: allowed_regions, value: "[]" }
+              - column: { name: enabled, valueBoolean: true }
+              - column: { name: deleted, valueBoolean: false }
+              - column: { name: notes, value: "Pro and enterprise can manage webhook endpoints" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
