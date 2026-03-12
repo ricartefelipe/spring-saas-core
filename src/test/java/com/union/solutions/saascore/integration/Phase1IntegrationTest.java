@@ -10,7 +10,6 @@ import com.union.solutions.saascore.application.port.TokenIssuer;
 import java.util.List;
 import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -51,6 +50,7 @@ class Phase1IntegrationTest {
   @Autowired TokenIssuer tokenIssuer;
 
   private String adminToken;
+  private String adminToken002;
   private String freeToken;
 
   @BeforeEach
@@ -58,7 +58,7 @@ class Phase1IntegrationTest {
     adminToken =
         tokenIssuer.issue(
             "admin@test",
-            "00000000-0000-0000-0000-000000000099",
+            "00000000-0000-0000-0000-000000000001",
             List.of("admin"),
             List.of(
                 "tenants:read",
@@ -66,7 +66,16 @@ class Phase1IntegrationTest {
                 "policies:read",
                 "policies:write",
                 "flags:read",
-                "flags:write"),
+                "flags:write",
+                "audit:read"),
+            "enterprise",
+            "us-east-1");
+    adminToken002 =
+        tokenIssuer.issue(
+            "admin@test",
+            "00000000-0000-0000-0000-000000000002",
+            List.of("admin"),
+            List.of("tenants:read", "flags:read"),
             "enterprise",
             "us-east-1");
     freeToken =
@@ -190,7 +199,6 @@ class Phase1IntegrationTest {
   }
 
   @Test
-  @Disabled("ABAC seed policies need review — flags:write not granted in test context")
   void flagCrud_worksEndToEnd() throws Exception {
     String tenantId = "00000000-0000-0000-0000-000000000001";
 
@@ -225,7 +233,6 @@ class Phase1IntegrationTest {
   }
 
   @Test
-  @Disabled("ABAC seed policies need review — flags:write not granted in test context")
   void flagSoftDelete_hidesFromList() throws Exception {
     String tenantId = "00000000-0000-0000-0000-000000000001";
 
@@ -317,24 +324,23 @@ class Phase1IntegrationTest {
   }
 
   @Test
-  @Disabled("ABAC seed policies need review — snapshot endpoint returns 403 in test context")
   void tenantSnapshot_returnsData() throws Exception {
     String tenantId = "00000000-0000-0000-0000-000000000002";
     mvc.perform(
             get("/v1/tenants/" + tenantId + "/snapshot")
-                .header("Authorization", "Bearer " + adminToken))
+                .header("Authorization", "Bearer " + adminToken002))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.plan").value("pro"));
 
     mvc.perform(
             get("/v1/tenants/" + tenantId + "/policies")
-                .header("Authorization", "Bearer " + adminToken))
+                .header("Authorization", "Bearer " + adminToken002))
         .andExpect(status().isOk());
 
     mvc.perform(
             get("/v1/tenants/" + tenantId + "/flags")
-                .header("Authorization", "Bearer " + adminToken))
+                .header("Authorization", "Bearer " + adminToken002))
         .andExpect(status().isOk());
   }
 
@@ -443,7 +449,6 @@ class Phase1IntegrationTest {
   }
 
   @Test
-  @Disabled("ABAC seed policies need review — flags:write not granted in test context")
   void flagDuplicate_returns400() throws Exception {
     String tenantId = "00000000-0000-0000-0000-000000000001";
     String flagBody =
