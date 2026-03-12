@@ -13,6 +13,10 @@ Estado atual por critério de "pronto para venda".
 - [x] JWT padronizado (claims: sub, tid, roles, perms, plan, region)
 - [x] Tenant snapshots (GET /v1/tenants/{id}/snapshot)
 - [x] Outbox para eventos de domínio (JpaOutboxPublisher + OutboxPublisher)
+- [x] Gestão de usuários por tenant
+- [x] Self-service onboarding (tenant + admin user)
+- [x] Catálogo de planos e assinaturas (billing)
+- [x] Registro, login e reset de senha de usuário
 - [ ] Webhook de eventos para integradores externos
 
 ---
@@ -25,7 +29,7 @@ Estado atual por critério de "pronto para venda".
 - [x] ABAC em TenantSnapshotController
 - [x] Sem credenciais hardcoded em código
 - [x] Rate limiting por tenant
-- [ ] Rotação de JWT_SECRET sem downtime
+- [x] Rotação de JWT_SECRET sem downtime
 
 ---
 
@@ -37,7 +41,7 @@ Estado atual por critério de "pronto para venda".
 - [x] Docker multi-stage
 - [x] Scripts: up, migrate, seed
 - [x] Script de smoke test
-- [ ] Alertas Grafana pré-configurados
+- [x] Alertas Grafana pré-configurados
 
 ---
 
