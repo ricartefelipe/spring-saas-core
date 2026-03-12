@@ -1,0 +1,261 @@
+databaseChangeLog:
+  - changeSet:
+      id: billing-001-plan-definitions
+      author: saascore
+      changes:
+        - createTable:
+            tableName: plan_definitions
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: slug
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: display_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: varchar(500)
+              - column:
+                  name: monthly_price_cents
+                  type: bigint
+                  constraints:
+                    nullable: false
+                  defaultValueNumeric: 0
+              - column:
+                  name: yearly_price_cents
+                  type: bigint
+                  constraints:
+                    nullable: false
+                  defaultValueNumeric: 0
+              - column:
+                  name: max_users
+                  type: int
+                  constraints:
+                    nullable: false
+                  defaultValueNumeric: 5
+              - column:
+                  name: max_projects
+                  type: int
+                  constraints:
+                    nullable: false
+                  defaultValueNumeric: 3
+              - column:
+                  name: storage_gb
+                  type: int
+                  constraints:
+                    nullable: false
+                  defaultValueNumeric: 1
+              - column:
+                  name: active
+                  type: boolean
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: true
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - createIndex:
+            indexName: idx_plan_definitions_slug
+            tableName: plan_definitions
+            columns:
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_plan_definitions_active
+            tableName: plan_definitions
+            columns:
+              - column:
+                  name: active
+
+  - changeSet:
+      id: billing-002-subscriptions
+      author: saascore
+      changes:
+        - createTable:
+            tableName: subscriptions
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: plan_slug
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+                  defaultValue: ACTIVE
+              - column:
+                  name: current_period_start
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: current_period_end
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: cancelled_at
+                  type: timestamp with time zone
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - createIndex:
+            indexName: idx_subscriptions_tenant_status
+            tableName: subscriptions
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: status
+        - addForeignKeyConstraint:
+            baseTableName: subscriptions
+            baseColumnNames: tenant_id
+            referencedTableName: tenants
+            referencedColumnNames: id
+            constraintName: fk_subscriptions_tenant
+
+  - changeSet:
+      id: billing-003-seed-plans
+      author: saascore
+      changes:
+        - insert:
+            tableName: plan_definitions
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: slug
+                  value: free
+              - column:
+                  name: display_name
+                  value: Free
+              - column:
+                  name: description
+                  value: Get started with basic features at no cost.
+              - column:
+                  name: monthly_price_cents
+                  valueNumeric: 0
+              - column:
+                  name: yearly_price_cents
+                  valueNumeric: 0
+              - column:
+                  name: max_users
+                  valueNumeric: 3
+              - column:
+                  name: max_projects
+                  valueNumeric: 2
+              - column:
+                  name: storage_gb
+                  valueNumeric: 1
+              - column:
+                  name: active
+                  valueBoolean: true
+        - insert:
+            tableName: plan_definitions
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: slug
+                  value: pro
+              - column:
+                  name: display_name
+                  value: Pro
+              - column:
+                  name: description
+                  value: For growing teams that need more power and flexibility.
+              - column:
+                  name: monthly_price_cents
+                  valueNumeric: 2900
+              - column:
+                  name: yearly_price_cents
+                  valueNumeric: 29000
+              - column:
+                  name: max_users
+                  valueNumeric: 25
+              - column:
+                  name: max_projects
+                  valueNumeric: 20
+              - column:
+                  name: storage_gb
+                  valueNumeric: 50
+              - column:
+                  name: active
+                  valueBoolean: true
+        - insert:
+            tableName: plan_definitions
+            columns:
+              - column:
+                  name: id
+                  valueComputed: gen_random_uuid()
+              - column:
+                  name: slug
+                  value: enterprise
+              - column:
+                  name: display_name
+                  value: Enterprise
+              - column:
+                  name: description
+                  value: Unlimited access with dedicated support and custom integrations.
+              - column:
+                  name: monthly_price_cents
+                  valueNumeric: 9900
+              - column:
+                  name: yearly_price_cents
+                  valueNumeric: 99000
+              - column:
+                  name: max_users
+                  valueNumeric: 9999
+              - column:
+                  name: max_projects
+                  valueNumeric: 9999
+              - column:
+                  name: storage_gb
+                  valueNumeric: 500
+              - column:
+                  name: active
+                  valueBoolean: true
