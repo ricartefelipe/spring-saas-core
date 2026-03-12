@@ -109,13 +109,15 @@ public class UserUseCase {
                             .flatMap(r -> ROLE_PERMISSIONS.getOrDefault(r, List.of()).stream())
                             .distinct()
                             .toList();
+                    boolean isSuperAdmin = u.getRoles().contains("admin");
                     Optional<Tenant> tenant = tenantRepo.findById(u.getTenantId());
                     String plan = tenant.map(Tenant::getPlan).orElse("starter");
                     String region = tenant.map(Tenant::getRegion).orElse("us-east-1");
+                    String tid = isSuperAdmin ? "*" : u.getTenantId().toString();
 
                     String token = tokenIssuer.issue(
                             u.getEmail(),
-                            u.getTenantId().toString(),
+                            tid,
                             u.getRoles(),
                             perms,
                             plan,
