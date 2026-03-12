@@ -3,10 +3,12 @@ package com.union.solutions.saascore.application.user;
 import com.union.solutions.saascore.application.abac.AuditLogger;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.PasswordResetTokenRepository;
+import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.port.TokenIssuer;
 import com.union.solutions.saascore.application.port.UserRepository;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.PasswordResetToken;
+import com.union.solutions.saascore.domain.Tenant;
 import com.union.solutions.saascore.domain.User;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -31,7 +33,24 @@ public class UserUseCase {
     private static final Logger log = LoggerFactory.getLogger(UserUseCase.class);
     private static final long RESET_TOKEN_TTL_SECONDS = 3600;
 
+    private static final Map<String, List<String>> ROLE_PERMISSIONS = Map.of(
+            "admin", List.of(
+                    "tenants:read", "tenants:write", "policies:read", "policies:write",
+                    "flags:read", "flags:write", "audit:read", "analytics:read", "admin:write",
+                    "orders:read", "orders:write", "inventory:read", "inventory:write",
+                    "payments:read", "payments:write", "ledger:read",
+                    "products:read", "products:write", "profile:read"),
+            "ops", List.of(
+                    "orders:read", "orders:write", "inventory:read", "inventory:write",
+                    "products:read", "products:write", "payments:read", "payments:write",
+                    "ledger:read", "profile:read"),
+            "viewer", List.of(
+                    "orders:read", "inventory:read", "payments:read", "ledger:read",
+                    "products:read", "profile:read"),
+            "member", List.of("products:read", "orders:read", "profile:read"));
+
     private final UserRepository userRepo;
+    private final TenantRepository tenantRepo;
     private final PasswordResetTokenRepository resetTokenRepo;
     private final PasswordEncoder passwordEncoder;
     private final TokenIssuer tokenIssuer;
@@ -40,12 +59,14 @@ public class UserUseCase {
     private final SecureRandom secureRandom = new SecureRandom();
 
     public UserUseCase(UserRepository userRepo,
+                       TenantRepository tenantRepo,
                        PasswordResetTokenRepository resetTokenRepo,
                        PasswordEncoder passwordEncoder,
                        TokenIssuer tokenIssuer,
                        OutboxPublisherPort outboxPublisher,
                        AuditLogger auditLogger) {
         this.userRepo = userRepo;
+        this.tenantRepo = tenantRepo;
         this.resetTokenRepo = resetTokenRepo;
         this.passwordEncoder = passwordEncoder;
         this.tokenIssuer = tokenIssuer;
@@ -84,13 +105,21 @@ public class UserUseCase {
                 .filter(User::isActive)
                 .filter(u -> passwordEncoder.matches(rawPassword, u.getPasswordHash()))
                 .map(u -> {
+                    List<String> perms = u.getRoles().stream()
+                            .flatMap(r -> ROLE_PERMISSIONS.getOrDefault(r, List.of()).stream())
+                            .distinct()
+                            .toList();
+                    Optional<Tenant> tenant = tenantRepo.findById(u.getTenantId());
+                    String plan = tenant.map(Tenant::getPlan).orElse("starter");
+                    String region = tenant.map(Tenant::getRegion).orElse("us-east-1");
+
                     String token = tokenIssuer.issue(
-                            u.getId().toString(),
+                            u.getEmail(),
                             u.getTenantId().toString(),
                             u.getRoles(),
-                            List.of(),
-                            "",
-                            "");
+                            perms,
+                            plan,
+                            region);
                     return new AuthResult(token, u);
                 });
     }
