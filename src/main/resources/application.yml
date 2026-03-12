@@ -45,7 +45,8 @@ app:
     mode: ${AUTH_MODE:hs256}
     jwt:
       issuer: ${JWT_ISSUER:spring-saas-core}
-      hs256-secret: ${JWT_HS256_SECRET:local-dev-secret-min-32-chars-for-hs256-signing}
+      hs256-secret: ${JWT_SECRET:${JWT_HS256_SECRET:local-dev-secret-min-32-chars-for-hs256-signing}}
+      hs256-secret-previous: ${JWT_SECRET_PREVIOUS:${JWT_HS256_SECRET_PREVIOUS:}}
       expiration-seconds: 3600
     oidc:
       issuer-uri: ${OIDC_ISSUER_URI:}
