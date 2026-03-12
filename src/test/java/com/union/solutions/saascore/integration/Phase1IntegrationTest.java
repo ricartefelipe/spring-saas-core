@@ -130,7 +130,7 @@ class Phase1IntegrationTest {
 
     mvc.perform(get("/v1/tenants").header("Authorization", "Bearer " + adminToken))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.content").isArray());
+        .andExpect(jsonPath("$.items").isArray());
 
     mvc.perform(
             patch("/v1/tenants/" + tenantId)
@@ -415,7 +415,7 @@ class Phase1IntegrationTest {
             .andExpect(status().isOk())
             .andReturn();
     JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-    for (JsonNode tenant : body.get("content")) {
+    for (JsonNode tenant : body.get("items")) {
       assertThat(tenant.get("plan").asText()).isEqualTo("enterprise");
     }
   }
