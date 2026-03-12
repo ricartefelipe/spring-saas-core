@@ -30,6 +30,7 @@ class OutboxPublisherTest {
 
   @Mock OutboxEventJpaRepository outboxRepo;
   @Mock RabbitOutboxSender rabbitOutboxSender;
+  @Mock io.micrometer.tracing.Tracer tracer;
   @Mock Counter publishedCounter;
   @Mock Counter failedCounter;
 
@@ -43,6 +44,7 @@ class OutboxPublisherTest {
             outboxRepo,
             rabbitOutboxSender,
             objectMapper,
+            tracer,
             publishedCounter,
             failedCounter,
             50,
