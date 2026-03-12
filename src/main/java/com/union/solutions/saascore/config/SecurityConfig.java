@@ -40,6 +40,7 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(
+                        "/v1/onboarding/**",
                         "/v1/dev/token",
                         "/healthz",
                         "/readyz",
