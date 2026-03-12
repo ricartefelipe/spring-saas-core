@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/changes/005-billing-plans-subscriptions.yaml
   - include:
       file: db/changelog/changes/006-webhooks.yaml
+  - include:
+      file: db/changelog/changes/007-subscription-lifecycle.yaml
