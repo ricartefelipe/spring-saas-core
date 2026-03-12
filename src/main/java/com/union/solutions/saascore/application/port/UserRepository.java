@@ -11,7 +11,11 @@ public interface UserRepository {
 
     Optional<User> findById(UUID id);
 
+    Optional<User> findByIdAndTenantId(UUID id, UUID tenantId);
+
     Optional<User> findByEmail(String email);
+
+    Optional<User> findByEmailAndTenantId(String email, UUID tenantId);
 
     List<User> findByTenantId(UUID tenantId);
 
