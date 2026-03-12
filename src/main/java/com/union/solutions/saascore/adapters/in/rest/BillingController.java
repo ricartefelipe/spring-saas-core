@@ -120,6 +120,9 @@ public class BillingController {
       String status,
       Instant currentPeriodStart,
       Instant currentPeriodEnd,
+      Instant trialEndsAt,
+      Instant gracePeriodEndsAt,
+      String previousPlanSlug,
       Instant cancelledAt,
       Instant createdAt,
       Instant updatedAt) {
@@ -132,6 +135,9 @@ public class BillingController {
           s.getStatus().name(),
           s.getCurrentPeriodStart(),
           s.getCurrentPeriodEnd(),
+          s.getTrialEndsAt(),
+          s.getGracePeriodEndsAt(),
+          s.getPreviousPlanSlug(),
           s.getCancelledAt(),
           s.getCreatedAt(),
           s.getUpdatedAt());
