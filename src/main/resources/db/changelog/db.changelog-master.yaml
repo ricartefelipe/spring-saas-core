@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/changes/004-users-and-reset-tokens.yaml
   - include:
       file: db/changelog/changes/005-billing-plans-subscriptions.yaml
+  - include:
+      file: db/changelog/changes/006-webhooks.yaml

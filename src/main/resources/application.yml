@@ -39,6 +39,7 @@ server:
   shutdown: graceful
 
 app:
+  version: ${APP_VERSION:1.0.0-SNAPSHOT}
   cors:
     allowed-origins: "*"
   auth:
@@ -53,6 +54,9 @@ app:
       jwk-set-uri: ${OIDC_JWK_SET_URI:}
       client-id: ${OIDC_CLIENT_ID:spring-saas-core}
       audience: ${OIDC_AUDIENCE:}
+  webhook:
+    max-attempts: 5
+    dispatch-interval-ms: 10000
   outbox:
     publish-enabled: ${OUTBOX_PUBLISH_ENABLED:false}
     batch-size: 50
