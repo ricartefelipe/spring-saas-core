@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: subscription-lifecycle-001-new-columns
+      author: saascore
+      changes:
+        - addColumn:
+            tableName: subscriptions
+            columns:
+              - column:
+                  name: trial_ends_at
+                  type: timestamp with time zone
+              - column:
+                  name: grace_period_ends_at
+                  type: timestamp with time zone
+              - column:
+                  name: previous_plan_slug
+                  type: varchar(50)
+
+  - changeSet:
+      id: subscription-lifecycle-002-migrate-trialing
+      author: saascore
+      comment: Rename TRIALING status to TRIAL for consistency
+      changes:
+        - update:
+            tableName: subscriptions
+            columns:
+              - column:
+                  name: status
+                  value: TRIAL
+            where: status = 'TRIALING'
+
+  - changeSet:
+      id: subscription-lifecycle-003-indexes
+      author: saascore
+      changes:
+        - createIndex:
+            indexName: idx_subscriptions_status_trial_ends
+            tableName: subscriptions
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: trial_ends_at
+        - createIndex:
+            indexName: idx_subscriptions_status_grace_ends
+            tableName: subscriptions
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: grace_period_ends_at
