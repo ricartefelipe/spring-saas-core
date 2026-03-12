@@ -40,6 +40,9 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(
+                        "/v1/auth/register",
+                        "/v1/auth/login",
+                        "/v1/auth/password-reset/**",
                         "/v1/dev/token",
                         "/healthz",
                         "/readyz",
