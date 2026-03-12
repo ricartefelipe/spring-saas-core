@@ -6,12 +6,18 @@ import java.util.UUID;
 
 public class Subscription {
 
+  public static final int DEFAULT_TRIAL_DAYS = 14;
+  public static final int GRACE_PERIOD_DAYS = 7;
+
   private UUID id;
   private UUID tenantId;
   private String planSlug;
   private SubscriptionStatus status;
   private Instant currentPeriodStart;
   private Instant currentPeriodEnd;
+  private Instant trialEndsAt;
+  private Instant gracePeriodEndsAt;
+  private String previousPlanSlug;
   private Instant cancelledAt;
   private Instant createdAt;
   private Instant updatedAt;
@@ -25,6 +31,9 @@ public class Subscription {
       SubscriptionStatus status,
       Instant currentPeriodStart,
       Instant currentPeriodEnd,
+      Instant trialEndsAt,
+      Instant gracePeriodEndsAt,
+      String previousPlanSlug,
       Instant cancelledAt,
       Instant createdAt,
       Instant updatedAt) {
@@ -34,6 +43,9 @@ public class Subscription {
     this.status = status;
     this.currentPeriodStart = currentPeriodStart;
     this.currentPeriodEnd = currentPeriodEnd;
+    this.trialEndsAt = trialEndsAt;
+    this.gracePeriodEndsAt = gracePeriodEndsAt;
+    this.previousPlanSlug = previousPlanSlug;
     this.cancelledAt = cancelledAt;
     this.createdAt = createdAt != null ? createdAt : Instant.now();
     this.updatedAt = updatedAt != null ? updatedAt : Instant.now();
@@ -87,6 +99,30 @@ public class Subscription {
     this.currentPeriodEnd = currentPeriodEnd;
   }
 
+  public Instant getTrialEndsAt() {
+    return trialEndsAt;
+  }
+
+  public void setTrialEndsAt(Instant trialEndsAt) {
+    this.trialEndsAt = trialEndsAt;
+  }
+
+  public Instant getGracePeriodEndsAt() {
+    return gracePeriodEndsAt;
+  }
+
+  public void setGracePeriodEndsAt(Instant gracePeriodEndsAt) {
+    this.gracePeriodEndsAt = gracePeriodEndsAt;
+  }
+
+  public String getPreviousPlanSlug() {
+    return previousPlanSlug;
+  }
+
+  public void setPreviousPlanSlug(String previousPlanSlug) {
+    this.previousPlanSlug = previousPlanSlug;
+  }
+
   public Instant getCancelledAt() {
     return cancelledAt;
   }
@@ -124,9 +160,10 @@ public class Subscription {
   }
 
   public enum SubscriptionStatus {
+    TRIAL,
     ACTIVE,
     PAST_DUE,
     CANCELLED,
-    TRIALING
+    EXPIRED
   }
 }
