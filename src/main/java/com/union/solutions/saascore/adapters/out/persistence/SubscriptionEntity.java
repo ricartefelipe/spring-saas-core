@@ -33,6 +33,15 @@ public class SubscriptionEntity {
   @Column(name = "current_period_end", nullable = false)
   private Instant currentPeriodEnd;
 
+  @Column(name = "trial_ends_at")
+  private Instant trialEndsAt;
+
+  @Column(name = "grace_period_ends_at")
+  private Instant gracePeriodEndsAt;
+
+  @Column(name = "previous_plan_slug", length = 50)
+  private String previousPlanSlug;
+
   @Column(name = "cancelled_at")
   private Instant cancelledAt;
 
@@ -50,6 +59,9 @@ public class SubscriptionEntity {
     e.status = d.getStatus();
     e.currentPeriodStart = d.getCurrentPeriodStart();
     e.currentPeriodEnd = d.getCurrentPeriodEnd();
+    e.trialEndsAt = d.getTrialEndsAt();
+    e.gracePeriodEndsAt = d.getGracePeriodEndsAt();
+    e.previousPlanSlug = d.getPreviousPlanSlug();
     e.cancelledAt = d.getCancelledAt();
     e.createdAt = d.getCreatedAt();
     e.updatedAt = d.getUpdatedAt();
@@ -64,6 +76,9 @@ public class SubscriptionEntity {
         status,
         currentPeriodStart,
         currentPeriodEnd,
+        trialEndsAt,
+        gracePeriodEndsAt,
+        previousPlanSlug,
         cancelledAt,
         createdAt,
         updatedAt);
@@ -115,6 +130,30 @@ public class SubscriptionEntity {
 
   public void setCurrentPeriodEnd(Instant currentPeriodEnd) {
     this.currentPeriodEnd = currentPeriodEnd;
+  }
+
+  public Instant getTrialEndsAt() {
+    return trialEndsAt;
+  }
+
+  public void setTrialEndsAt(Instant trialEndsAt) {
+    this.trialEndsAt = trialEndsAt;
+  }
+
+  public Instant getGracePeriodEndsAt() {
+    return gracePeriodEndsAt;
+  }
+
+  public void setGracePeriodEndsAt(Instant gracePeriodEndsAt) {
+    this.gracePeriodEndsAt = gracePeriodEndsAt;
+  }
+
+  public String getPreviousPlanSlug() {
+    return previousPlanSlug;
+  }
+
+  public void setPreviousPlanSlug(String previousPlanSlug) {
+    this.previousPlanSlug = previousPlanSlug;
   }
 
   public Instant getCancelledAt() {
