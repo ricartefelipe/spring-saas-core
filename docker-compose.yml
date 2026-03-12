@@ -106,7 +106,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus:/etc/prometheus:ro
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
     depends_on:
@@ -137,7 +137,7 @@ services:
 
 networks:
   fluxe_shared:
-    external: true
+    name: fluxe_shared
 
 volumes:
   pgdata:
