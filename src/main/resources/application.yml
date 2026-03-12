@@ -75,6 +75,9 @@ app:
     max-tokens: ${AI_MAX_TOKENS:2048}
     temperature: ${AI_TEMPERATURE:0.3}
     timeout-seconds: ${AI_TIMEOUT:30}
+  email:
+    provider: ${EMAIL_PROVIDER:log}
+    from: ${EMAIL_FROM:noreply@fluxe.com.br}
   dev:
     token-endpoint-enabled: false
 
