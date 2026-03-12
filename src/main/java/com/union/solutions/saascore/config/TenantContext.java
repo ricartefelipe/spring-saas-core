@@ -66,6 +66,10 @@ public final class TenantContext {
     return HOLDER.get().perms != null ? HOLDER.get().perms : List.of();
   }
 
+  public static Optional<List<String>> getPermsIfSet() {
+    return Optional.ofNullable(HOLDER.get().perms);
+  }
+
   public static void clear() {
     HOLDER.remove();
   }

@@ -7,6 +7,7 @@ import com.union.solutions.saascore.domain.Policy;
 import io.micrometer.core.instrument.Counter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,12 @@ public class AbacEvaluator {
 
   @Transactional(readOnly = true)
   public AbacResult evaluate(AbacContext ctx) {
+    Optional<List<String>> jwtPerms = TenantContext.getPermsIfSet();
+    if (jwtPerms.isPresent() && !jwtPerms.get().contains(ctx.permission())) {
+      logDeny(ctx, null);
+      return AbacResult.deny(null, "permission_not_in_jwt");
+    }
+
     List<Policy> policies = policyRepo.findByPermissionCodeAndEnabledTrue(ctx.permission());
     if (policies.isEmpty()) {
       logDeny(ctx, null);
