@@ -17,7 +17,7 @@ Estado atual por critério de "pronto para venda".
 - [x] Self-service onboarding (tenant + admin user)
 - [x] Catálogo de planos e assinaturas (billing)
 - [x] Registro, login e reset de senha de usuário
-- [ ] Webhook de eventos para integradores externos
+- [x] Webhook de eventos para integradores externos
 
 ---
 
@@ -59,7 +59,7 @@ Estado atual por critério de "pronto para venda".
 
 - [x] Auditoria de ações sensíveis
 - [x] Auditoria de negações
-- [ ] Retenção configurável de audit log
+- [x] Retenção configurável de audit log
 - [x] Exportação de audit log (CSV/JSON)
 - [x] Política de privacidade de dados
 
@@ -69,4 +69,4 @@ Estado atual por critério de "pronto para venda".
 
 - [x] API de dados agregados para análise
 - [x] Endpoint de anomalias em audit log
-- [ ] Documentação viva gerada por IA
+- [x] Documentação viva gerada por IA

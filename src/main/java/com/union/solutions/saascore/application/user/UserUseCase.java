@@ -117,7 +117,8 @@ public class UserUseCase {
         resetTokenRepo.save(resetToken);
 
         outboxPublisher.publish("USER", user.getId().toString(), "user.password_reset_requested",
-                Map.of("userId", user.getId().toString(), "tokenId", tokenId.toString(), "rawToken", rawToken));
+                Map.of("userId", user.getId().toString(), "tenantId", user.getTenantId().toString(),
+                    "tokenId", tokenId.toString(), "rawToken", rawToken));
 
         log.info("Password reset requested for user={}", user.getId());
         return new PasswordResetResult(true, tokenId, rawToken);
