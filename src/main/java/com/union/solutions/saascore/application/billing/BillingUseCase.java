@@ -71,6 +71,9 @@ public class BillingUseCase {
             now,
             now.plus(30, ChronoUnit.DAYS),
             null,
+            null,
+            null,
+            null,
             now,
             now);
 
