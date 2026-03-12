@@ -12,7 +12,6 @@ import com.union.solutions.saascore.application.port.TokenIssuer;
 import java.util.List;
 import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -62,7 +61,7 @@ class AbacIntegrationTest {
     adminToken =
         tokenIssuer.issue(
             "admin@test",
-            "00000000-0000-0000-0000-000000000099",
+            "00000000-0000-0000-0000-000000000001",
             List.of("admin"),
             List.of(
                 "tenants:read",
@@ -112,7 +111,6 @@ class AbacIntegrationTest {
   }
 
   @Test
-  @Disabled("ABAC seed policies need review — expected 403 but gets 200")
   void userWithoutRequiredPermission_gets403() throws Exception {
     mvc.perform(get("/v1/tenants").header("Authorization", "Bearer " + noPermsToken))
         .andExpect(status().isForbidden());
@@ -188,7 +186,6 @@ class AbacIntegrationTest {
   }
 
   @Test
-  @Disabled("ABAC seed policies need review — expected 200 but gets 403")
   void featureFlagAccess_withPermission_succeeds() throws Exception {
     String tenantId = "00000000-0000-0000-0000-000000000001";
 
@@ -205,7 +202,6 @@ class AbacIntegrationTest {
   }
 
   @Test
-  @Disabled("ABAC seed policies need review — expected 403 but gets 200")
   void auditAccess_withoutPermission_gets403() throws Exception {
     mvc.perform(get("/v1/audit").header("Authorization", "Bearer " + noPermsToken))
         .andExpect(status().isForbidden());
