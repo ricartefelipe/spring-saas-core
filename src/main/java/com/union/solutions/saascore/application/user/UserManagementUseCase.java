@@ -114,9 +114,10 @@ public class UserManagementUseCase {
     User user =
         new User(
             id,
-            tenantId,
-            name,
             email,
+            name,
+            null,
+            tenantId,
             roles != null ? roles : List.of("member"),
             User.UserStatus.PENDING,
             now,

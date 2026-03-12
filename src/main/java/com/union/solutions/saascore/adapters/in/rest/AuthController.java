@@ -44,7 +44,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         return userUseCase.authenticate(request.email(), request.password())
-                .map(result -> ResponseEntity.ok(Map.of(
+                .<ResponseEntity<?>>map(result -> ResponseEntity.ok(Map.of(
                         "access_token", result.accessToken(),
                         "token_type", "Bearer",
                         "expires_in", 3600,
