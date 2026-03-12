@@ -3,18 +3,19 @@ package com.union.solutions.saascore.adapters.in.rest;
 import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
+import com.union.solutions.saascore.application.ai.GovernanceChatbotService;
+import com.union.solutions.saascore.application.ai.GovernanceRecommendationService;
 import com.union.solutions.saascore.application.service.AiDocsService;
 import com.union.solutions.saascore.application.service.AiService;
 import com.union.solutions.saascore.config.AiConfig.AiProperties;
+import com.union.solutions.saascore.config.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
-import org.springframework.http.ResponseEntity;
 import java.util.UUID;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,16 +35,22 @@ public class AiController {
   private final AiDocsService aiDocsService;
   private final AbacEvaluator abacEvaluator;
   private final AiProperties aiProperties;
+  private final GovernanceChatbotService chatbotService;
+  private final GovernanceRecommendationService governanceRecommendationService;
 
   public AiController(
       AiService aiService,
       AiDocsService aiDocsService,
       AbacEvaluator abacEvaluator,
-      AiProperties aiProperties) {
+      AiProperties aiProperties,
+      GovernanceChatbotService chatbotService,
+      GovernanceRecommendationService governanceRecommendationService) {
     this.aiService = aiService;
     this.aiDocsService = aiDocsService;
     this.abacEvaluator = abacEvaluator;
     this.aiProperties = aiProperties;
+    this.chatbotService = chatbotService;
+    this.governanceRecommendationService = governanceRecommendationService;
   }
 
   @GetMapping("/status")
@@ -87,12 +94,15 @@ public class AiController {
 
   @PostMapping("/chat")
   @Operation(summary = "Conversational AI assistant for platform governance")
-  public ResponseEntity<?> chat(@Valid @RequestBody ChatRequest request) {
+  public ResponseEntity<?> chat(@RequestBody ChatRequest request) {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("analytics:read"));
     if (!abac.allowed()) {
       return forbidden(abac, "/v1/ai/chat");
     }
-    return ResponseEntity.ok(aiService.chat(request.message(), request.tenantId()));
+    UUID tenantId = resolveTenantId(request.tenantId());
+    String question = request.question() != null ? request.question() : request.message();
+    GovernanceChatbotService.ChatResponse chatResponse = chatbotService.chat(tenantId, question);
+    return ResponseEntity.ok(chatResponse);
   }
 
   @GetMapping("/insights")
@@ -134,10 +144,48 @@ public class AiController {
         .orElse(ResponseEntity.notFound().build());
   }
 
+  @GetMapping("/recommendations")
+  @Operation(summary = "Governance recommendations for a tenant based on current configuration")
+  public ResponseEntity<?> governanceRecommendations() {
+    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("analytics:read"));
+    if (!abac.allowed()) {
+      return forbidden(abac, "/v1/ai/recommendations");
+    }
+    UUID tenantId = resolveTenantId(null);
+    if (tenantId == null) {
+      return ResponseEntity.badRequest()
+          .body(
+              ProblemDetails.of(
+                  400,
+                  "Bad Request",
+                  "Tenant ID required. Authenticate with a JWT containing `tid`.",
+                  "/v1/ai/recommendations",
+                  null));
+    }
+    return ResponseEntity.ok(governanceRecommendationService.analyzeGovernance(tenantId));
+  }
+
+  private UUID resolveTenantId(String requestTenantId) {
+    if (requestTenantId != null && !requestTenantId.isBlank()) {
+      try {
+        return UUID.fromString(requestTenantId);
+      } catch (IllegalArgumentException e) {
+        return TenantContext.getTenantId().orElse(null);
+      }
+    }
+    return TenantContext.getTenantId().orElse(null);
+  }
+
   private ResponseEntity<ProblemDetails> forbidden(AbacResult abac, String instance) {
     return ResponseEntity.status(403)
         .body(ProblemDetails.of(403, "Forbidden", abac.reason(), instance, null));
   }
 
-  public record ChatRequest(@NotBlank String message, String tenantId) {}
+  public record ChatRequest(String message, String question, String tenantId) {
+    public ChatRequest {
+      if ((message == null || message.isBlank()) && (question == null || question.isBlank())) {
+        throw new IllegalArgumentException("Either 'message' or 'question' must be provided");
+      }
+    }
+  }
 }
