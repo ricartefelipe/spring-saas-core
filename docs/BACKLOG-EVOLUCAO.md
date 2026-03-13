@@ -13,7 +13,11 @@ Estado atual por critério de "pronto para venda".
 - [x] JWT padronizado (claims: sub, tid, roles, perms, plan, region)
 - [x] Tenant snapshots (GET /v1/tenants/{id}/snapshot)
 - [x] Outbox para eventos de domínio (JpaOutboxPublisher + OutboxPublisher)
-- [ ] Webhook de eventos para integradores externos
+- [x] Gestão de usuários por tenant
+- [x] Self-service onboarding (tenant + admin user)
+- [x] Catálogo de planos e assinaturas (billing)
+- [x] Registro, login e reset de senha de usuário
+- [x] Webhook de eventos para integradores externos
 
 ---
 
@@ -25,7 +29,7 @@ Estado atual por critério de "pronto para venda".
 - [x] ABAC em TenantSnapshotController
 - [x] Sem credenciais hardcoded em código
 - [x] Rate limiting por tenant
-- [ ] Rotação de JWT_SECRET sem downtime
+- [x] Rotação de JWT_SECRET sem downtime
 
 ---
 
@@ -37,7 +41,9 @@ Estado atual por critério de "pronto para venda".
 - [x] Docker multi-stage
 - [x] Scripts: up, migrate, seed
 - [x] Script de smoke test
-- [ ] Alertas Grafana pré-configurados
+- [x] Alertas Grafana pré-configurados
+- [x] Rede Docker `fluxe_shared` com `external: true` para orquestração multi-serviço
+- [x] Script `up-all.sh` (fluxe-b2b-suite) integra os 3 backends com RabbitMQ compartilhado
 
 ---
 
@@ -55,7 +61,7 @@ Estado atual por critério de "pronto para venda".
 
 - [x] Auditoria de ações sensíveis
 - [x] Auditoria de negações
-- [ ] Retenção configurável de audit log
+- [x] Retenção configurável de audit log
 - [x] Exportação de audit log (CSV/JSON)
 - [x] Política de privacidade de dados
 
@@ -65,4 +71,4 @@ Estado atual por critério de "pronto para venda".
 
 - [x] API de dados agregados para análise
 - [x] Endpoint de anomalias em audit log
-- [ ] Documentação viva gerada por IA
+- [x] Documentação viva gerada por IA

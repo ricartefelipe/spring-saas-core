@@ -1,0 +1,171 @@
+databaseChangeLog:
+  # ---------------------------------------------------------------------------
+  # 1. Additional Tenants (3 more)
+  # ---------------------------------------------------------------------------
+  - changeSet:
+      id: seed-009-tenants
+      author: saascore
+      context: seed
+      runOnChange: false
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO tenants (id, name, plan, region, status, created_at, updated_at)
+              VALUES
+                ('00000000-0000-0000-0000-000000000003', 'Acme Distribuidora', 'pro', 'sa-east-1', 'ACTIVE', '2025-12-20T10:00:00+00:00'::timestamptz, '2025-12-20T10:00:00+00:00'::timestamptz),
+                ('00000000-0000-0000-0000-000000000004', 'TechParts Ltda', 'free', 'sa-east-1', 'ACTIVE', '2026-01-10T14:30:00+00:00'::timestamptz, '2026-01-10T14:30:00+00:00'::timestamptz),
+                ('00000000-0000-0000-0000-000000000005', 'Global Supplies Inc', 'enterprise', 'us-east-1', 'SUSPENDED', '2025-11-15T09:00:00+00:00'::timestamptz, '2026-02-28T16:00:00+00:00'::timestamptz)
+              ON CONFLICT (id) DO NOTHING;
+
+  # ---------------------------------------------------------------------------
+  # 2. Additional Users (6 more)
+  # ---------------------------------------------------------------------------
+  - changeSet:
+      id: seed-009-users
+      author: saascore
+      context: seed
+      runOnChange: false
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO users (id, email, name, password_hash, tenant_id, roles, status, created_at, updated_at)
+              VALUES
+                ('30000000-0000-0000-0000-000000000001', 'admin@acme.com.br', 'Admin Acme', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '00000000-0000-0000-0000-000000000003', 'admin', 'ACTIVE', '2025-12-20T10:05:00+00:00'::timestamptz, '2025-12-20T10:05:00+00:00'::timestamptz),
+                ('30000000-0000-0000-0000-000000000002', 'compras@acme.com.br', 'Compras Acme', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '00000000-0000-0000-0000-000000000003', 'ops', 'ACTIVE', '2025-12-22T08:00:00+00:00'::timestamptz, '2025-12-22T08:00:00+00:00'::timestamptz),
+                ('30000000-0000-0000-0000-000000000003', 'gerente@techparts.com.br', 'Gerente TechParts', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '00000000-0000-0000-0000-000000000004', 'admin', 'ACTIVE', '2026-01-10T14:35:00+00:00'::timestamptz, '2026-01-10T14:35:00+00:00'::timestamptz),
+                ('30000000-0000-0000-0000-000000000004', 'vendas@techparts.com.br', 'Vendas TechParts', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '00000000-0000-0000-0000-000000000004', 'member', 'ACTIVE', '2026-01-12T11:00:00+00:00'::timestamptz, '2026-01-12T11:00:00+00:00'::timestamptz),
+                ('30000000-0000-0000-0000-000000000005', 'admin@globalsupplies.com', 'Admin Global', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '00000000-0000-0000-0000-000000000005', 'admin', 'ACTIVE', '2025-11-15T09:05:00+00:00'::timestamptz, '2025-11-15T09:05:00+00:00'::timestamptz),
+                ('30000000-0000-0000-0000-000000000006', 'suporte@globalsupplies.com', 'Suporte Global', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '00000000-0000-0000-0000-000000000005', 'viewer', 'ACTIVE', '2025-11-20T13:00:00+00:00'::timestamptz, '2025-11-20T13:00:00+00:00'::timestamptz)
+              ON CONFLICT (id) DO NOTHING;
+
+  # ---------------------------------------------------------------------------
+  # 3. Feature Flags (8 flags across tenants)
+  # ---------------------------------------------------------------------------
+  - changeSet:
+      id: seed-009-feature-flags
+      author: saascore
+      context: seed
+      runOnChange: false
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO feature_flags (id, tenant_id, name, enabled, rollout_percent, allowed_roles, deleted, created_at, updated_at)
+              VALUES
+                ('20000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000001', 'ai_chatbot', true, 100, '[]', false, NOW(), NOW()),
+                ('20000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000001', 'advanced_analytics', true, 50, '["admin"]', false, NOW(), NOW()),
+                ('20000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000001', 'dark_mode', true, 100, '[]', false, NOW(), NOW()),
+                ('20000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000003', 'new_checkout', true, 75, '["admin","ops"]', false, NOW(), NOW()),
+                ('20000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000003', 'bulk_import', false, 0, '[]', false, NOW(), NOW()),
+                ('20000000-0000-0000-0000-000000000015', '00000000-0000-0000-0000-000000000004', 'beta_catalog', true, 100, '[]', false, NOW(), NOW()),
+                ('20000000-0000-0000-0000-000000000016', '00000000-0000-0000-0000-000000000002', 'new_dashboard', true, 100, '[]', false, NOW(), NOW()),
+                ('20000000-0000-0000-0000-000000000017', '00000000-0000-0000-0000-000000000002', 'beta_export', true, 25, '["admin"]', false, NOW(), NOW())
+              ON CONFLICT (tenant_id, name) DO NOTHING;
+
+  # ---------------------------------------------------------------------------
+  # 4. Subscriptions (one per tenant)
+  # ---------------------------------------------------------------------------
+  - changeSet:
+      id: seed-009-subscriptions
+      author: saascore
+      context: seed
+      runOnChange: false
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO subscriptions (id, tenant_id, plan_slug, status, current_period_start, current_period_end, previous_plan_slug, trial_ends_at, grace_period_ends_at, created_at, updated_at)
+              VALUES
+                ('40000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'enterprise', 'ACTIVE', '2026-01-01T00:00:00+00:00'::timestamptz, '2026-12-31T23:59:59+00:00'::timestamptz, NULL, NULL, NULL, '2025-12-15T00:00:00+00:00'::timestamptz, NOW()),
+                ('40000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002', 'pro', 'ACTIVE', '2026-02-01T00:00:00+00:00'::timestamptz, '2026-03-01T23:59:59+00:00'::timestamptz, 'free', NULL, NULL, '2025-12-15T00:00:00+00:00'::timestamptz, NOW()),
+                ('40000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000003', 'pro', 'TRIAL', '2026-03-01T00:00:00+00:00'::timestamptz, '2026-04-01T23:59:59+00:00'::timestamptz, NULL, '2026-03-15T23:59:59+00:00'::timestamptz, NULL, '2026-03-01T00:00:00+00:00'::timestamptz, NOW()),
+                ('40000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000004', 'free', 'ACTIVE', '2026-01-15T00:00:00+00:00'::timestamptz, '2027-01-15T23:59:59+00:00'::timestamptz, NULL, NULL, NULL, '2026-01-15T00:00:00+00:00'::timestamptz, NOW()),
+                ('40000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000005', 'enterprise', 'PAST_DUE', '2026-01-01T00:00:00+00:00'::timestamptz, '2026-02-01T23:59:59+00:00'::timestamptz, NULL, NULL, '2026-02-15T23:59:59+00:00'::timestamptz, '2025-11-15T00:00:00+00:00'::timestamptz, NOW())
+              ON CONFLICT (id) DO NOTHING;
+
+  # ---------------------------------------------------------------------------
+  # 5. Audit Log entries (30+ entries simulating 3 months of activity)
+  # ---------------------------------------------------------------------------
+  - changeSet:
+      id: seed-009-audit-log
+      author: saascore
+      context: seed
+      runOnChange: false
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO audit_log (id, tenant_id, actor_sub, actor_roles, actor_perms, action, resource_type, resource_id, method, path, status_code, correlation_id, details, created_at)
+              VALUES
+                ('a1000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001'::uuid, 'felipericartem@gmail.com', '["admin"]', '[]', 'LOGIN', 'USER', NULL, 'POST', '/v1/auth/login', 200, 'corr-001-a1b2', NULL, '2025-12-15T08:30:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001'::uuid, 'felipericartem@gmail.com', '["admin"]', '[]', 'READ', 'TENANT', '00000000-0000-0000-0000-000000000001', 'GET', '/v1/tenants/00000000-0000-0000-0000-000000000001', 200, 'corr-001-a1b2', NULL, '2025-12-15T08:31:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002'::uuid, 'ops@fluxe.com.br', '["ops"]', '[]', 'READ', 'TENANT', NULL, 'GET', '/v1/tenants', 200, 'corr-002-c3d4', NULL, '2025-12-18T10:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000002'::uuid, 'ops@fluxe.com.br', '["ops"]', '[]', 'CREATE', 'POLICY', NULL, 'POST', '/v1/policies', 201, 'corr-002-c3d4', '{"permission":"orders:read"}', '2025-12-18T10:05:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000001'::uuid, 'felipericartem@gmail.com', '["admin"]', '[]', 'READ', 'FEATURE_FLAG', NULL, 'GET', '/v1/feature-flags', 200, 'corr-003-e5f6', NULL, '2025-12-20T09:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000003'::uuid, 'admin@acme.com.br', '["admin"]', '[]', 'CREATE', 'TENANT', '00000000-0000-0000-0000-000000000003', 'POST', '/v1/tenants', 201, 'corr-004-g7h8', NULL, '2025-12-20T10:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000003'::uuid, 'admin@acme.com.br', '["admin"]', '[]', 'LOGIN', 'USER', NULL, 'POST', '/v1/auth/login', 200, 'corr-005-i9j0', NULL, '2025-12-20T10:01:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000003'::uuid, 'compras@acme.com.br', '["ops"]', '[]', 'READ', 'ORDER', 'ord-12345', 'GET', '/v1/orders/ord-12345', 200, 'corr-006-k1l2', NULL, '2025-12-22T14:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000003'::uuid, 'compras@acme.com.br', '["ops"]', '[]', 'CREATE', 'ORDER', 'ord-12346', 'POST', '/v1/orders', 201, 'corr-006-k1l2', NULL, '2025-12-22T14:15:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000005'::uuid, 'admin@globalsupplies.com', '["admin"]', '[]', 'ACCESS_DENIED', 'POLICY', NULL, 'POST', '/v1/policies', 403, 'corr-007-m3n4', 'ABAC DENY: free plan', '2025-12-25T11:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000004'::uuid, 'gerente@techparts.com.br', '["admin"]', '[]', 'LOGIN', 'USER', NULL, 'POST', '/v1/auth/login', 200, 'corr-008-o5p6', NULL, '2026-01-10T14:35:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000004'::uuid, 'gerente@techparts.com.br', '["admin"]', '[]', 'READ', 'PRODUCT', NULL, 'GET', '/v1/products', 200, 'corr-008-o5p6', NULL, '2026-01-10T14:40:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000004'::uuid, 'vendas@techparts.com.br', '["member"]', '[]', 'READ', 'PRODUCT', 'prod-001', 'GET', '/v1/products/prod-001', 200, 'corr-009-q7r8', NULL, '2026-01-12T11:05:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000004'::uuid, 'vendas@techparts.com.br', '["member"]', '[]', 'ACCESS_DENIED', 'USER', NULL, 'DELETE', '/v1/users/30000000-0000-0000-0000-000000000003', 403, 'corr-010-s9t0', 'Insufficient permissions', '2026-01-12T11:10:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000015', '00000000-0000-0000-0000-000000000002'::uuid, 'ops@fluxe.com.br', '["ops"]', '[]', 'UPDATE', 'SUBSCRIPTION', '40000000-0000-0000-0000-000000000002', 'PUT', '/v1/subscriptions/40000000-0000-0000-0000-000000000002', 200, 'corr-011-u1v2', '{"plan":"pro"}', '2026-01-15T09:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000016', '00000000-0000-0000-0000-000000000001'::uuid, 'felipericartem@gmail.com', '["admin"]', '[]', 'READ', 'AUDIT', NULL, 'GET', '/v1/audit', 200, 'corr-012-w3x4', NULL, '2026-01-20T16:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000017', '00000000-0000-0000-0000-000000000005'::uuid, 'suporte@globalsupplies.com', '["viewer"]', '[]', 'READ', 'ORDER', NULL, 'GET', '/v1/orders', 200, 'corr-013-y5z6', NULL, '2026-01-25T08:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000018', '00000000-0000-0000-0000-000000000005'::uuid, 'suporte@globalsupplies.com', '["viewer"]', '[]', 'ACCESS_DENIED', 'USER', NULL, 'POST', '/v1/users/invite', 403, 'corr-014-a7b8', 'Viewer cannot invite', '2026-01-25T08:05:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000003'::uuid, 'admin@acme.com.br', '["admin"]', '[]', 'UPDATE', 'FEATURE_FLAG', '20000000-0000-0000-0000-000000000013', 'PUT', '/v1/feature-flags/20000000-0000-0000-0000-000000000013', 200, 'corr-015-c9d0', '{"rollout_percent":75}', '2026-02-01T10:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000002'::uuid, 'ops@fluxe.com.br', '["ops"]', '[]', 'LOGOUT', 'USER', NULL, 'POST', '/v1/auth/logout', 204, 'corr-016-e1f2', NULL, '2026-02-05T17:30:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000021', '00000000-0000-0000-0000-000000000005'::uuid, 'admin@globalsupplies.com', '["admin"]', '[]', 'READ', 'SUBSCRIPTION', NULL, 'GET', '/v1/subscriptions', 200, 'corr-017-g3h4', NULL, '2026-02-10T09:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000022', NULL, 'felipericartem@gmail.com', '["admin"]', '[]', 'READ', 'TENANT', NULL, 'GET', '/v1/tenants', 200, 'corr-018-i5j6', NULL, '2026-02-15T11:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000023', '00000000-0000-0000-0000-000000000003'::uuid, 'compras@acme.com.br', '["ops"]', '[]', 'UPDATE', 'ORDER', 'ord-12346', 'PUT', '/v1/orders/ord-12346', 200, 'corr-019-k7l8', '{"status":"shipped"}', '2026-02-20T15:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000024', '00000000-0000-0000-0000-000000000004'::uuid, 'gerente@techparts.com.br', '["admin"]', '[]', 'CREATE', 'FEATURE_FLAG', '20000000-0000-0000-0000-000000000015', 'POST', '/v1/feature-flags', 201, 'corr-020-m9n0', NULL, '2026-02-25T14:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000025', '00000000-0000-0000-0000-000000000002'::uuid, 'ops@fluxe.com.br', '["ops"]', '[]', 'READ', 'PRODUCT', 'prod-demo', 'GET', '/v1/products/prod-demo', 404, 'corr-021-o1p2', 'Not found', '2026-03-01T08:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000001'::uuid, 'felipericartem@gmail.com', '["admin"]', '[]', 'DELETE', 'POLICY', '10000000-0000-0000-0000-000000000099', 'DELETE', '/v1/policies/10000000-0000-0000-0000-000000000099', 204, 'corr-022-q3r4', NULL, '2026-03-05T10:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000003'::uuid, 'admin@acme.com.br', '["admin"]', '[]', 'READ', 'USER', NULL, 'GET', '/v1/users', 200, 'corr-023-s5t6', NULL, '2026-03-08T12:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000028', '00000000-0000-0000-0000-000000000005'::uuid, 'admin@globalsupplies.com', '["admin"]', '[]', 'ACCESS_DENIED', 'TENANT', '00000000-0000-0000-0000-000000000001', 'PUT', '/v1/tenants/00000000-0000-0000-0000-000000000001', 403, 'corr-024-u7v8', 'Cross-tenant write denied', '2026-03-10T09:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000029', '00000000-0000-0000-0000-000000000001'::uuid, 'felipericartem@gmail.com', '["admin"]', '[]', 'READ', 'SUBSCRIPTION', NULL, 'GET', '/v1/subscriptions', 200, 'corr-025-w9x0', NULL, '2026-03-12T14:00:00+00:00'::timestamptz),
+                ('a1000000-0000-0000-0000-000000000030', '00000000-0000-0000-0000-000000000004'::uuid, 'vendas@techparts.com.br', '["member"]', '[]', 'LOGIN', 'USER', NULL, 'POST', '/v1/auth/login', 200, 'corr-026-y1z2', NULL, '2026-03-12T16:00:00+00:00'::timestamptz)
+              ON CONFLICT (id) DO NOTHING;
+
+  # ---------------------------------------------------------------------------
+  # 6. Webhook Endpoints (3)
+  # ---------------------------------------------------------------------------
+  - changeSet:
+      id: seed-009-webhooks
+      author: saascore
+      context: seed
+      runOnChange: false
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO webhook_endpoints (id, tenant_id, url, secret, events, is_active, created_at, updated_at)
+              VALUES
+                ('50000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'https://hooks.example.com/fluxe', 'whsec_seed_fluxe_001_placeholder', '["tenant.created","user.created","subscription.updated"]', true, NOW(), NOW()),
+                ('50000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003', 'https://api.acme.com.br/webhooks', 'whsec_seed_acme_002_placeholder', '["order.created","order.updated"]', true, NOW(), NOW()),
+                ('50000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002', 'https://demo.example.com/events', 'whsec_seed_demo_003_placeholder', '["*"]', false, NOW(), NOW())
+              ON CONFLICT (id) DO NOTHING;
+
+  # ---------------------------------------------------------------------------
+  # 7. Outbox Events (10+ past events, mostly PUBLISHED)
+  # ---------------------------------------------------------------------------
+  - changeSet:
+      id: seed-009-outbox-events
+      author: saascore
+      context: seed
+      runOnChange: false
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO outbox_events (id, aggregate_type, aggregate_id, event_type, payload, status, attempts, next_attempt_at, created_at, updated_at)
+              VALUES
+                ('60000000-0000-0000-0000-000000000001', 'Tenant', '00000000-0000-0000-0000-000000000003', 'tenant.created', '{"id":"00000000-0000-0000-0000-000000000003","name":"Acme Distribuidora","plan":"pro"}', 'PUBLISHED', 1, NULL, '2025-12-20T10:00:01+00:00'::timestamptz, NOW()),
+                ('60000000-0000-0000-0000-000000000002', 'User', '30000000-0000-0000-0000-000000000001', 'user.created', '{"id":"30000000-0000-0000-0000-000000000001","email":"admin@acme.com.br","tenant_id":"00000000-0000-0000-0000-000000000003"}', 'PUBLISHED', 1, NULL, '2025-12-20T10:05:01+00:00'::timestamptz, NOW()),
+                ('60000000-0000-0000-0000-000000000003', 'Tenant', '00000000-0000-0000-0000-000000000004', 'tenant.created', '{"id":"00000000-0000-0000-0000-000000000004","name":"TechParts Ltda","plan":"free"}', 'PUBLISHED', 1, NULL, '2026-01-10T14:30:01+00:00'::timestamptz, NOW()),
+                ('60000000-0000-0000-0000-000000000004', 'Subscription', '40000000-0000-0000-0000-000000000002', 'subscription.updated', '{"tenant_id":"00000000-0000-0000-0000-000000000002","plan":"pro","previous_plan":"free"}', 'PUBLISHED', 1, NULL, '2026-01-15T09:00:01+00:00'::timestamptz, NOW()),
+                ('60000000-0000-0000-0000-000000000005', 'Tenant', '00000000-0000-0000-0000-000000000005', 'tenant.updated', '{"id":"00000000-0000-0000-0000-000000000005","status":"SUSPENDED"}', 'PUBLISHED', 1, NULL, '2026-02-28T16:00:01+00:00'::timestamptz, NOW()),
+                ('60000000-0000-0000-0000-000000000006', 'User', '30000000-0000-0000-0000-000000000003', 'user.created', '{"id":"30000000-0000-0000-0000-000000000003","email":"gerente@techparts.com.br","tenant_id":"00000000-0000-0000-0000-000000000004"}', 'PUBLISHED', 1, NULL, '2026-01-10T14:35:01+00:00'::timestamptz, NOW()),
+                ('60000000-0000-0000-0000-000000000007', 'FeatureFlag', '20000000-0000-0000-0000-000000000013', 'feature_flag.updated', '{"name":"new_checkout","rollout_percent":75}', 'PUBLISHED', 1, NULL, '2026-02-01T10:00:01+00:00'::timestamptz, NOW()),
+                ('60000000-0000-0000-0000-000000000008', 'Subscription', '40000000-0000-0000-0000-000000000003', 'subscription.created', '{"tenant_id":"00000000-0000-0000-0000-000000000003","plan":"pro","status":"TRIAL"}', 'PUBLISHED', 1, NULL, '2026-03-01T00:00:01+00:00'::timestamptz, NOW()),
+                ('60000000-0000-0000-0000-000000000009', 'User', '30000000-0000-0000-0000-000000000002', 'user.created', '{"id":"30000000-0000-0000-0000-000000000002","email":"compras@acme.com.br","tenant_id":"00000000-0000-0000-0000-000000000003"}', 'PUBLISHED', 1, NULL, '2025-12-22T08:00:01+00:00'::timestamptz, NOW()),
+                ('60000000-0000-0000-0000-000000000010', 'Subscription', '40000000-0000-0000-0000-000000000005', 'subscription.updated', '{"tenant_id":"00000000-0000-0000-0000-000000000005","status":"PAST_DUE"}', 'PUBLISHED', 1, NULL, '2026-02-01T00:00:01+00:00'::timestamptz, NOW()),
+                ('60000000-0000-0000-0000-000000000011', 'FeatureFlag', '20000000-0000-0000-0000-000000000015', 'feature_flag.created', '{"name":"beta_catalog","tenant_id":"00000000-0000-0000-0000-000000000004"}', 'PUBLISHED', 1, NULL, '2026-02-25T14:00:01+00:00'::timestamptz, NOW())
+              ON CONFLICT (id) DO NOTHING;
