@@ -33,7 +33,9 @@ public class WebhookEndpointRepositoryAdapter implements WebhookEndpointReposito
 
   @Override
   public Optional<WebhookEndpoint> findByIdAndTenantId(UUID id, UUID tenantId) {
-    return jpa.findById(id).filter(entity -> tenantId.equals(entity.getTenantId())).map(this::toDomain);
+    return jpa.findById(id)
+        .filter(entity -> tenantId.equals(entity.getTenantId()))
+        .map(this::toDomain);
   }
 
   @Override

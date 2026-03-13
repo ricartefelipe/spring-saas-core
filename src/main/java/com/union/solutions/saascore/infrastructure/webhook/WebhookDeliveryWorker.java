@@ -12,7 +12,6 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
@@ -92,10 +91,7 @@ public class WebhookDeliveryWorker {
     try {
       var response =
           restTemplate.exchange(
-              URI.create(endpoint.getUrl()),
-              HttpMethod.POST,
-              entity,
-              String.class);
+              URI.create(endpoint.getUrl()), HttpMethod.POST, entity, String.class);
 
       HttpStatusCode status = response.getStatusCode();
       int code = status.value();

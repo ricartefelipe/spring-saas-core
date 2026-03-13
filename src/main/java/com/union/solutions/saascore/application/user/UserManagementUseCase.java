@@ -38,7 +38,8 @@ public class UserManagementUseCase {
   }
 
   @Transactional
-  public Optional<User> update(UUID id, UUID tenantId, String name, List<String> roles, User.UserStatus status) {
+  public Optional<User> update(
+      UUID id, UUID tenantId, String name, List<String> roles, User.UserStatus status) {
     return userRepo
         .findByIdAndTenantId(id, tenantId)
         .map(
