@@ -573,21 +573,35 @@ public class GovernanceChatbotService {
   private ChatResponse handleGreeting() {
     AnalyticsService.SummaryResponse summary = analyticsService.getSummary();
     long activeTenants = summary.tenants().byStatus().getOrDefault("ACTIVE", 0L);
+    boolean hasAnomalies = !analyticsService.detectAnomalies().anomalies().isEmpty();
 
-    String answer = String.format(
-        "Olá! Sou o assistente de governança do **Fluxe B2B Suite**.\n\n"
-            + "**Resumo rápido do sistema:**\n"
-            + "- %d tenants ativos de %d cadastrados\n"
-            + "- %d políticas ABAC configuradas\n"
-            + "- %d feature flags ativas de %d\n"
-            + "- %d eventos de auditoria nas últimas 24h\n\n"
-            + "Como posso ajudar? Pergunte sobre **tenants**, **políticas**, **auditoria**, "
-            + "**segurança**, **flags** ou digite **ajuda** para ver todos os comandos.",
-        activeTenants, summary.tenants().total(),
-        summary.policies().total(),
-        summary.flags().enabled(), summary.flags().total(),
-        summary.audit().last24h());
-    return new ChatResponse(answer, "greeting", List.of());
+    StringBuilder sb = new StringBuilder();
+    sb.append("Olá! Tudo bem? Que bom ter você por aqui! \uD83D\uDE0A\n\n");
+    sb.append("Sou o assistente de governança do **Fluxe B2B Suite** ");
+    sb.append("e estou aqui para te ajudar no que precisar.\n\n");
+
+    if (hasAnomalies) {
+      sb.append("Vi que temos algumas **anomalias** no sistema que merecem atenção. ");
+      sb.append("Quer que eu detalhe?\n\n");
+    } else {
+      sb.append(String.format(
+          "Está tudo tranquilo por aqui — **%d tenants** ativos, "
+              + "**%d políticas** configuradas e nenhuma anomalia detectada.\n\n",
+          activeTenants, summary.policies().total()));
+    }
+
+    sb.append("No que posso te ajudar? Alguns exemplos:\n\n");
+    sb.append("- \uD83C\uDFE2 **\"tenants\"** — ver informações dos tenants\n");
+    sb.append("- \uD83D\uDD12 **\"políticas\"** — consultar regras de acesso\n");
+    sb.append("- \uD83D\uDCCA **\"auditoria\"** — eventos recentes\n");
+    sb.append("- \u2699\uFE0F **\"flags\"** — feature flags ativas\n");
+    sb.append("- \uD83D\uDCA1 **\"recomendações\"** — sugestões de melhoria\n\n");
+    sb.append("Ou pode perguntar com suas próprias palavras — eu me viro! \uD83D\uDE09");
+
+    List<String> suggestions = hasAnomalies
+        ? List.of("anomalias", "status", "recomendações")
+        : List.of("tenants", "políticas", "auditoria");
+    return new ChatResponse(sb.toString(), "greeting", suggestions);
   }
 
   private ChatResponse handleUnknown(String question) {
