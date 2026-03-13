@@ -7,9 +7,9 @@ import java.util.UUID;
 
 public interface PasswordResetTokenRepository {
 
-    PasswordResetToken save(PasswordResetToken token);
+  PasswordResetToken save(PasswordResetToken token);
 
-    Optional<PasswordResetToken> findByIdAndNotUsed(UUID id);
+  Optional<PasswordResetToken> findByIdAndNotUsed(UUID id);
 
-    void deleteExpiredBefore(Instant cutoff);
+  void deleteExpiredBefore(Instant cutoff);
 }
