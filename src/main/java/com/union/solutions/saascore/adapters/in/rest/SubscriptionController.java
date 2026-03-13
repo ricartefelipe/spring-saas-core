@@ -32,7 +32,9 @@ public class SubscriptionController {
       return ResponseEntity.status(201).body(SubscriptionResponse.from(sub));
     } catch (IllegalStateException | IllegalArgumentException e) {
       return ResponseEntity.badRequest()
-          .body(ProblemDetails.of(400, "Bad Request", e.getMessage(), "/v1/subscriptions/trial", null));
+          .body(
+              ProblemDetails.of(
+                  400, "Bad Request", e.getMessage(), "/v1/subscriptions/trial", null));
     }
   }
 
@@ -44,7 +46,9 @@ public class SubscriptionController {
       return ResponseEntity.ok(SubscriptionResponse.from(sub));
     } catch (IllegalStateException e) {
       return ResponseEntity.badRequest()
-          .body(ProblemDetails.of(400, "Bad Request", e.getMessage(), "/v1/subscriptions/activate", null));
+          .body(
+              ProblemDetails.of(
+                  400, "Bad Request", e.getMessage(), "/v1/subscriptions/activate", null));
     }
   }
 
@@ -56,7 +60,9 @@ public class SubscriptionController {
       return ResponseEntity.ok(SubscriptionResponse.from(sub));
     } catch (IllegalStateException | IllegalArgumentException e) {
       return ResponseEntity.badRequest()
-          .body(ProblemDetails.of(400, "Bad Request", e.getMessage(), "/v1/subscriptions/upgrade", null));
+          .body(
+              ProblemDetails.of(
+                  400, "Bad Request", e.getMessage(), "/v1/subscriptions/upgrade", null));
     }
   }
 
@@ -82,7 +88,9 @@ public class SubscriptionController {
       return ResponseEntity.ok(SubscriptionResponse.from(sub));
     } catch (IllegalStateException e) {
       return ResponseEntity.badRequest()
-          .body(ProblemDetails.of(400, "Bad Request", e.getMessage(), "/v1/subscriptions/cancel", null));
+          .body(
+              ProblemDetails.of(
+                  400, "Bad Request", e.getMessage(), "/v1/subscriptions/cancel", null));
     }
   }
 

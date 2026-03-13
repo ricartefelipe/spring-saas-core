@@ -1,7 +1,7 @@
 package com.union.solutions.saascore.infrastructure.audit;
 
-import com.union.solutions.saascore.application.abac.AuditLogger;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaRepository;
+import com.union.solutions.saascore.application.abac.AuditLogger;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.slf4j.Logger;
@@ -52,7 +52,8 @@ public class AuditRetentionService {
     log.info(
         "Audit log retention purge completed total_deleted={} cutoff={}", totalDeleted, cutoff);
 
-    String details = "deleted=" + totalDeleted + ",cutoff=" + cutoff + ",retention_days=" + retentionDays;
+    String details =
+        "deleted=" + totalDeleted + ",cutoff=" + cutoff + ",retention_days=" + retentionDays;
     auditLogger.log(
         null,
         "system",

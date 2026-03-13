@@ -1,6 +1,5 @@
 package com.union.solutions.saascore.application.port;
 
-import java.util.Map;
 import java.util.UUID;
 
 public interface WebhookEnqueuerPort {

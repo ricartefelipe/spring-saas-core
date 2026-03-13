@@ -46,7 +46,8 @@ public class JpaOutboxPublisher implements OutboxPublisherPort {
     webhookEnqueuer.enqueue(tenantId, eventType, payloadJson);
   }
 
-  private UUID resolveTenantId(String aggregateType, String aggregateId, Map<String, String> payload) {
+  private UUID resolveTenantId(
+      String aggregateType, String aggregateId, Map<String, String> payload) {
     String tenantIdStr = payload != null ? payload.get("tenantId") : null;
     if (tenantIdStr != null && !tenantIdStr.isBlank()) {
       try {

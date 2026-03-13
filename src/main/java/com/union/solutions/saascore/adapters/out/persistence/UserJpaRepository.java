@@ -7,15 +7,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserJpaRepository extends JpaRepository<UserEntity, UUID> {
 
-    Optional<UserEntity> findByEmail(String email);
+  Optional<UserEntity> findByEmail(String email);
 
-    Optional<UserEntity> findByIdAndTenantId(UUID id, UUID tenantId);
+  Optional<UserEntity> findByIdAndTenantId(UUID id, UUID tenantId);
 
-    Optional<UserEntity> findByEmailAndTenantId(String email, UUID tenantId);
+  Optional<UserEntity> findByEmailAndTenantId(String email, UUID tenantId);
 
-    List<UserEntity> findByTenantId(UUID tenantId);
+  List<UserEntity> findByTenantId(UUID tenantId);
 
-    boolean existsByEmail(String email);
+  boolean existsByEmail(String email);
 
-    long countByTenantId(UUID tenantId);
+  long countByTenantId(UUID tenantId);
 }

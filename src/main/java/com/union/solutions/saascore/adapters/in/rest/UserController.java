@@ -39,8 +39,7 @@ public class UserController {
     UUID tenantId = requireTenantId();
     if (tenantId == null) return tenantRequired();
 
-    List<UserDto> users =
-        userUseCase.listByTenant(tenantId).stream().map(UserDto::from).toList();
+    List<UserDto> users = userUseCase.listByTenant(tenantId).stream().map(UserDto::from).toList();
     return ResponseEntity.ok(users);
   }
 
@@ -121,9 +120,7 @@ public class UserController {
       return ResponseEntity.status(201).body(UserDto.from(invited));
     } catch (UserAlreadyExistsException e) {
       return ResponseEntity.status(409)
-          .body(
-              ProblemDetails.of(
-                  409, "Conflict", e.getMessage(), "/v1/users/invite", null));
+          .body(ProblemDetails.of(409, "Conflict", e.getMessage(), "/v1/users/invite", null));
     }
   }
 
