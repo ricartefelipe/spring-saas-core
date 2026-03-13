@@ -61,7 +61,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: docker/app.Dockerfile
+      dockerfile: docker/app.local.Dockerfile
       network: host
     ports:
       - "8080:8080"
