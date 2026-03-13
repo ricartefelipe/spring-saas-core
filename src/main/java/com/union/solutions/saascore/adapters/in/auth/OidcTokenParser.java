@@ -30,10 +30,10 @@ public class OidcTokenParser implements TokenParser {
   }
 
   @Override
-  public Optional<TokenClaims> parse(String token) {
+  public Optional<TokenParseResult> parse(String token) {
     try {
       Jwt jwt = jwtDecoder.decode(token);
-      return Optional.of(toClaims(jwt));
+      return Optional.of(TokenParseResult.current(toClaims(jwt)));
     } catch (Exception e) {
       log.debug("OIDC token parse failed: {}", e.getMessage());
       return Optional.empty();

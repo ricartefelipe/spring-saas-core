@@ -14,6 +14,8 @@ Todas as operações CRUD e eventos de acesso negado são registrados no audit l
 |----------|--------|
 | CRUD | Create, Read, Update, Delete em tenants, policies, feature flags |
 | Access | `ACCESS_DENIED` — todas as tentativas de acesso negadas por ABAC |
+| System | `audit.retention.cleanup` — execução do job de limpeza de audit log |
+| System | `JWT_VERIFIED_WITH_PREVIOUS_KEY` — token verificado com chave anterior durante rotação de JWT_SECRET |
 
 ### Campos registrados
 

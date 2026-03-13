@@ -5,3 +5,15 @@ databaseChangeLog:
       file: db/changelog/changes/002-phase1-seed.yaml
   - include:
       file: db/changelog/changes/003-soft-delete-policies-flags.yaml
+  - include:
+      file: db/changelog/changes/004-users-and-reset-tokens.yaml
+  - include:
+      file: db/changelog/changes/005-billing-plans-subscriptions.yaml
+  - include:
+      file: db/changelog/changes/006-webhooks.yaml
+  - include:
+      file: db/changelog/changes/007-subscription-lifecycle.yaml
+  - include:
+      file: db/changelog/changes/008-essential-seed-all-envs.yaml
+  - include:
+      file: db/changelog/changes/009-realistic-seed-data.yaml

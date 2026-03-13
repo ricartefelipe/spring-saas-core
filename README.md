@@ -244,7 +244,8 @@ A API está versionada como **v1** e é estável para integração com node-b2b-
 | DB_PASS / spring.datasource.password | saascore | Senha do banco |
 | AUTH_MODE | hs256 | `hs256` (local) ou `oidc` (produção) |
 | JWT_ISSUER | spring-saas-core | Issuer do JWT |
-| JWT_HS256_SECRET | (dev) | Chave HS256 (**apenas profile local**) |
+| JWT_SECRET / JWT_HS256_SECRET | (dev) | Chave HS256 atual (**apenas profile local**) |
+| JWT_SECRET_PREVIOUS / JWT_HS256_SECRET_PREVIOUS | — | Chave anterior para rotação sem downtime |
 | OIDC_ISSUER_URI | — | Obrigatório em prod (ex.: Keycloak) |
 | REDIS_HOST | localhost | Host Redis |
 | RABBITMQ_HOST | localhost | Host RabbitMQ |

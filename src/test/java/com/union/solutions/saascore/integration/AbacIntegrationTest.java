@@ -61,7 +61,7 @@ class AbacIntegrationTest {
     adminToken =
         tokenIssuer.issue(
             "admin@test",
-            "00000000-0000-0000-0000-000000000099",
+            "00000000-0000-0000-0000-000000000001",
             List.of("admin"),
             List.of(
                 "tenants:read",
