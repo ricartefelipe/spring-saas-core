@@ -54,25 +54,27 @@ public class OnboardingController {
       return ResponseEntity.status(201)
           .body(
               Map.of(
-                  "access_token", token,
-                  "token_type", "Bearer",
-                  "expires_in", 3600,
+                  "access_token",
+                  token,
+                  "token_type",
+                  "Bearer",
+                  "expires_in",
+                  3600,
                   "tenant",
-                      Map.of(
-                          "id", tenant.getId(),
-                          "name", tenant.getName(),
-                          "plan", tenant.getPlan(),
-                          "region", tenant.getRegion()),
+                  Map.of(
+                      "id", tenant.getId(),
+                      "name", tenant.getName(),
+                      "plan", tenant.getPlan(),
+                      "region", tenant.getRegion()),
                   "user",
-                      Map.of(
-                          "id", user.getId(),
-                          "email", user.getEmail(),
-                          "name", user.getName(),
-                          "roles", user.getRoles())));
+                  Map.of(
+                      "id", user.getId(),
+                      "email", user.getEmail(),
+                      "name", user.getName(),
+                      "roles", user.getRoles())));
     } catch (IllegalArgumentException e) {
       return ResponseEntity.status(409)
-          .body(
-              ProblemDetails.of(409, "Conflict", e.getMessage(), "/v1/onboarding/signup", null));
+          .body(ProblemDetails.of(409, "Conflict", e.getMessage(), "/v1/onboarding/signup", null));
     }
   }
 

@@ -36,8 +36,7 @@ public class Hs256TokenParser implements TokenParser {
   @Override
   public Optional<TokenParseResult> parse(String token) {
     try {
-      Claims c =
-          Jwts.parser().verifyWith(currentKey).build().parseSignedClaims(token).getPayload();
+      Claims c = Jwts.parser().verifyWith(currentKey).build().parseSignedClaims(token).getPayload();
       return Optional.of(TokenParseResult.current(toClaims(c)));
     } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
       if (previousKey != null) {
