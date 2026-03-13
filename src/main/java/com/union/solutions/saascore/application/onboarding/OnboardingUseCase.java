@@ -59,7 +59,14 @@ public class OnboardingUseCase {
     List<String> adminRoles = List.of("admin", "member");
     User user =
         new User(
-            userId, adminEmail, adminName, hash, tenantId, adminRoles, User.UserStatus.ACTIVE, now,
+            userId,
+            adminEmail,
+            adminName,
+            hash,
+            tenantId,
+            adminRoles,
+            User.UserStatus.ACTIVE,
+            now,
             now);
     userRepo.save(user);
 

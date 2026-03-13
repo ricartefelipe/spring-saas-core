@@ -10,24 +10,24 @@ import org.springframework.stereotype.Component;
 @Component
 public class PasswordResetTokenRepositoryAdapter implements PasswordResetTokenRepository {
 
-    private final PasswordResetTokenJpaRepository jpa;
+  private final PasswordResetTokenJpaRepository jpa;
 
-    public PasswordResetTokenRepositoryAdapter(PasswordResetTokenJpaRepository jpa) {
-        this.jpa = jpa;
-    }
+  public PasswordResetTokenRepositoryAdapter(PasswordResetTokenJpaRepository jpa) {
+    this.jpa = jpa;
+  }
 
-    @Override
-    public PasswordResetToken save(PasswordResetToken token) {
-        return jpa.save(PasswordResetTokenEntity.from(token)).toDomain();
-    }
+  @Override
+  public PasswordResetToken save(PasswordResetToken token) {
+    return jpa.save(PasswordResetTokenEntity.from(token)).toDomain();
+  }
 
-    @Override
-    public Optional<PasswordResetToken> findByIdAndNotUsed(UUID id) {
-        return jpa.findByIdAndNotUsed(id).map(PasswordResetTokenEntity::toDomain);
-    }
+  @Override
+  public Optional<PasswordResetToken> findByIdAndNotUsed(UUID id) {
+    return jpa.findByIdAndNotUsed(id).map(PasswordResetTokenEntity::toDomain);
+  }
 
-    @Override
-    public void deleteExpiredBefore(Instant cutoff) {
-        jpa.deleteExpiredBefore(cutoff);
-    }
+  @Override
+  public void deleteExpiredBefore(Instant cutoff) {
+    jpa.deleteExpiredBefore(cutoff);
+  }
 }
