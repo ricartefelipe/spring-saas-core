@@ -1,16 +1,16 @@
 package com.union.solutions.saascore.unit.infrastructure.audit;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.union.solutions.saascore.application.abac.AuditLogger;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaRepository;
+import com.union.solutions.saascore.application.abac.AuditLogger;
 import com.union.solutions.saascore.infrastructure.audit.AuditRetentionService;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,8 @@ class AuditRetentionServiceTest {
     service.purgeExpiredLogs();
 
     verify(auditRepo, never()).deleteBatchOlderThan(any(Instant.class), eq(1000));
-    verify(auditLogger, never()).log(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+    verify(auditLogger, never())
+        .log(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
   }
 
   @Test
@@ -55,7 +56,8 @@ class AuditRetentionServiceTest {
     service.purgeExpiredLogs();
 
     verify(auditRepo, never()).deleteBatchOlderThan(any(Instant.class), eq(1000));
-    verify(auditLogger, never()).log(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+    verify(auditLogger, never())
+        .log(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
   }
 
   @Test
