@@ -5,6 +5,7 @@ import com.union.solutions.saascore.adapters.in.rest.RateLimitFilter;
 import com.union.solutions.saascore.observability.CorrelationIdFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -13,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -40,6 +42,10 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(
+                        "/v1/auth/register",
+                        "/v1/auth/login",
+                        "/v1/auth/password-reset/**",
+                        "/v1/onboarding/**",
                         "/v1/dev/token",
                         "/healthz",
                         "/readyz",
@@ -51,10 +57,14 @@ public class SecurityConfig {
                         "/swagger-ui.html",
                         "/actuator",
                         "/actuator/**",
-                        "/v1/ai/status")
+                        "/v1/ai/status",
+                        "/v1/billing/plans",
+                        "/v1/billing/plans/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
+        .exceptionHandling(
+            ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
         .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class);
