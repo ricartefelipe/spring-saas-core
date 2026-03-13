@@ -19,6 +19,7 @@ Estado atual por critério de "pronto para venda".
 - [x] Registro, login e reset de senha de usuário
 - [x] Webhook de eventos para integradores externos
 - [x] Seed de dados realistas para simulação operacional (Liquibase changeset 009)
+- [x] Políticas ABAC cross-service (payments, orders, products, inventory, ledger, profile)
 
 ---
 
@@ -46,6 +47,7 @@ Estado atual por critério de "pronto para venda".
 - [x] Rede Docker `fluxe_shared` com `external: true` para orquestração multi-serviço
 - [x] Script `up-all.sh` (fluxe-b2b-suite) integra os 3 backends com RabbitMQ compartilhado
 - [x] Script de seed idempotente para ambientes de teste/homologação
+- [x] OpenTelemetry desabilitado em staging (sem collector disponível)
 
 ---
 
