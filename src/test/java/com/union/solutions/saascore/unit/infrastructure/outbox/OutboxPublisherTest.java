@@ -94,8 +94,7 @@ class OutboxPublisherTest {
 
     publisher.publishPending();
 
-    verify(rabbitOutboxSender, never())
-        .send(anyString(), anyString(), anyString(), any(Map.class));
+    verify(rabbitOutboxSender, never()).send(anyString(), anyString(), anyString(), any(Map.class));
   }
 
   @Test
