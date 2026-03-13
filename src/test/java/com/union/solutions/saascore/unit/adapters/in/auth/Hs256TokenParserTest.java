@@ -3,7 +3,6 @@ package com.union.solutions.saascore.unit.adapters.in.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.union.solutions.saascore.adapters.in.auth.Hs256TokenParser;
-import com.union.solutions.saascore.adapters.in.auth.TokenParseResult;
 import io.jsonwebtoken.Jwts;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
