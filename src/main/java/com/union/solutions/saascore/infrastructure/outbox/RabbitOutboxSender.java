@@ -30,8 +30,7 @@ public class RabbitOutboxSender {
   public void send(String exchange, String routingKey, String body, Map<String, String> headers) {
     MessagePostProcessor postProcessor =
         message -> {
-          headers.forEach(
-              (k, v) -> message.getMessageProperties().setHeader(k, v));
+          headers.forEach((k, v) -> message.getMessageProperties().setHeader(k, v));
           return message;
         };
     rabbitTemplate.convertAndSend(exchange, routingKey, body, postProcessor);

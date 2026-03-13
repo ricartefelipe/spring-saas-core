@@ -94,8 +94,7 @@ public class SubscriptionUseCase {
 
     if (sub.getStatus() != SubscriptionStatus.TRIAL
         && sub.getStatus() != SubscriptionStatus.PAST_DUE) {
-      throw new IllegalStateException(
-          "Cannot activate subscription in status: " + sub.getStatus());
+      throw new IllegalStateException("Cannot activate subscription in status: " + sub.getStatus());
     }
 
     Instant now = Instant.now();
@@ -131,7 +130,8 @@ public class SubscriptionUseCase {
                 () -> new IllegalStateException("No current subscription for tenant: " + tenantId));
 
     if (sub.getStatus() != SubscriptionStatus.ACTIVE) {
-      throw new IllegalStateException("Can only upgrade ACTIVE subscriptions, current: " + sub.getStatus());
+      throw new IllegalStateException(
+          "Can only upgrade ACTIVE subscriptions, current: " + sub.getStatus());
     }
 
     PlanDefinition currentPlan =
@@ -163,7 +163,8 @@ public class SubscriptionUseCase {
             "previousPlan", previousSlug,
             "newPlan", newPlanCode));
 
-    log.info("Subscription upgraded for tenant={} from={} to={}", tenantId, previousSlug, newPlanCode);
+    log.info(
+        "Subscription upgraded for tenant={} from={} to={}", tenantId, previousSlug, newPlanCode);
     return saved;
   }
 
@@ -178,7 +179,8 @@ public class SubscriptionUseCase {
                 () -> new IllegalStateException("No current subscription for tenant: " + tenantId));
 
     if (sub.getStatus() != SubscriptionStatus.ACTIVE) {
-      throw new IllegalStateException("Can only downgrade ACTIVE subscriptions, current: " + sub.getStatus());
+      throw new IllegalStateException(
+          "Can only downgrade ACTIVE subscriptions, current: " + sub.getStatus());
     }
 
     PlanDefinition currentPlan =
@@ -210,7 +212,8 @@ public class SubscriptionUseCase {
             "previousPlan", previousSlug,
             "newPlan", newPlanCode));
 
-    log.info("Subscription downgraded for tenant={} from={} to={}", tenantId, previousSlug, newPlanCode);
+    log.info(
+        "Subscription downgraded for tenant={} from={} to={}", tenantId, previousSlug, newPlanCode);
     return saved;
   }
 
@@ -248,11 +251,13 @@ public class SubscriptionUseCase {
         subscriptionRepo
             .findCurrentByTenantId(tenantId)
             .orElseGet(
-                () -> subscriptionRepo
-                    .findActiveByTenantId(tenantId)
-                    .orElseThrow(
-                        () -> new IllegalStateException(
-                            "No subscription found for tenant: " + tenantId)));
+                () ->
+                    subscriptionRepo
+                        .findActiveByTenantId(tenantId)
+                        .orElseThrow(
+                            () ->
+                                new IllegalStateException(
+                                    "No subscription found for tenant: " + tenantId)));
 
     if (sub.getStatus() != SubscriptionStatus.CANCELLED
         && sub.getStatus() != SubscriptionStatus.PAST_DUE) {
