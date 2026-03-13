@@ -1,0 +1,44 @@
+databaseChangeLog:
+  - changeSet:
+      id: essential-system-tenant
+      author: saascore
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableIsEmpty:
+                tableName: tenants
+      changes: []
+
+  - changeSet:
+      id: essential-system-tenant-insert
+      author: saascore
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: "SELECT COUNT(*) FROM tenants WHERE id = '00000000-0000-0000-0000-000000000001'"
+      changes:
+        - insert:
+            tableName: tenants
+            columns:
+              - column: { name: id, value: "00000000-0000-0000-0000-000000000001" }
+              - column: { name: name, value: "System" }
+              - column: { name: plan, value: "enterprise" }
+              - column: { name: region, value: "global" }
+              - column: { name: status, value: "ACTIVE" }
+              - column: { name: created_at, valueComputed: "CURRENT_TIMESTAMP" }
+              - column: { name: updated_at, valueComputed: "CURRENT_TIMESTAMP" }
+
+  - changeSet:
+      id: essential-abac-policies
+      author: saascore
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO policies (id, permission_code, effect, allowed_plans, allowed_regions, enabled, notes, created_at, updated_at)
+              VALUES
+                ('10000000-0000-0000-0000-000000000010', 'users:read', 'ALLOW', '[]', '[]', true, 'All plans can read users', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000011', 'users:write', 'ALLOW', '["pro","enterprise"]', '[]', true, 'Pro and enterprise can manage users', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000012', 'admin:write', 'ALLOW', '["pro","enterprise"]', '[]', true, 'Pro and enterprise admin write', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000013', 'analytics:read', 'ALLOW', '[]', '[]', true, 'All plans can read analytics', NOW(), NOW())
+              ON CONFLICT (id) DO NOTHING;
