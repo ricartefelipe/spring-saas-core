@@ -84,45 +84,68 @@ public class GovernanceChatbotService {
   }
 
   private Intent detectIntent(String question) {
-    String lower = question.toLowerCase().trim();
+    String lower = question.toLowerCase().trim()
+        .replaceAll("[áàâã]", "a")
+        .replaceAll("[éèê]", "e")
+        .replaceAll("[íìî]", "i")
+        .replaceAll("[óòôõ]", "o")
+        .replaceAll("[úùû]", "u")
+        .replaceAll("[ç]", "c");
 
-    if (matchesAny(lower, "olá", "ola", "oi", "hey", "hello", "hi", "bom dia", "boa tarde",
-        "boa noite", "como vai", "tudo bem", "e aí", "e ai", "fala")) {
+    if (matchesAny(lower, "ola", "oi", "hey", "hello", "hi", "bom dia", "boa tarde",
+        "boa noite", "como vai", "tudo bem", "e ai", "fala")) {
       return Intent.GREETING;
     }
-    if (matchesAny(lower, "tenant status", "meu tenant", "status do tenant", "info tenant",
-        "dados do tenant", "meu inquilino", "tenant info")) {
-      return Intent.TENANT_STATUS;
-    }
-    if (matchesAny(lower, "policies", "politicas", "política", "permissoes", "permissão",
-        "abac", "regras de acesso", "policy")) {
-      return Intent.POLICIES;
-    }
-    if (matchesAny(lower, "flags", "feature flag", "feature flags", "toggle", "funcionalidade")) {
-      return Intent.FLAGS;
-    }
-    if (matchesAny(lower, "audit", "auditoria", "log", "logs", "trilha", "rastreamento",
-        "eventos")) {
-      return Intent.AUDIT;
-    }
-    if (matchesAny(lower, "users", "usuarios", "usuários", "equipe", "membros", "team")) {
-      return Intent.USERS;
-    }
-    if (matchesAny(lower, "subscription", "assinatura", "plano", "billing", "cobrança",
-        "fatura")) {
-      return Intent.SUBSCRIPTION;
-    }
-    if (matchesAny(lower, "help", "ajuda", "comandos", "o que pode", "como funciona",
-        "instruções")) {
+    if (matchesAny(lower, "ajuda", "help", "comandos", "o que pode", "como funciona",
+        "instrucoes", "menu")) {
       return Intent.HELP;
     }
-    if (matchesAny(lower, "health", "saude", "saúde", "status", "sistema", "disponibilidade")) {
+
+    boolean isListAction = matchesAny(lower, "list", "mostre", "mostrar", "mostra",
+        "detalh", "exib", "quais", "quero ver", "me de", "me da", "me liste",
+        "apresent", "traz", "traga", "conte", "fale sobre", "informac");
+
+    if (matchesAny(lower, "tenant", "inquilino", "organizac", "empresa",
+        "meu tenant", "info tenant", "dados do tenant")) {
+      return Intent.TENANT_STATUS;
+    }
+    if (matchesAny(lower, "politic", "policies", "policy", "permiss", "abac",
+        "regras de acesso", "controle de acesso", "governanc")) {
+      return Intent.POLICIES;
+    }
+    if (matchesAny(lower, "flag", "feature flag", "toggle", "funcionalidade",
+        "recurso", "habilit")) {
+      return Intent.FLAGS;
+    }
+    if (matchesAny(lower, "audit", "log", "trilha", "rastreamento", "evento",
+        "historico", "registro")) {
+      return Intent.AUDIT;
+    }
+    if (matchesAny(lower, "user", "usuario", "equipe", "membro", "team",
+        "pessoa", "colaborador")) {
+      return Intent.USERS;
+    }
+    if (matchesAny(lower, "subscription", "assinatura", "plano", "billing",
+        "cobranca", "fatura", "pagamento")) {
+      return Intent.SUBSCRIPTION;
+    }
+    if (matchesAny(lower, "anomali", "problema", "alerta", "incidente",
+        "detectou", "detectad", "irregularidade", "suspeito")) {
       return Intent.HEALTH;
     }
-    if (matchesAny(lower, "recommendations", "recomendacoes", "recomendações", "sugestoes",
-        "sugestões", "melhorias", "otimizar")) {
+    if (matchesAny(lower, "health", "saude", "status", "sistema",
+        "disponibilidade", "visao geral", "resumo", "overview", "dashboard")) {
+      return Intent.HEALTH;
+    }
+    if (matchesAny(lower, "recomend", "sugest", "melhoria", "otimizar",
+        "melhorar", "dica", "conselho")) {
       return Intent.RECOMMENDATIONS;
     }
+
+    if (isListAction) {
+      return Intent.HEALTH;
+    }
+
     return Intent.UNKNOWN;
   }
 
@@ -568,25 +591,22 @@ public class GovernanceChatbotService {
   }
 
   private ChatResponse handleUnknown(String question) {
-    AnalyticsService.SummaryResponse summary = analyticsService.getSummary();
-    long activeTenants = summary.tenants().byStatus().getOrDefault("ACTIVE", 0L);
-
     String answer = String.format(
-        "Entendi sua pergunta: *\"%s\"*\n\n"
-            + "No modo Rule Engine, respondo sobre dados do sistema. "
-            + "Aqui está o que sei agora:\n\n"
-            + "- %d tenants (%d ativos)\n"
-            + "- %d políticas ABAC\n"
-            + "- %d flags ativas\n"
-            + "- %d eventos de auditoria (24h)\n\n"
-            + "Pergunte sobre: **tenants**, **políticas**, **auditoria**, **flags**, "
-            + "**segurança** ou **anomalias**.\n\n"
-            + "> Para respostas livres com linguagem natural, configure `OPENAI_API_KEY`.",
-        question, summary.tenants().total(), activeTenants,
-        summary.policies().total(), summary.flags().enabled(),
-        summary.audit().last24h());
+        "Não consegui identificar o assunto de: *\"%s\"*\n\n"
+            + "Tente perguntar de forma mais direta. Exemplos:\n\n"
+            + "- **\"tenants\"** — informações do tenant\n"
+            + "- **\"políticas\"** — políticas ABAC\n"
+            + "- **\"flags\"** — feature flags\n"
+            + "- **\"auditoria\"** — eventos recentes\n"
+            + "- **\"usuários\"** — membros da equipe\n"
+            + "- **\"status\"** — visão geral do sistema\n"
+            + "- **\"anomalias\"** — problemas detectados\n"
+            + "- **\"recomendações\"** — sugestões de melhoria\n"
+            + "- **\"ajuda\"** — lista completa de comandos",
+        question);
     return new ChatResponse(
-        answer, "unknown", List.of("Digite 'ajuda' para ver os comandos disponíveis"));
+        answer, "unknown",
+        List.of("tenants", "políticas", "flags", "auditoria", "status", "anomalias", "ajuda"));
   }
 
   private static String formatStatus(Tenant.TenantStatus status) {
