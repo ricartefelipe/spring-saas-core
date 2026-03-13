@@ -69,6 +69,7 @@ public class GovernanceChatbotService {
     log.debug("Chat intent={} for tenant={} question=\"{}\"", intent, tenantId, question);
 
     return switch (intent) {
+      case GREETING -> handleGreeting();
       case TENANT_STATUS -> handleTenantStatus(tenantId);
       case POLICIES -> handlePolicies(tenantId);
       case FLAGS -> handleFlags(tenantId);
@@ -85,6 +86,10 @@ public class GovernanceChatbotService {
   private Intent detectIntent(String question) {
     String lower = question.toLowerCase().trim();
 
+    if (matchesAny(lower, "olá", "ola", "oi", "hey", "hello", "hi", "bom dia", "boa tarde",
+        "boa noite", "como vai", "tudo bem", "e aí", "e ai", "fala")) {
+      return Intent.GREETING;
+    }
     if (matchesAny(lower, "tenant status", "meu tenant", "status do tenant", "info tenant",
         "dados do tenant", "meu inquilino", "tenant info")) {
       return Intent.TENANT_STATUS;
@@ -542,14 +547,44 @@ public class GovernanceChatbotService {
     return new ChatResponse(sb.toString(), "recommendations", suggestions);
   }
 
+  private ChatResponse handleGreeting() {
+    AnalyticsService.SummaryResponse summary = analyticsService.getSummary();
+    long activeTenants = summary.tenants().byStatus().getOrDefault("ACTIVE", 0L);
+
+    String answer = String.format(
+        "Olá! Sou o assistente de governança do **Fluxe B2B Suite**.\n\n"
+            + "**Resumo rápido do sistema:**\n"
+            + "- %d tenants ativos de %d cadastrados\n"
+            + "- %d políticas ABAC configuradas\n"
+            + "- %d feature flags ativas de %d\n"
+            + "- %d eventos de auditoria nas últimas 24h\n\n"
+            + "Como posso ajudar? Pergunte sobre **tenants**, **políticas**, **auditoria**, "
+            + "**segurança**, **flags** ou digite **ajuda** para ver todos os comandos.",
+        activeTenants, summary.tenants().total(),
+        summary.policies().total(),
+        summary.flags().enabled(), summary.flags().total(),
+        summary.audit().last24h());
+    return new ChatResponse(answer, "greeting", List.of());
+  }
+
   private ChatResponse handleUnknown(String question) {
-    String answer =
-        String.format(
-            "Não consegui identificar o assunto da sua pergunta: *\"%s\"*\n\n"
-                + "Tente perguntar sobre: **tenant status**, **policies**, **flags**, "
-                + "**audit**, **users**, **subscription**, **health** ou **recommendations**.\n\n"
-                + "Digite **ajuda** para ver todos os comandos disponíveis.",
-            question);
+    AnalyticsService.SummaryResponse summary = analyticsService.getSummary();
+    long activeTenants = summary.tenants().byStatus().getOrDefault("ACTIVE", 0L);
+
+    String answer = String.format(
+        "Entendi sua pergunta: *\"%s\"*\n\n"
+            + "No modo Rule Engine, respondo sobre dados do sistema. "
+            + "Aqui está o que sei agora:\n\n"
+            + "- %d tenants (%d ativos)\n"
+            + "- %d políticas ABAC\n"
+            + "- %d flags ativas\n"
+            + "- %d eventos de auditoria (24h)\n\n"
+            + "Pergunte sobre: **tenants**, **políticas**, **auditoria**, **flags**, "
+            + "**segurança** ou **anomalias**.\n\n"
+            + "> Para respostas livres com linguagem natural, configure `OPENAI_API_KEY`.",
+        question, summary.tenants().total(), activeTenants,
+        summary.policies().total(), summary.flags().enabled(),
+        summary.audit().last24h());
     return new ChatResponse(
         answer, "unknown", List.of("Digite 'ajuda' para ver os comandos disponíveis"));
   }
@@ -572,6 +607,7 @@ public class GovernanceChatbotService {
   public record ChatResponse(String answer, String intent, List<String> suggestions) {}
 
   private enum Intent {
+    GREETING,
     TENANT_STATUS,
     POLICIES,
     FLAGS,
