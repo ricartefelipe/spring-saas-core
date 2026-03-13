@@ -50,6 +50,7 @@ class Phase1IntegrationTest {
   @Autowired TokenIssuer tokenIssuer;
 
   private String adminToken;
+  private String adminToken002;
   private String freeToken;
 
   @BeforeEach
@@ -57,7 +58,7 @@ class Phase1IntegrationTest {
     adminToken =
         tokenIssuer.issue(
             "admin@test",
-            "00000000-0000-0000-0000-000000000099",
+            "00000000-0000-0000-0000-000000000001",
             List.of("admin"),
             List.of(
                 "tenants:read",
@@ -65,7 +66,16 @@ class Phase1IntegrationTest {
                 "policies:read",
                 "policies:write",
                 "flags:read",
-                "flags:write"),
+                "flags:write",
+                "audit:read"),
+            "enterprise",
+            "us-east-1");
+    adminToken002 =
+        tokenIssuer.issue(
+            "admin@test",
+            "00000000-0000-0000-0000-000000000002",
+            List.of("admin"),
+            List.of("tenants:read", "flags:read"),
             "enterprise",
             "us-east-1");
     freeToken =
@@ -130,7 +140,7 @@ class Phase1IntegrationTest {
 
     mvc.perform(get("/v1/tenants").header("Authorization", "Bearer " + adminToken))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.content").isArray());
+        .andExpect(jsonPath("$.items").isArray());
 
     mvc.perform(
             patch("/v1/tenants/" + tenantId)
@@ -318,19 +328,19 @@ class Phase1IntegrationTest {
     String tenantId = "00000000-0000-0000-0000-000000000002";
     mvc.perform(
             get("/v1/tenants/" + tenantId + "/snapshot")
-                .header("Authorization", "Bearer " + adminToken))
+                .header("Authorization", "Bearer " + adminToken002))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.plan").value("pro"));
 
     mvc.perform(
             get("/v1/tenants/" + tenantId + "/policies")
-                .header("Authorization", "Bearer " + adminToken))
+                .header("Authorization", "Bearer " + adminToken002))
         .andExpect(status().isOk());
 
     mvc.perform(
             get("/v1/tenants/" + tenantId + "/flags")
-                .header("Authorization", "Bearer " + adminToken))
+                .header("Authorization", "Bearer " + adminToken002))
         .andExpect(status().isOk());
   }
 
@@ -415,7 +425,7 @@ class Phase1IntegrationTest {
             .andExpect(status().isOk())
             .andReturn();
     JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-    for (JsonNode tenant : body.get("content")) {
+    for (JsonNode tenant : body.get("items")) {
       assertThat(tenant.get("plan").asText()).isEqualTo("enterprise");
     }
   }

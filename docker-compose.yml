@@ -61,7 +61,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: docker/app.Dockerfile
+      dockerfile: docker/app.local.Dockerfile
       network: host
     ports:
       - "8080:8080"
@@ -106,7 +106,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus:/etc/prometheus:ro
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
     depends_on:
@@ -137,6 +137,7 @@ services:
 
 networks:
   fluxe_shared:
+    name: fluxe_shared
     external: true
 
 volumes:
