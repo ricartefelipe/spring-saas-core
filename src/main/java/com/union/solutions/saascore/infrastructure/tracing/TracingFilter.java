@@ -51,8 +51,7 @@ public class TracingFilter extends OncePerRequestFilter {
     if (correlationId != null && !correlationId.isBlank()) {
       span.tag("correlation.id", correlationId);
     }
-    TenantContext.getTenantId()
-        .ifPresent(tid -> span.tag("tenant.id", tid.toString()));
+    TenantContext.getTenantId().ifPresent(tid -> span.tag("tenant.id", tid.toString()));
   }
 
   private void propagateTraceToMdc(Span span) {

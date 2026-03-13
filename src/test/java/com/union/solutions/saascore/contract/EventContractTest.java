@@ -12,9 +12,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
- * Consumer-driven contract tests for events published by spring-saas-core via outbox.
- * Validates that event payloads match the structure expected by
- * node-b2b-orders and py-payments-ledger consumers.
+ * Consumer-driven contract tests for events published by spring-saas-core via outbox. Validates
+ * that event payloads match the structure expected by node-b2b-orders and py-payments-ledger
+ * consumers.
  */
 class EventContractTest {
 
@@ -26,15 +26,9 @@ class EventContractTest {
 
   private void assertRequiredStringFields(JsonNode node, String... fields) {
     for (String field : fields) {
-      assertThat(node.has(field))
-          .as("missing required field: %s", field)
-          .isTrue();
-      assertThat(node.get(field).isTextual())
-          .as("field %s must be a string", field)
-          .isTrue();
-      assertThat(node.get(field).asText())
-          .as("field %s must not be blank", field)
-          .isNotBlank();
+      assertThat(node.has(field)).as("missing required field: %s", field).isTrue();
+      assertThat(node.get(field).isTextual()).as("field %s must be a string", field).isTrue();
+      assertThat(node.get(field).asText()).as("field %s must not be blank", field).isNotBlank();
     }
   }
 
@@ -200,8 +194,7 @@ class EventContractTest {
 
     @Test
     void payloadContainsAllRequiredFields() {
-      JsonNode node =
-          toJson(Map.of("tenantId", UUID.randomUUID().toString(), "name", "old-flag"));
+      JsonNode node = toJson(Map.of("tenantId", UUID.randomUUID().toString(), "name", "old-flag"));
       assertRequiredStringFields(node, "tenantId", "name");
     }
   }
@@ -224,7 +217,8 @@ class EventContractTest {
     @Test
     void tenantEnvelopeContainsAllRequiredFields() {
       JsonNode node = toJson(makeEnvelope("TENANT", "tenant.created"));
-      assertRequiredStringFields(node, "id", "aggregateType", "aggregateId", "eventType", "createdAt");
+      assertRequiredStringFields(
+          node, "id", "aggregateType", "aggregateId", "eventType", "createdAt");
       assertThat(node.has("payload")).isTrue();
       assertThat(node.get("payload").isObject()).isTrue();
     }
@@ -232,14 +226,16 @@ class EventContractTest {
     @Test
     void policyEnvelopeContainsAllRequiredFields() {
       JsonNode node = toJson(makeEnvelope("POLICY", "policy.created"));
-      assertRequiredStringFields(node, "id", "aggregateType", "aggregateId", "eventType", "createdAt");
+      assertRequiredStringFields(
+          node, "id", "aggregateType", "aggregateId", "eventType", "createdAt");
       assertThat(node.get("payload").isObject()).isTrue();
     }
 
     @Test
     void flagEnvelopeContainsAllRequiredFields() {
       JsonNode node = toJson(makeEnvelope("FLAG", "flag.created"));
-      assertRequiredStringFields(node, "id", "aggregateType", "aggregateId", "eventType", "createdAt");
+      assertRequiredStringFields(
+          node, "id", "aggregateType", "aggregateId", "eventType", "createdAt");
       assertThat(node.get("payload").isObject()).isTrue();
     }
 
@@ -301,8 +297,7 @@ class EventContractTest {
 
     @Test
     void payloadFieldsAreAllStrings() {
-      Map<String, String> tenantPayload =
-          Map.of("name", "Test", "plan", "PRO", "region", "US");
+      Map<String, String> tenantPayload = Map.of("name", "Test", "plan", "PRO", "region", "US");
       for (Object value : tenantPayload.values()) {
         assertThat(value).isInstanceOf(String.class);
       }

@@ -10,49 +10,49 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserRepositoryAdapter implements UserRepository {
 
-    private final UserJpaRepository jpa;
+  private final UserJpaRepository jpa;
 
-    public UserRepositoryAdapter(UserJpaRepository jpa) {
-        this.jpa = jpa;
-    }
+  public UserRepositoryAdapter(UserJpaRepository jpa) {
+    this.jpa = jpa;
+  }
 
-    @Override
-    public User save(User user) {
-        return jpa.save(UserEntity.from(user)).toDomain();
-    }
+  @Override
+  public User save(User user) {
+    return jpa.save(UserEntity.from(user)).toDomain();
+  }
 
-    @Override
-    public Optional<User> findById(UUID id) {
-        return jpa.findById(id).map(UserEntity::toDomain);
-    }
+  @Override
+  public Optional<User> findById(UUID id) {
+    return jpa.findById(id).map(UserEntity::toDomain);
+  }
 
-    @Override
-    public Optional<User> findByEmail(String email) {
-        return jpa.findByEmail(email).map(UserEntity::toDomain);
-    }
+  @Override
+  public Optional<User> findByEmail(String email) {
+    return jpa.findByEmail(email).map(UserEntity::toDomain);
+  }
 
-    @Override
-    public List<User> findByTenantId(UUID tenantId) {
-        return jpa.findByTenantId(tenantId).stream().map(UserEntity::toDomain).toList();
-    }
+  @Override
+  public List<User> findByTenantId(UUID tenantId) {
+    return jpa.findByTenantId(tenantId).stream().map(UserEntity::toDomain).toList();
+  }
 
-    @Override
-    public Optional<User> findByIdAndTenantId(UUID id, UUID tenantId) {
-        return jpa.findByIdAndTenantId(id, tenantId).map(UserEntity::toDomain);
-    }
+  @Override
+  public Optional<User> findByIdAndTenantId(UUID id, UUID tenantId) {
+    return jpa.findByIdAndTenantId(id, tenantId).map(UserEntity::toDomain);
+  }
 
-    @Override
-    public Optional<User> findByEmailAndTenantId(String email, UUID tenantId) {
-        return jpa.findByEmailAndTenantId(email, tenantId).map(UserEntity::toDomain);
-    }
+  @Override
+  public Optional<User> findByEmailAndTenantId(String email, UUID tenantId) {
+    return jpa.findByEmailAndTenantId(email, tenantId).map(UserEntity::toDomain);
+  }
 
-    @Override
-    public boolean existsByEmail(String email) {
-        return jpa.existsByEmail(email);
-    }
+  @Override
+  public boolean existsByEmail(String email) {
+    return jpa.existsByEmail(email);
+  }
 
-    @Override
-    public long countByTenantId(UUID tenantId) {
-        return jpa.countByTenantId(tenantId);
-    }
+  @Override
+  public long countByTenantId(UUID tenantId) {
+    return jpa.countByTenantId(tenantId);
+  }
 }

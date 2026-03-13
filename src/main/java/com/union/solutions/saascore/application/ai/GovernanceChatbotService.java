@@ -16,14 +16,12 @@ import com.union.solutions.saascore.domain.User;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,61 +82,131 @@ public class GovernanceChatbotService {
   }
 
   private Intent detectIntent(String question) {
-    String lower = question.toLowerCase().trim()
-        .replaceAll("[áàâã]", "a")
-        .replaceAll("[éèê]", "e")
-        .replaceAll("[íìî]", "i")
-        .replaceAll("[óòôõ]", "o")
-        .replaceAll("[úùû]", "u")
-        .replaceAll("[ç]", "c");
+    String lower =
+        question
+            .toLowerCase()
+            .trim()
+            .replaceAll("[áàâã]", "a")
+            .replaceAll("[éèê]", "e")
+            .replaceAll("[íìî]", "i")
+            .replaceAll("[óòôõ]", "o")
+            .replaceAll("[úùû]", "u")
+            .replaceAll("[ç]", "c");
 
-    if (matchesAny(lower, "ola", "oi", "hey", "hello", "hi", "bom dia", "boa tarde",
-        "boa noite", "como vai", "tudo bem", "e ai", "fala")) {
+    if (matchesAny(
+        lower,
+        "ola",
+        "oi",
+        "hey",
+        "hello",
+        "hi",
+        "bom dia",
+        "boa tarde",
+        "boa noite",
+        "como vai",
+        "tudo bem",
+        "e ai",
+        "fala")) {
       return Intent.GREETING;
     }
-    if (matchesAny(lower, "ajuda", "help", "comandos", "o que pode", "como funciona",
-        "instrucoes", "menu")) {
+    if (matchesAny(
+        lower, "ajuda", "help", "comandos", "o que pode", "como funciona", "instrucoes", "menu")) {
       return Intent.HELP;
     }
 
-    boolean isListAction = matchesAny(lower, "list", "mostre", "mostrar", "mostra",
-        "detalh", "exib", "quais", "quero ver", "me de", "me da", "me liste",
-        "apresent", "traz", "traga", "conte", "fale sobre", "informac");
+    boolean isListAction =
+        matchesAny(
+            lower,
+            "list",
+            "mostre",
+            "mostrar",
+            "mostra",
+            "detalh",
+            "exib",
+            "quais",
+            "quero ver",
+            "me de",
+            "me da",
+            "me liste",
+            "apresent",
+            "traz",
+            "traga",
+            "conte",
+            "fale sobre",
+            "informac");
 
-    if (matchesAny(lower, "tenant", "inquilino", "organizac", "empresa",
-        "meu tenant", "info tenant", "dados do tenant")) {
+    if (matchesAny(
+        lower,
+        "tenant",
+        "inquilino",
+        "organizac",
+        "empresa",
+        "meu tenant",
+        "info tenant",
+        "dados do tenant")) {
       return Intent.TENANT_STATUS;
     }
-    if (matchesAny(lower, "politic", "policies", "policy", "permiss", "abac",
-        "regras de acesso", "controle de acesso", "governanc")) {
+    if (matchesAny(
+        lower,
+        "politic",
+        "policies",
+        "policy",
+        "permiss",
+        "abac",
+        "regras de acesso",
+        "controle de acesso",
+        "governanc")) {
       return Intent.POLICIES;
     }
-    if (matchesAny(lower, "flag", "feature flag", "toggle", "funcionalidade",
-        "recurso", "habilit")) {
+    if (matchesAny(
+        lower, "flag", "feature flag", "toggle", "funcionalidade", "recurso", "habilit")) {
       return Intent.FLAGS;
     }
-    if (matchesAny(lower, "audit", "log", "trilha", "rastreamento", "evento",
-        "historico", "registro")) {
+    if (matchesAny(
+        lower, "audit", "log", "trilha", "rastreamento", "evento", "historico", "registro")) {
       return Intent.AUDIT;
     }
-    if (matchesAny(lower, "user", "usuario", "equipe", "membro", "team",
-        "pessoa", "colaborador")) {
+    if (matchesAny(lower, "user", "usuario", "equipe", "membro", "team", "pessoa", "colaborador")) {
       return Intent.USERS;
     }
-    if (matchesAny(lower, "subscription", "assinatura", "plano", "billing",
-        "cobranca", "fatura", "pagamento")) {
+    if (matchesAny(
+        lower,
+        "subscription",
+        "assinatura",
+        "plano",
+        "billing",
+        "cobranca",
+        "fatura",
+        "pagamento")) {
       return Intent.SUBSCRIPTION;
     }
-    if (matchesAny(lower, "anomali", "problema", "alerta", "incidente",
-        "detectou", "detectad", "irregularidade", "suspeito")) {
+    if (matchesAny(
+        lower,
+        "anomali",
+        "problema",
+        "alerta",
+        "incidente",
+        "detectou",
+        "detectad",
+        "irregularidade",
+        "suspeito")) {
       return Intent.HEALTH;
     }
-    if (matchesAny(lower, "health", "saude", "status", "sistema",
-        "disponibilidade", "visao geral", "resumo", "overview", "dashboard")) {
+    if (matchesAny(
+        lower,
+        "health",
+        "saude",
+        "status",
+        "sistema",
+        "disponibilidade",
+        "visao geral",
+        "resumo",
+        "overview",
+        "dashboard")) {
       return Intent.HEALTH;
     }
-    if (matchesAny(lower, "recomend", "sugest", "melhoria", "otimizar",
-        "melhorar", "dica", "conselho")) {
+    if (matchesAny(
+        lower, "recomend", "sugest", "melhoria", "otimizar", "melhorar", "dica", "conselho")) {
       return Intent.RECOMMENDATIONS;
     }
 
@@ -243,7 +311,9 @@ public class GovernanceChatbotService {
                           "| `%s` | %s | %s | %s | %s |\n",
                           p.getPermissionCode(),
                           p.getEffect(),
-                          p.getAllowedPlans().isEmpty() ? "todos" : String.join(", ", p.getAllowedPlans()),
+                          p.getAllowedPlans().isEmpty()
+                              ? "todos"
+                              : String.join(", ", p.getAllowedPlans()),
                           p.getAllowedRegions().isEmpty()
                               ? "todas"
                               : String.join(", ", p.getAllowedRegions()),
@@ -255,7 +325,8 @@ public class GovernanceChatbotService {
               if (applicable.isEmpty()) {
                 suggestions.add("Crie políticas ABAC para controle de acesso granular");
               }
-              long denyCount = applicable.stream().filter(p -> p.getEffect() == Policy.Effect.DENY).count();
+              long denyCount =
+                  applicable.stream().filter(p -> p.getEffect() == Policy.Effect.DENY).count();
               if (denyCount == 0 && !applicable.isEmpty()) {
                 suggestions.add(
                     "Considere adicionar políticas DENY para restrições explícitas (DENY tem precedência)");
@@ -311,7 +382,8 @@ public class GovernanceChatbotService {
       suggestions.add("Configure feature flags para controle gradual de funcionalidades");
     }
     if (enabled > 20) {
-      suggestions.add("Muitas flags ativas — revise flags antigas que podem ser promovidas a permanentes");
+      suggestions.add(
+          "Muitas flags ativas — revise flags antigas que podem ser promovidas a permanentes");
     }
     if (disabled > enabled && flags.size() > 3) {
       suggestions.add("Há mais flags desativadas do que ativas — considere limpar flags obsoletas");
@@ -378,9 +450,7 @@ public class GovernanceChatbotService {
 
     Map<String, Long> statusDistribution =
         users.stream()
-            .collect(
-                Collectors.groupingBy(
-                    u -> u.getStatus().name(), Collectors.counting()));
+            .collect(Collectors.groupingBy(u -> u.getStatus().name(), Collectors.counting()));
 
     StringBuilder sb = new StringBuilder();
     sb.append(String.format("## Usuários do Tenant\n\n**Total**: %d\n\n", count));
@@ -394,8 +464,7 @@ public class GovernanceChatbotService {
 
     if (!roleDistribution.isEmpty()) {
       sb.append("### Por Role\n\n");
-      roleDistribution.forEach(
-          (role, c) -> sb.append(String.format("- `%s`: %d\n", role, c)));
+      roleDistribution.forEach((role, c) -> sb.append(String.format("- `%s`: %d\n", role, c)));
     }
 
     List<String> suggestions = new ArrayList<>();
@@ -544,8 +613,7 @@ public class GovernanceChatbotService {
     StringBuilder sb = new StringBuilder();
     sb.append(
         String.format(
-            "## Recomendações de Governança\n\n"
-                + "**Score**: %d/100 | **Verificações**: %d\n\n",
+            "## Recomendações de Governança\n\n" + "**Score**: %d/100 | **Verificações**: %d\n\n",
             report.score(), report.recommendations().size()));
 
     if (report.recommendations().isEmpty()) {
@@ -584,10 +652,11 @@ public class GovernanceChatbotService {
       sb.append("Vi que temos algumas **anomalias** no sistema que merecem atenção. ");
       sb.append("Quer que eu detalhe?\n\n");
     } else {
-      sb.append(String.format(
-          "Está tudo tranquilo por aqui — **%d tenants** ativos, "
-              + "**%d políticas** configuradas e nenhuma anomalia detectada.\n\n",
-          activeTenants, summary.policies().total()));
+      sb.append(
+          String.format(
+              "Está tudo tranquilo por aqui — **%d tenants** ativos, "
+                  + "**%d políticas** configuradas e nenhuma anomalia detectada.\n\n",
+              activeTenants, summary.policies().total()));
     }
 
     sb.append("No que posso te ajudar? Alguns exemplos:\n\n");
@@ -598,28 +667,31 @@ public class GovernanceChatbotService {
     sb.append("- \uD83D\uDCA1 **\"recomendações\"** — sugestões de melhoria\n\n");
     sb.append("Ou pode perguntar com suas próprias palavras — eu me viro! \uD83D\uDE09");
 
-    List<String> suggestions = hasAnomalies
-        ? List.of("anomalias", "status", "recomendações")
-        : List.of("tenants", "políticas", "auditoria");
+    List<String> suggestions =
+        hasAnomalies
+            ? List.of("anomalias", "status", "recomendações")
+            : List.of("tenants", "políticas", "auditoria");
     return new ChatResponse(sb.toString(), "greeting", suggestions);
   }
 
   private ChatResponse handleUnknown(String question) {
-    String answer = String.format(
-        "Não consegui identificar o assunto de: *\"%s\"*\n\n"
-            + "Tente perguntar de forma mais direta. Exemplos:\n\n"
-            + "- **\"tenants\"** — informações do tenant\n"
-            + "- **\"políticas\"** — políticas ABAC\n"
-            + "- **\"flags\"** — feature flags\n"
-            + "- **\"auditoria\"** — eventos recentes\n"
-            + "- **\"usuários\"** — membros da equipe\n"
-            + "- **\"status\"** — visão geral do sistema\n"
-            + "- **\"anomalias\"** — problemas detectados\n"
-            + "- **\"recomendações\"** — sugestões de melhoria\n"
-            + "- **\"ajuda\"** — lista completa de comandos",
-        question);
+    String answer =
+        String.format(
+            "Não consegui identificar o assunto de: *\"%s\"*\n\n"
+                + "Tente perguntar de forma mais direta. Exemplos:\n\n"
+                + "- **\"tenants\"** — informações do tenant\n"
+                + "- **\"políticas\"** — políticas ABAC\n"
+                + "- **\"flags\"** — feature flags\n"
+                + "- **\"auditoria\"** — eventos recentes\n"
+                + "- **\"usuários\"** — membros da equipe\n"
+                + "- **\"status\"** — visão geral do sistema\n"
+                + "- **\"anomalias\"** — problemas detectados\n"
+                + "- **\"recomendações\"** — sugestões de melhoria\n"
+                + "- **\"ajuda\"** — lista completa de comandos",
+            question);
     return new ChatResponse(
-        answer, "unknown",
+        answer,
+        "unknown",
         List.of("tenants", "políticas", "flags", "auditoria", "status", "anomalias", "ajuda"));
   }
 
