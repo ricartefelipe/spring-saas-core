@@ -4,8 +4,6 @@ import com.union.solutions.saascore.application.port.WebhookDeliveryRepository;
 import com.union.solutions.saascore.domain.WebhookDelivery;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 

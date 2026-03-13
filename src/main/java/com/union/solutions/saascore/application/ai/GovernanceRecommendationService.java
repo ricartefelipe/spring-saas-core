@@ -60,8 +60,7 @@ public class GovernanceRecommendationService {
     Tenant tenant =
         tenantUseCase
             .getById(tenantId)
-            .orElseThrow(
-                () -> new IllegalArgumentException("Tenant not found: " + tenantId));
+            .orElseThrow(() -> new IllegalArgumentException("Tenant not found: " + tenantId));
 
     List<Recommendation> recommendations = new ArrayList<>();
 
@@ -185,7 +184,8 @@ public class GovernanceRecommendationService {
 
     if (userCount > 1) {
       List<User> users = userRepo.findByTenantId(tenantId);
-      long adminCount = users.stream().flatMap(u -> u.getRoles().stream()).filter("admin"::equals).count();
+      long adminCount =
+          users.stream().flatMap(u -> u.getRoles().stream()).filter("admin"::equals).count();
 
       if (adminCount == 0) {
         recommendations.add(
@@ -264,7 +264,8 @@ public class GovernanceRecommendationService {
 
     List<Object[]> deniedSpikes = auditRepo.findAccessDeniedSpikes(since7d, 5);
     if (!deniedSpikes.isEmpty()) {
-      long totalDenied = deniedSpikes.stream().mapToLong(row -> ((Number) row[1]).longValue()).sum();
+      long totalDenied =
+          deniedSpikes.stream().mapToLong(row -> ((Number) row[1]).longValue()).sum();
       recommendations.add(
           new Recommendation(
               "security",
