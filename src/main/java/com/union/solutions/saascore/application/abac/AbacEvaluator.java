@@ -1,6 +1,7 @@
 package com.union.solutions.saascore.application.abac;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.union.solutions.saascore.application.port.AuditLogger;
 import com.union.solutions.saascore.application.port.PolicyRepository;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.Policy;
@@ -34,6 +35,14 @@ public class AbacEvaluator {
     this.auditLogger = auditLogger;
     this.objectMapper = objectMapper;
     this.accessDeniedCounter = accessDeniedCounter;
+  }
+
+  public void enforceOrThrow(String permission) {
+    AbacResult result = evaluate(AbacContext.fromCurrentContext(permission));
+    if (!result.allowed()) {
+      throw new org.springframework.security.access.AccessDeniedException(
+          "ABAC denied: " + permission + " (" + result.reason() + ")");
+    }
   }
 
   @Transactional(readOnly = true)
