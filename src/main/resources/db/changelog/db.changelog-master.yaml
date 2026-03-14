@@ -17,3 +17,5 @@ databaseChangeLog:
       file: db/changelog/changes/008-essential-seed-all-envs.yaml
   - include:
       file: db/changelog/changes/009-realistic-seed-data.yaml
+  - include:
+      file: db/changelog/changes/010-stripe-billing-columns.yaml

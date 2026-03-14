@@ -1,6 +1,8 @@
 package com.union.solutions.saascore.application.onboarding;
 
+import com.union.solutions.saascore.application.email.EmailTemplates;
 import com.union.solutions.saascore.application.port.AuditLogger;
+import com.union.solutions.saascore.application.port.EmailSender;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.port.UserRepository;
@@ -23,18 +25,21 @@ public class OnboardingUseCase {
   private final PasswordEncoder passwordEncoder;
   private final OutboxPublisherPort outboxPublisher;
   private final AuditLogger auditLogger;
+  private final EmailSender emailSender;
 
   public OnboardingUseCase(
       TenantRepository tenantRepo,
       UserRepository userRepo,
       PasswordEncoder passwordEncoder,
       OutboxPublisherPort outboxPublisher,
-      AuditLogger auditLogger) {
+      AuditLogger auditLogger,
+      EmailSender emailSender) {
     this.tenantRepo = tenantRepo;
     this.userRepo = userRepo;
     this.passwordEncoder = passwordEncoder;
     this.outboxPublisher = outboxPublisher;
     this.auditLogger = auditLogger;
+    this.emailSender = emailSender;
   }
 
   @Transactional
@@ -94,6 +99,11 @@ public class OnboardingUseCase {
         201,
         null,
         null);
+
+    emailSender.send(
+        adminEmail,
+        "Welcome to " + companyName,
+        EmailTemplates.welcomeEmail(adminName, companyName));
 
     return new OnboardingResult(tenant, user);
   }

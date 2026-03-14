@@ -1,6 +1,8 @@
 package com.union.solutions.saascore.application.user;
 
+import com.union.solutions.saascore.application.email.EmailTemplates;
 import com.union.solutions.saascore.application.port.AuditLogger;
+import com.union.solutions.saascore.application.port.EmailSender;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.PasswordResetTokenRepository;
 import com.union.solutions.saascore.application.port.TenantRepository;
@@ -24,6 +26,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -95,6 +98,8 @@ public class UserUseCase {
   private final TokenIssuer tokenIssuer;
   private final OutboxPublisherPort outboxPublisher;
   private final AuditLogger auditLogger;
+  private final EmailSender emailSender;
+  private final String frontendUrl;
   private final SecureRandom secureRandom = new SecureRandom();
 
   public UserUseCase(
@@ -104,7 +109,9 @@ public class UserUseCase {
       PasswordEncoder passwordEncoder,
       TokenIssuer tokenIssuer,
       OutboxPublisherPort outboxPublisher,
-      AuditLogger auditLogger) {
+      AuditLogger auditLogger,
+      EmailSender emailSender,
+      @Value("${app.email.frontend-url:http://localhost:4200}") String frontendUrl) {
     this.userRepo = userRepo;
     this.tenantRepo = tenantRepo;
     this.resetTokenRepo = resetTokenRepo;
@@ -112,6 +119,8 @@ public class UserUseCase {
     this.tokenIssuer = tokenIssuer;
     this.outboxPublisher = outboxPublisher;
     this.auditLogger = auditLogger;
+    this.emailSender = emailSender;
+    this.frontendUrl = frontendUrl;
   }
 
   @Transactional
@@ -220,6 +229,12 @@ public class UserUseCase {
             tokenId.toString(),
             "rawToken",
             rawToken));
+
+    String resetLink = frontendUrl + "/reset-password?tokenId=" + tokenId + "&token=" + rawToken;
+    emailSender.send(
+        user.getEmail(),
+        "Reset your password",
+        EmailTemplates.passwordResetEmail(user.getName(), resetLink));
 
     log.info("Password reset requested for user={}", user.getId());
     return new PasswordResetResult(true, tokenId, rawToken);
