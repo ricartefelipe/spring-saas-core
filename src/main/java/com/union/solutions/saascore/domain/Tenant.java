@@ -12,6 +12,7 @@ public class Tenant {
   private TenantStatus status;
   private Instant createdAt;
   private Instant updatedAt;
+  private String stripeCustomerId;
 
   public Tenant() {}
 
@@ -86,6 +87,14 @@ public class Tenant {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public String getStripeCustomerId() {
+    return stripeCustomerId;
+  }
+
+  public void setStripeCustomerId(String stripeCustomerId) {
+    this.stripeCustomerId = stripeCustomerId;
   }
 
   public boolean isActive() {
