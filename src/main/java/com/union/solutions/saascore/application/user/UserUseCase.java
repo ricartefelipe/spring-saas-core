@@ -46,6 +46,8 @@ public class UserUseCase {
                   "audit:read",
                   "analytics:read",
                   "admin:write",
+                  "users:read",
+                  "users:write",
                   "orders:read",
                   "orders:write",
                   "inventory:read",
