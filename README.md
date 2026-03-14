@@ -1,13 +1,14 @@
 # spring-saas-core
 
-[![Build](https://github.com/ricartefelipe/spring-saas-core/actions/workflows/ci.yml/badge.svg)](https://github.com/ricartefelipe/spring-saas-core/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-jacoco-green)](https://github.com/ricartefelipe/spring-saas-core)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Java 21](https://img.shields.io/badge/Java-21-ED8B00.svg)](https://openjdk.org/)
-[![Spring Boot 3](https://img.shields.io/badge/Spring%20Boot-3.x-6DB33F.svg)](https://spring.io/projects/spring-boot)
-[![Docker](https://img.shields.io/badge/docker-ready-brightgreen)](docker-compose.yml)
-[![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0-yellow)](docs/api/openapi.yaml)
-[![Prometheus](https://img.shields.io/badge/Prometheus-metrics-orange)](http://localhost:9090)
+[![CI](https://github.com/ricartefelipe/spring-saas-core/actions/workflows/ci.yml/badge.svg)](https://github.com/ricartefelipe/spring-saas-core/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)](https://redis.io/)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3-FF6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
+[![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0-6BA539?logo=openapiinitiative&logoColor=white)](docs/api/openapi.yaml)
 
 Núcleo de governança multi-tenant para SaaS: tenants, RBAC/ABAC, feature flags, auditoria e publicação de eventos (outbox). Serve como **control plane** para uma plataforma B2B, integrando com APIs de pedidos (Node) e pagamentos (Python) através de um contrato de identidade JWT unificado.
 
