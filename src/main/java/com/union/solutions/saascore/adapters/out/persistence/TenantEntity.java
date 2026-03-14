@@ -32,6 +32,9 @@ public class TenantEntity {
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;
 
+  @Column(name = "stripe_customer_id")
+  private String stripeCustomerId;
+
   public static TenantEntity from(Tenant t) {
     TenantEntity e = new TenantEntity();
     e.id = t.getId();
@@ -41,11 +44,14 @@ public class TenantEntity {
     e.status = t.getStatus();
     e.createdAt = t.getCreatedAt();
     e.updatedAt = t.getUpdatedAt();
+    e.stripeCustomerId = t.getStripeCustomerId();
     return e;
   }
 
   public Tenant toDomain() {
-    return new Tenant(id, name, plan, region, status, createdAt, updatedAt);
+    Tenant t = new Tenant(id, name, plan, region, status, createdAt, updatedAt);
+    t.setStripeCustomerId(stripeCustomerId);
+    return t;
   }
 
   public UUID getId() {
@@ -102,6 +108,14 @@ public class TenantEntity {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public String getStripeCustomerId() {
+    return stripeCustomerId;
+  }
+
+  public void setStripeCustomerId(String stripeCustomerId) {
+    this.stripeCustomerId = stripeCustomerId;
   }
 
   @Override
