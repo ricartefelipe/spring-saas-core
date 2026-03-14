@@ -4,6 +4,8 @@ import com.union.solutions.saascore.application.onboarding.OnboardingUseCase;
 import com.union.solutions.saascore.application.port.TokenIssuer;
 import com.union.solutions.saascore.domain.Tenant;
 import com.union.solutions.saascore.domain.User;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -28,54 +30,52 @@ public class OnboardingController {
     this.tokenIssuer = tokenIssuer;
   }
 
+  @Operation(summary = "Self-service signup", description = "Creates a new tenant and admin user in one step")
+  @ApiResponse(responseCode = "201", description = "Tenant and user created")
+  @ApiResponse(responseCode = "409", description = "Email already registered")
   @PostMapping("/signup")
   public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
-    try {
-      OnboardingUseCase.OnboardingResult result =
-          onboardingUseCase.onboard(
-              request.companyName(),
-              request.plan(),
-              request.region(),
-              request.email(),
-              request.name(),
-              request.password());
+    OnboardingUseCase.OnboardingResult result =
+        onboardingUseCase.onboard(
+            request.companyName(),
+            request.plan(),
+            request.region(),
+            request.email(),
+            request.name(),
+            request.password());
 
-      User user = result.user();
-      Tenant tenant = result.tenant();
-      String token =
-          tokenIssuer.issue(
-              user.getId().toString(),
-              tenant.getId().toString(),
-              user.getRoles(),
-              List.of(),
-              tenant.getPlan(),
-              tenant.getRegion());
+    User user = result.user();
+    Tenant tenant = result.tenant();
+    String token =
+        tokenIssuer.issue(
+            user.getId().toString(),
+            tenant.getId().toString(),
+            user.getRoles(),
+            List.of(),
+            tenant.getPlan(),
+            tenant.getRegion());
 
-      return ResponseEntity.status(201)
-          .body(
-              Map.of(
-                  "access_token",
-                  token,
-                  "token_type",
-                  "Bearer",
-                  "expires_in",
-                  3600,
-                  "tenant",
-                  Map.of(
-                      "id", tenant.getId(),
-                      "name", tenant.getName(),
-                      "plan", tenant.getPlan(),
-                      "region", tenant.getRegion()),
-                  "user",
-                  Map.of(
-                      "id", user.getId(),
-                      "email", user.getEmail(),
-                      "name", user.getName(),
-                      "roles", user.getRoles())));
-    } catch (IllegalArgumentException e) {
-      return ResponseEntity.status(409)
-          .body(ProblemDetails.of(409, "Conflict", e.getMessage(), "/v1/onboarding/signup", null));
-    }
+    return ResponseEntity.status(201)
+        .body(
+            Map.of(
+                "access_token",
+                token,
+                "token_type",
+                "Bearer",
+                "expires_in",
+                3600,
+                "tenant",
+                Map.of(
+                    "id", tenant.getId(),
+                    "name", tenant.getName(),
+                    "plan", tenant.getPlan(),
+                    "region", tenant.getRegion()),
+                "user",
+                Map.of(
+                    "id", user.getId(),
+                    "email", user.getEmail(),
+                    "name", user.getName(),
+                    "roles", user.getRoles())));
   }
 
   public record SignupRequest(

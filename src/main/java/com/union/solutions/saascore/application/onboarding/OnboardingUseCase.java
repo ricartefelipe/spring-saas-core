@@ -1,6 +1,7 @@
 package com.union.solutions.saascore.application.onboarding;
 
-import com.union.solutions.saascore.application.abac.AuditLogger;
+import com.union.solutions.saascore.application.port.AuditLogger;
+import com.union.solutions.saascore.application.user.EmailAlreadyExistsException;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.port.UserRepository;
@@ -45,7 +46,7 @@ public class OnboardingUseCase {
       String adminName,
       String rawPassword) {
     if (userRepo.existsByEmail(adminEmail)) {
-      throw new IllegalArgumentException("Email already registered: " + adminEmail);
+      throw new EmailAlreadyExistsException(adminEmail);
     }
 
     UUID tenantId = UUID.randomUUID();

@@ -1,10 +1,10 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
-import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
-import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.application.tenant.TenantUseCase;
 import com.union.solutions.saascore.domain.Tenant;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
@@ -27,16 +27,19 @@ public class TenantController {
     this.abacEvaluator = abacEvaluator;
   }
 
+  @Operation(summary = "Create tenant", description = "Creates a new tenant with given plan and region")
+  @ApiResponse(responseCode = "201", description = "Tenant created")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @PostMapping
   public ResponseEntity<?> create(@Valid @RequestBody CreateTenantRequest request) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:write"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/tenants", null));
+    abacEvaluator.enforceOrThrow("tenants:write");
     Tenant t = tenantUseCase.create(request.name(), request.plan(), request.region());
     return ResponseEntity.status(201).body(TenantDto.from(t));
   }
 
+  @Operation(summary = "List tenants", description = "Returns a cursor-paginated list of tenants with optional filtering")
+  @ApiResponse(responseCode = "200", description = "Tenants listed successfully")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping
   public ResponseEntity<?> list(
       @RequestParam(required = false) String status,
@@ -45,10 +48,7 @@ public class TenantController {
       @RequestParam(required = false) String name,
       @RequestParam(required = false) String cursor,
       @RequestParam(required = false, defaultValue = "20") int limit) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:read"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/tenants", null));
+    abacEvaluator.enforceOrThrow("tenants:read");
     Tenant.TenantStatus statusEnum = null;
     if (status != null && !status.isBlank()) {
       try {
@@ -95,25 +95,27 @@ public class TenantController {
     return lastCreatedAt != null ? encodeCursor(lastCreatedAt) : null;
   }
 
+  @Operation(summary = "Get tenant by ID", description = "Returns a single tenant by UUID")
+  @ApiResponse(responseCode = "200", description = "Tenant found")
+  @ApiResponse(responseCode = "404", description = "Tenant not found")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable @NonNull UUID id) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:read"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/tenants/" + id, null));
+    abacEvaluator.enforceOrThrow("tenants:read");
     return tenantUseCase
         .getById(id)
         .map(t -> ResponseEntity.ok(TenantDto.from(t)))
         .orElse(ResponseEntity.notFound().build());
   }
 
+  @Operation(summary = "Update tenant", description = "Partially updates tenant attributes")
+  @ApiResponse(responseCode = "200", description = "Tenant updated")
+  @ApiResponse(responseCode = "404", description = "Tenant not found")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @PatchMapping("/{id}")
   public ResponseEntity<?> update(
       @PathVariable @NonNull UUID id, @RequestBody UpdateTenantRequest request) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:write"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/tenants/" + id, null));
+    abacEvaluator.enforceOrThrow("tenants:write");
     Tenant.TenantStatus statusEnum =
         request.status() != null ? Tenant.TenantStatus.valueOf(request.status()) : null;
     return tenantUseCase
@@ -122,10 +124,13 @@ public class TenantController {
         .orElse(ResponseEntity.notFound().build());
   }
 
+  @Operation(summary = "Delete tenant", description = "Soft-deletes a tenant by UUID")
+  @ApiResponse(responseCode = "204", description = "Tenant deleted")
+  @ApiResponse(responseCode = "404", description = "Tenant not found")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> delete(@PathVariable @NonNull UUID id) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("tenants:write"));
-    if (!abac.allowed()) return ResponseEntity.status(403).build();
+    abacEvaluator.enforceOrThrow("tenants:write");
     return tenantUseCase.softDelete(id)
         ? ResponseEntity.noContent().build()
         : ResponseEntity.notFound().build();
