@@ -119,7 +119,8 @@ public class ProblemDetailsConfig {
   }
 
   @ExceptionHandler({EmailAlreadyExistsException.class, UserAlreadyExistsException.class})
-  public ResponseEntity<ProblemDetails> handleConflict(RuntimeException ex, HttpServletRequest req) {
+  public ResponseEntity<ProblemDetails> handleConflict(
+      RuntimeException ex, HttpServletRequest req) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
         .body(
             ProblemDetails.of(
@@ -144,8 +145,7 @@ public class ProblemDetailsConfig {
   }
 
   @ExceptionHandler(CryptoException.class)
-  public ResponseEntity<ProblemDetails> handleCrypto(
-      CryptoException ex, HttpServletRequest req) {
+  public ResponseEntity<ProblemDetails> handleCrypto(CryptoException ex, HttpServletRequest req) {
     org.slf4j.LoggerFactory.getLogger(ProblemDetailsConfig.class)
         .error("Crypto error: {}", ex.getMessage(), ex);
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

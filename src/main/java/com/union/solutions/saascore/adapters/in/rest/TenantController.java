@@ -27,7 +27,9 @@ public class TenantController {
     this.abacEvaluator = abacEvaluator;
   }
 
-  @Operation(summary = "Create tenant", description = "Creates a new tenant with given plan and region")
+  @Operation(
+      summary = "Create tenant",
+      description = "Creates a new tenant with given plan and region")
   @ApiResponse(responseCode = "201", description = "Tenant created")
   @ApiResponse(responseCode = "403", description = "Access denied")
   @PostMapping
@@ -37,7 +39,9 @@ public class TenantController {
     return ResponseEntity.status(201).body(TenantDto.from(t));
   }
 
-  @Operation(summary = "List tenants", description = "Returns a cursor-paginated list of tenants with optional filtering")
+  @Operation(
+      summary = "List tenants",
+      description = "Returns a cursor-paginated list of tenants with optional filtering")
   @ApiResponse(responseCode = "200", description = "Tenants listed successfully")
   @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping
