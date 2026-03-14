@@ -26,7 +26,9 @@ public class FeatureFlagController {
     this.abacEvaluator = abacEvaluator;
   }
 
-  @Operation(summary = "Create feature flag", description = "Creates a new feature flag for the tenant")
+  @Operation(
+      summary = "Create feature flag",
+      description = "Creates a new feature flag for the tenant")
   @ApiResponse(responseCode = "201", description = "Flag created")
   @ApiResponse(responseCode = "403", description = "Access denied")
   @PostMapping
@@ -44,7 +46,9 @@ public class FeatureFlagController {
     return ResponseEntity.status(201).body(FlagDto.from(flag));
   }
 
-  @Operation(summary = "List feature flags", description = "Returns all feature flags for the tenant")
+  @Operation(
+      summary = "List feature flags",
+      description = "Returns all feature flags for the tenant")
   @ApiResponse(responseCode = "200", description = "Flags listed successfully")
   @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping
@@ -55,7 +59,9 @@ public class FeatureFlagController {
     return ResponseEntity.ok(flags);
   }
 
-  @Operation(summary = "Update feature flag", description = "Partially updates a feature flag by name")
+  @Operation(
+      summary = "Update feature flag",
+      description = "Partially updates a feature flag by name")
   @ApiResponse(responseCode = "200", description = "Flag updated")
   @ApiResponse(responseCode = "404", description = "Flag not found")
   @ApiResponse(responseCode = "403", description = "Access denied")

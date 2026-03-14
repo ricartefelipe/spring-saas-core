@@ -1,10 +1,10 @@
 package com.union.solutions.saascore.application.onboarding;
 
 import com.union.solutions.saascore.application.port.AuditLogger;
-import com.union.solutions.saascore.application.user.EmailAlreadyExistsException;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.port.UserRepository;
+import com.union.solutions.saascore.application.user.EmailAlreadyExistsException;
 import com.union.solutions.saascore.domain.Tenant;
 import com.union.solutions.saascore.domain.User;
 import java.time.Instant;

@@ -30,7 +30,9 @@ public class OnboardingController {
     this.tokenIssuer = tokenIssuer;
   }
 
-  @Operation(summary = "Self-service signup", description = "Creates a new tenant and admin user in one step")
+  @Operation(
+      summary = "Self-service signup",
+      description = "Creates a new tenant and admin user in one step")
   @ApiResponse(responseCode = "201", description = "Tenant and user created")
   @ApiResponse(responseCode = "409", description = "Email already registered")
   @PostMapping("/signup")
