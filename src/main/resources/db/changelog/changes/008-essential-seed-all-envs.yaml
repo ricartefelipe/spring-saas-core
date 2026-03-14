@@ -32,6 +32,7 @@ databaseChangeLog:
   - changeSet:
       id: essential-abac-policies
       author: saascore
+      validCheckSum: ANY
       changes:
         - sql:
             sql: |
