@@ -1,6 +1,7 @@
 package com.union.solutions.saascore.application.user;
 
-import com.union.solutions.saascore.application.abac.AuditLogger;
+import com.union.solutions.saascore.application.port.AuditLogger;
+import com.union.solutions.saascore.domain.exception.CryptoException;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.PasswordResetTokenRepository;
 import com.union.solutions.saascore.application.port.TenantRepository;
@@ -287,7 +288,7 @@ public class UserUseCase {
       byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
       return HexFormat.of().formatHex(hash);
     } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException("SHA-256 not available", e);
+      throw new CryptoException("SHA-256 not available", e);
     }
   }
 

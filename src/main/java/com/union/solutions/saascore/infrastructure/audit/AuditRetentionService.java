@@ -1,7 +1,7 @@
 package com.union.solutions.saascore.infrastructure.audit;
 
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaRepository;
-import com.union.solutions.saascore.application.abac.AuditLogger;
+import com.union.solutions.saascore.application.port.AuditLogger;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.slf4j.Logger;
