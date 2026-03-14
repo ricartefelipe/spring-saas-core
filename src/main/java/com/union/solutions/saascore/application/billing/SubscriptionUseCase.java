@@ -2,11 +2,13 @@ package com.union.solutions.saascore.application.billing;
 
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.PlanDefinitionRepository;
+import com.union.solutions.saascore.application.port.StripeBillingPort;
 import com.union.solutions.saascore.application.port.SubscriptionRepository;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.domain.PlanDefinition;
 import com.union.solutions.saascore.domain.Subscription;
 import com.union.solutions.saascore.domain.Subscription.SubscriptionStatus;
+import com.union.solutions.saascore.domain.Tenant;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -26,16 +28,19 @@ public class SubscriptionUseCase {
   private final PlanDefinitionRepository planRepo;
   private final TenantRepository tenantRepo;
   private final OutboxPublisherPort outboxPublisher;
+  private final StripeBillingPort billingPort;
 
   public SubscriptionUseCase(
       SubscriptionRepository subscriptionRepo,
       PlanDefinitionRepository planRepo,
       TenantRepository tenantRepo,
-      OutboxPublisherPort outboxPublisher) {
+      OutboxPublisherPort outboxPublisher,
+      StripeBillingPort billingPort) {
     this.subscriptionRepo = subscriptionRepo;
     this.planRepo = planRepo;
     this.tenantRepo = tenantRepo;
     this.outboxPublisher = outboxPublisher;
+    this.billingPort = billingPort;
   }
 
   @Transactional
@@ -105,6 +110,29 @@ public class SubscriptionUseCase {
     sub.setGracePeriodEndsAt(null);
     sub.setUpdatedAt(now);
 
+    Tenant tenant =
+        tenantRepo
+            .findById(tenantId)
+            .orElseThrow(() -> new IllegalStateException("Tenant not found: " + tenantId));
+
+    if (tenant.getStripeCustomerId() == null) {
+      String customerId =
+          billingPort.createCustomer(tenant.getName(), tenant.getName(), tenantId.toString());
+      tenant.setStripeCustomerId(customerId);
+      tenant.setUpdatedAt(now);
+      tenantRepo.save(tenant);
+    }
+
+    PlanDefinition plan =
+        planRepo
+            .findBySlug(sub.getPlanSlug())
+            .orElseThrow(() -> new IllegalStateException("Plan not found: " + sub.getPlanSlug()));
+    String priceId = plan.getStripePriceIdMonthly();
+    if (priceId != null && !priceId.isBlank()) {
+      String stripeSub = billingPort.createSubscription(tenant.getStripeCustomerId(), priceId);
+      sub.setStripeSubscriptionId(stripeSub);
+    }
+
     Subscription saved = subscriptionRepo.save(sub);
 
     outboxPublisher.publish(
@@ -143,6 +171,22 @@ public class SubscriptionUseCase {
     if (newPlan.getMonthlyPriceCents() <= currentPlan.getMonthlyPriceCents()) {
       throw new IllegalArgumentException(
           "Upgrade requires a higher-tier plan. Use downgrade instead.");
+    }
+
+    if (sub.getStripeSubscriptionId() != null) {
+      billingPort.cancelSubscription(sub.getStripeSubscriptionId());
+    }
+    String newStripePriceId = newPlan.getStripePriceIdMonthly();
+    if (newStripePriceId != null && !newStripePriceId.isBlank()) {
+      Tenant tenant =
+          tenantRepo
+              .findById(tenantId)
+              .orElseThrow(() -> new IllegalStateException("Tenant not found: " + tenantId));
+      if (tenant.getStripeCustomerId() != null) {
+        String newStripeSub =
+            billingPort.createSubscription(tenant.getStripeCustomerId(), newStripePriceId);
+        sub.setStripeSubscriptionId(newStripeSub);
+      }
     }
 
     String previousSlug = sub.getPlanSlug();
@@ -194,6 +238,22 @@ public class SubscriptionUseCase {
           "Downgrade requires a lower-tier plan. Use upgrade instead.");
     }
 
+    if (sub.getStripeSubscriptionId() != null) {
+      billingPort.cancelSubscription(sub.getStripeSubscriptionId());
+    }
+    String newStripePriceId = newPlan.getStripePriceIdMonthly();
+    if (newStripePriceId != null && !newStripePriceId.isBlank()) {
+      Tenant tenant =
+          tenantRepo
+              .findById(tenantId)
+              .orElseThrow(() -> new IllegalStateException("Tenant not found: " + tenantId));
+      if (tenant.getStripeCustomerId() != null) {
+        String newStripeSub =
+            billingPort.createSubscription(tenant.getStripeCustomerId(), newStripePriceId);
+        sub.setStripeSubscriptionId(newStripeSub);
+      }
+    }
+
     String previousSlug = sub.getPlanSlug();
     Instant now = Instant.now();
     sub.setPreviousPlanSlug(previousSlug);
@@ -224,6 +284,10 @@ public class SubscriptionUseCase {
             .findCurrentByTenantId(tenantId)
             .orElseThrow(
                 () -> new IllegalStateException("No current subscription for tenant: " + tenantId));
+
+    if (sub.getStripeSubscriptionId() != null) {
+      billingPort.cancelSubscription(sub.getStripeSubscriptionId());
+    }
 
     Instant now = Instant.now();
     sub.setStatus(SubscriptionStatus.CANCELLED);

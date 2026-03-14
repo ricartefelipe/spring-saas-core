@@ -80,9 +80,14 @@ app:
     max-tokens: ${AI_MAX_TOKENS:2048}
     temperature: ${AI_TEMPERATURE:0.3}
     timeout-seconds: ${AI_TIMEOUT:30}
+  billing:
+    provider: ${BILLING_PROVIDER:noop}
+    stripe-secret-key: ${STRIPE_BILLING_SECRET_KEY:}
   email:
     provider: ${EMAIL_PROVIDER:log}
+    resend-api-key: ${RESEND_API_KEY:}
     from: ${EMAIL_FROM:noreply@fluxe.com.br}
+    frontend-url: ${FRONTEND_URL:http://localhost:4200}
   dev:
     token-endpoint-enabled: false
 
