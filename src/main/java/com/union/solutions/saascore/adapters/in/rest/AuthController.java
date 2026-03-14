@@ -27,7 +27,9 @@ public class AuthController {
     this.userUseCase = userUseCase;
   }
 
-  @Operation(summary = "Register user", description = "Creates a new user account with email and password")
+  @Operation(
+      summary = "Register user",
+      description = "Creates a new user account with email and password")
   @ApiResponse(responseCode = "201", description = "User registered")
   @ApiResponse(responseCode = "409", description = "Email already registered")
   @PostMapping("/register")
@@ -89,7 +91,9 @@ public class AuthController {
                             null)));
   }
 
-  @Operation(summary = "Request password reset", description = "Sends a password reset link to the given email if it exists")
+  @Operation(
+      summary = "Request password reset",
+      description = "Sends a password reset link to the given email if it exists")
   @ApiResponse(responseCode = "200", description = "Reset email sent (if email exists)")
   @PostMapping("/password-reset/request")
   public ResponseEntity<?> requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
@@ -97,7 +101,9 @@ public class AuthController {
     return ResponseEntity.ok(Map.of("message", "If the email exists, a reset link has been sent"));
   }
 
-  @Operation(summary = "Confirm password reset", description = "Resets the password using a valid reset token")
+  @Operation(
+      summary = "Confirm password reset",
+      description = "Resets the password using a valid reset token")
   @ApiResponse(responseCode = "200", description = "Password reset successful")
   @ApiResponse(responseCode = "400", description = "Invalid or expired token")
   @PostMapping("/password-reset/confirm")
