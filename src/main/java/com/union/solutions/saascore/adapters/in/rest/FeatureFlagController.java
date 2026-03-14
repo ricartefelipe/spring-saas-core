@@ -1,11 +1,11 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
-import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
-import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.FeatureFlag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
@@ -26,15 +26,13 @@ public class FeatureFlagController {
     this.abacEvaluator = abacEvaluator;
   }
 
+  @Operation(summary = "Create feature flag", description = "Creates a new feature flag for the tenant")
+  @ApiResponse(responseCode = "201", description = "Flag created")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @PostMapping
   public ResponseEntity<?> create(
       @PathVariable UUID tenantId, @Valid @RequestBody CreateFlagRequest request) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("flags:write"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(
-              ProblemDetails.of(
-                  403, "Forbidden", abac.reason(), "/v1/tenants/" + tenantId + "/flags", null));
+    abacEvaluator.enforceOrThrow("flags:write");
     enforceTenantAccess(tenantId);
     FeatureFlag flag =
         flagService.create(
@@ -46,34 +44,27 @@ public class FeatureFlagController {
     return ResponseEntity.status(201).body(FlagDto.from(flag));
   }
 
+  @Operation(summary = "List feature flags", description = "Returns all feature flags for the tenant")
+  @ApiResponse(responseCode = "200", description = "Flags listed successfully")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping
   public ResponseEntity<?> list(@PathVariable UUID tenantId) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("flags:read"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(
-              ProblemDetails.of(
-                  403, "Forbidden", abac.reason(), "/v1/tenants/" + tenantId + "/flags", null));
+    abacEvaluator.enforceOrThrow("flags:read");
     enforceTenantAccess(tenantId);
     List<FlagDto> flags = flagService.listByTenant(tenantId).stream().map(FlagDto::from).toList();
     return ResponseEntity.ok(flags);
   }
 
+  @Operation(summary = "Update feature flag", description = "Partially updates a feature flag by name")
+  @ApiResponse(responseCode = "200", description = "Flag updated")
+  @ApiResponse(responseCode = "404", description = "Flag not found")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @PatchMapping("/{flagName}")
   public ResponseEntity<?> update(
       @PathVariable UUID tenantId,
       @PathVariable String flagName,
       @RequestBody UpdateFlagRequest request) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("flags:write"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(
-              ProblemDetails.of(
-                  403,
-                  "Forbidden",
-                  abac.reason(),
-                  "/v1/tenants/" + tenantId + "/flags/" + flagName,
-                  null));
+    abacEvaluator.enforceOrThrow("flags:write");
     enforceTenantAccess(tenantId);
     return flagService
         .update(
@@ -82,18 +73,13 @@ public class FeatureFlagController {
         .orElse(ResponseEntity.notFound().build());
   }
 
+  @Operation(summary = "Delete feature flag", description = "Soft-deletes a feature flag by name")
+  @ApiResponse(responseCode = "204", description = "Flag deleted")
+  @ApiResponse(responseCode = "404", description = "Flag not found")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @DeleteMapping("/{flagName}")
   public ResponseEntity<?> delete(@PathVariable UUID tenantId, @PathVariable String flagName) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("flags:write"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(
-              ProblemDetails.of(
-                  403,
-                  "Forbidden",
-                  abac.reason(),
-                  "/v1/tenants/" + tenantId + "/flags/" + flagName,
-                  null));
+    abacEvaluator.enforceOrThrow("flags:write");
     enforceTenantAccess(tenantId);
     return flagService.softDelete(tenantId, flagName)
         ? ResponseEntity.noContent().build()

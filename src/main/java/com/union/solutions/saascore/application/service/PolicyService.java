@@ -1,7 +1,7 @@
 package com.union.solutions.saascore.application.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.union.solutions.saascore.application.abac.AuditLogger;
+import com.union.solutions.saascore.application.port.AuditLogger;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.PolicyRepository;
 import com.union.solutions.saascore.config.TenantContext;
