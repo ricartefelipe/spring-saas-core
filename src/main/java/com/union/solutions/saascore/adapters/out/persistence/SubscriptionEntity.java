@@ -51,6 +51,9 @@ public class SubscriptionEntity {
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;
 
+  @Column(name = "stripe_subscription_id")
+  private String stripeSubscriptionId;
+
   public static SubscriptionEntity fromDomain(Subscription d) {
     SubscriptionEntity e = new SubscriptionEntity();
     e.id = d.getId();
@@ -65,23 +68,27 @@ public class SubscriptionEntity {
     e.cancelledAt = d.getCancelledAt();
     e.createdAt = d.getCreatedAt();
     e.updatedAt = d.getUpdatedAt();
+    e.stripeSubscriptionId = d.getStripeSubscriptionId();
     return e;
   }
 
   public Subscription toDomain() {
-    return new Subscription(
-        id,
-        tenantId,
-        planSlug,
-        status,
-        currentPeriodStart,
-        currentPeriodEnd,
-        trialEndsAt,
-        gracePeriodEndsAt,
-        previousPlanSlug,
-        cancelledAt,
-        createdAt,
-        updatedAt);
+    Subscription s =
+        new Subscription(
+            id,
+            tenantId,
+            planSlug,
+            status,
+            currentPeriodStart,
+            currentPeriodEnd,
+            trialEndsAt,
+            gracePeriodEndsAt,
+            previousPlanSlug,
+            cancelledAt,
+            createdAt,
+            updatedAt);
+    s.setStripeSubscriptionId(stripeSubscriptionId);
+    return s;
   }
 
   public UUID getId() {
@@ -178,5 +185,13 @@ public class SubscriptionEntity {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public String getStripeSubscriptionId() {
+    return stripeSubscriptionId;
+  }
+
+  public void setStripeSubscriptionId(String stripeSubscriptionId) {
+    this.stripeSubscriptionId = stripeSubscriptionId;
   }
 }
