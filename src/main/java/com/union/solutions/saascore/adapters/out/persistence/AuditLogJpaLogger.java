@@ -1,6 +1,6 @@
 package com.union.solutions.saascore.adapters.out.persistence;
 
-import com.union.solutions.saascore.application.abac.AuditLogger;
+import com.union.solutions.saascore.application.port.AuditLogger;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
