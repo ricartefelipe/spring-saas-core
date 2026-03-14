@@ -1,12 +1,11 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
-import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
-import com.union.solutions.saascore.application.abac.AbacResult;
-import com.union.solutions.saascore.application.user.UserAlreadyExistsException;
 import com.union.solutions.saascore.application.user.UserManagementUseCase;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.User;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -29,13 +28,12 @@ public class UserController {
     this.abacEvaluator = abacEvaluator;
   }
 
+  @Operation(summary = "List users", description = "Returns users for the current tenant")
+  @ApiResponse(responseCode = "200", description = "Users listed successfully")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping
   public ResponseEntity<?> list() {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("users:read"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/users", null));
-
+    abacEvaluator.enforceOrThrow("users:read");
     UUID tenantId = requireTenantId();
     if (tenantId == null) return tenantRequired();
 
@@ -43,13 +41,13 @@ public class UserController {
     return ResponseEntity.ok(users);
   }
 
+  @Operation(summary = "Get user by ID", description = "Returns a single user by its UUID")
+  @ApiResponse(responseCode = "200", description = "User found")
+  @ApiResponse(responseCode = "404", description = "User not found")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable @NonNull UUID id) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("users:read"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/users/" + id, null));
-
+    abacEvaluator.enforceOrThrow("users:read");
     UUID tenantId = requireTenantId();
     if (tenantId == null) return tenantRequired();
 
@@ -59,31 +57,20 @@ public class UserController {
         .orElse(ResponseEntity.notFound().build());
   }
 
+  @Operation(summary = "Update user", description = "Partially updates a user's name, roles or status")
+  @ApiResponse(responseCode = "200", description = "User updated")
+  @ApiResponse(responseCode = "404", description = "User not found")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @PatchMapping("/{id}")
   public ResponseEntity<?> update(
       @PathVariable @NonNull UUID id, @RequestBody UpdateUserRequest request) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("users:write"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/users/" + id, null));
-
+    abacEvaluator.enforceOrThrow("users:write");
     UUID tenantId = requireTenantId();
     if (tenantId == null) return tenantRequired();
 
     User.UserStatus statusEnum = null;
     if (request.status() != null) {
-      try {
-        statusEnum = User.UserStatus.valueOf(request.status());
-      } catch (IllegalArgumentException e) {
-        return ResponseEntity.badRequest()
-            .body(
-                ProblemDetails.of(
-                    400,
-                    "Bad Request",
-                    "Invalid status: " + request.status(),
-                    "/v1/users/" + id,
-                    null));
-      }
+      statusEnum = User.UserStatus.valueOf(request.status());
     }
 
     return userUseCase
@@ -92,11 +79,13 @@ public class UserController {
         .orElse(ResponseEntity.notFound().build());
   }
 
+  @Operation(summary = "Delete user", description = "Soft-deletes a user by UUID")
+  @ApiResponse(responseCode = "204", description = "User deleted")
+  @ApiResponse(responseCode = "404", description = "User not found")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> delete(@PathVariable @NonNull UUID id) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("users:write"));
-    if (!abac.allowed()) return ResponseEntity.status(403).build();
-
+    abacEvaluator.enforceOrThrow("users:write");
     UUID tenantId = requireTenantId();
     if (tenantId == null) return ResponseEntity.status(400).build();
 
@@ -105,23 +94,18 @@ public class UserController {
         : ResponseEntity.notFound().build();
   }
 
+  @Operation(summary = "Invite user", description = "Invites a new user to the current tenant")
+  @ApiResponse(responseCode = "201", description = "User invited")
+  @ApiResponse(responseCode = "409", description = "User already exists")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @PostMapping("/invite")
   public ResponseEntity<?> invite(@Valid @RequestBody InviteUserRequest request) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("users:write"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/users/invite", null));
-
+    abacEvaluator.enforceOrThrow("users:write");
     UUID tenantId = requireTenantId();
     if (tenantId == null) return tenantRequired();
 
-    try {
-      User invited = userUseCase.invite(tenantId, request.name(), request.email(), request.roles());
-      return ResponseEntity.status(201).body(UserDto.from(invited));
-    } catch (UserAlreadyExistsException e) {
-      return ResponseEntity.status(409)
-          .body(ProblemDetails.of(409, "Conflict", e.getMessage(), "/v1/users/invite", null));
-    }
+    User invited = userUseCase.invite(tenantId, request.name(), request.email(), request.roles());
+    return ResponseEntity.status(201).body(UserDto.from(invited));
   }
 
   private static UUID requireTenantId() {

@@ -1,4 +1,4 @@
-package com.union.solutions.saascore.application.abac;
+package com.union.solutions.saascore.application.port;
 
 import java.util.UUID;
 
