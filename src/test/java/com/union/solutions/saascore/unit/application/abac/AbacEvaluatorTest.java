@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
-import com.union.solutions.saascore.application.abac.AuditLogger;
+import com.union.solutions.saascore.application.port.AuditLogger;
 import com.union.solutions.saascore.application.port.PolicyRepository;
 import com.union.solutions.saascore.domain.Policy;
 import io.micrometer.core.instrument.Counter;

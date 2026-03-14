@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaRepository;
-import com.union.solutions.saascore.application.abac.AuditLogger;
+import com.union.solutions.saascore.application.port.AuditLogger;
 import com.union.solutions.saascore.infrastructure.audit.AuditRetentionService;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
