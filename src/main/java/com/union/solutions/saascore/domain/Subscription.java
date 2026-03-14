@@ -21,6 +21,7 @@ public class Subscription {
   private Instant cancelledAt;
   private Instant createdAt;
   private Instant updatedAt;
+  private String stripeSubscriptionId;
 
   public Subscription() {}
 
@@ -145,6 +146,14 @@ public class Subscription {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public String getStripeSubscriptionId() {
+    return stripeSubscriptionId;
+  }
+
+  public void setStripeSubscriptionId(String stripeSubscriptionId) {
+    this.stripeSubscriptionId = stripeSubscriptionId;
   }
 
   @Override

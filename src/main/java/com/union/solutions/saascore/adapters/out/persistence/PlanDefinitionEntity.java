@@ -47,6 +47,12 @@ public class PlanDefinitionEntity {
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;
 
+  @Column(name = "stripe_price_id_monthly")
+  private String stripePriceIdMonthly;
+
+  @Column(name = "stripe_price_id_yearly")
+  private String stripePriceIdYearly;
+
   public static PlanDefinitionEntity fromDomain(PlanDefinition d) {
     PlanDefinitionEntity e = new PlanDefinitionEntity();
     e.id = d.getId();
@@ -61,23 +67,29 @@ public class PlanDefinitionEntity {
     e.active = d.isActive();
     e.createdAt = d.getCreatedAt();
     e.updatedAt = d.getUpdatedAt();
+    e.stripePriceIdMonthly = d.getStripePriceIdMonthly();
+    e.stripePriceIdYearly = d.getStripePriceIdYearly();
     return e;
   }
 
   public PlanDefinition toDomain() {
-    return new PlanDefinition(
-        id,
-        slug,
-        displayName,
-        description,
-        monthlyPriceCents,
-        yearlyPriceCents,
-        maxUsers,
-        maxProjects,
-        storageGb,
-        active,
-        createdAt,
-        updatedAt);
+    PlanDefinition p =
+        new PlanDefinition(
+            id,
+            slug,
+            displayName,
+            description,
+            monthlyPriceCents,
+            yearlyPriceCents,
+            maxUsers,
+            maxProjects,
+            storageGb,
+            active,
+            createdAt,
+            updatedAt);
+    p.setStripePriceIdMonthly(stripePriceIdMonthly);
+    p.setStripePriceIdYearly(stripePriceIdYearly);
+    return p;
   }
 
   public UUID getId() {
@@ -174,5 +186,21 @@ public class PlanDefinitionEntity {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public String getStripePriceIdMonthly() {
+    return stripePriceIdMonthly;
+  }
+
+  public void setStripePriceIdMonthly(String stripePriceIdMonthly) {
+    this.stripePriceIdMonthly = stripePriceIdMonthly;
+  }
+
+  public String getStripePriceIdYearly() {
+    return stripePriceIdYearly;
+  }
+
+  public void setStripePriceIdYearly(String stripePriceIdYearly) {
+    this.stripePriceIdYearly = stripePriceIdYearly;
   }
 }
