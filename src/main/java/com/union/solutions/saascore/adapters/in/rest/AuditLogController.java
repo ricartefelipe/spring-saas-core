@@ -3,9 +3,9 @@ package com.union.solutions.saascore.adapters.in.rest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogEntity;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaRepository;
-import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
-import com.union.solutions.saascore.application.abac.AbacResult;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -38,6 +38,9 @@ public class AuditLogController {
     this.objectMapper = objectMapper;
   }
 
+  @Operation(summary = "List audit logs", description = "Returns audit log entries with optional filtering and cursor pagination")
+  @ApiResponse(responseCode = "200", description = "Audit logs listed successfully")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping
   public ResponseEntity<?> list(
       @RequestParam(required = false) UUID tenantId,
@@ -48,10 +51,7 @@ public class AuditLogController {
       @RequestParam(required = false) Instant to,
       @RequestParam(required = false) String cursor,
       @RequestParam(required = false, defaultValue = "50") int limit) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("audit:read"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/audit", null));
+    abacEvaluator.enforceOrThrow("audit:read");
 
     String safeAction = (action == null || action.isBlank()) ? "" : action;
     String safeActorSub = (actorSub == null || actorSub.isBlank()) ? "" : actorSub;
@@ -103,6 +103,9 @@ public class AuditLogController {
    * limitar o volume. Usa streaming para não carregar todos os registros na memória. Máximo 10_000
    * registros por requisição.
    */
+  @Operation(summary = "Export audit logs", description = "Exports audit log data for compliance in JSON or CSV format (max 10k records)")
+  @ApiResponse(responseCode = "200", description = "Audit data exported")
+  @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping("/export")
   public ResponseEntity<?> export(
       @RequestParam(required = false) UUID tenantId,
@@ -111,10 +114,7 @@ public class AuditLogController {
       @RequestParam Instant to,
       @RequestParam(required = false, defaultValue = "json") String format,
       @RequestParam(required = false, defaultValue = "10000") int limit) {
-    AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("audit:read"));
-    if (!abac.allowed())
-      return ResponseEntity.status(403)
-          .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/audit/export", null));
+    abacEvaluator.enforceOrThrow("audit:read");
 
     int maxLimit = Math.min(10_000, Math.max(1, limit));
     String safeAction = (action == null || action.isBlank()) ? "" : action;

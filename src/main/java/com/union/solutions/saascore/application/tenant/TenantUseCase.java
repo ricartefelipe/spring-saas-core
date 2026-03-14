@@ -1,6 +1,6 @@
 package com.union.solutions.saascore.application.tenant;
 
-import com.union.solutions.saascore.application.abac.AuditLogger;
+import com.union.solutions.saascore.application.port.AuditLogger;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.config.TenantContext;
