@@ -286,7 +286,8 @@ public class AiService {
     if (response != null && response.has("choices") && !response.get("choices").isEmpty()) {
       return response.get("choices").get(0).get("message").get("content").asText();
     }
-    throw new com.union.solutions.saascore.domain.exception.AiServiceException("Empty LLM response");
+    throw new com.union.solutions.saascore.domain.exception.AiServiceException(
+        "Empty LLM response");
   }
 
   @SuppressWarnings("unused")
