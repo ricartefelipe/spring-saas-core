@@ -18,6 +18,8 @@ public class PlanDefinition {
   private boolean active;
   private Instant createdAt;
   private Instant updatedAt;
+  private String stripePriceIdMonthly;
+  private String stripePriceIdYearly;
 
   public PlanDefinition() {}
 
@@ -142,6 +144,22 @@ public class PlanDefinition {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public String getStripePriceIdMonthly() {
+    return stripePriceIdMonthly;
+  }
+
+  public void setStripePriceIdMonthly(String stripePriceIdMonthly) {
+    this.stripePriceIdMonthly = stripePriceIdMonthly;
+  }
+
+  public String getStripePriceIdYearly() {
+    return stripePriceIdYearly;
+  }
+
+  public void setStripePriceIdYearly(String stripePriceIdYearly) {
+    this.stripePriceIdYearly = stripePriceIdYearly;
   }
 
   @Override

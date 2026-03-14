@@ -1,13 +1,17 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
 import com.union.solutions.saascore.application.billing.BillingUseCase;
+import com.union.solutions.saascore.application.port.StripeBillingPort;
+import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.PlanDefinition;
 import com.union.solutions.saascore.domain.Subscription;
+import com.union.solutions.saascore.domain.Tenant;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,9 +26,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class BillingController {
 
   private final BillingUseCase billingUseCase;
+  private final StripeBillingPort billingPort;
+  private final TenantRepository tenantRepo;
 
-  public BillingController(BillingUseCase billingUseCase) {
+  public BillingController(
+      BillingUseCase billingUseCase, StripeBillingPort billingPort, TenantRepository tenantRepo) {
     this.billingUseCase = billingUseCase;
+    this.billingPort = billingPort;
+    this.tenantRepo = tenantRepo;
   }
 
   @GetMapping("/plans")
@@ -78,6 +87,33 @@ public class BillingController {
         .cancelSubscription(tenantId)
         .map(s -> ResponseEntity.ok(SubscriptionDto.from(s)))
         .orElse(ResponseEntity.notFound().build());
+  }
+
+  @PostMapping("/portal-session")
+  public ResponseEntity<?> createPortalSession(@RequestBody Map<String, String> req) {
+    UUID tenantId =
+        TenantContext.getTenantId()
+            .orElseThrow(() -> new IllegalStateException("Tenant context not available"));
+
+    Tenant tenant =
+        tenantRepo
+            .findById(tenantId)
+            .orElseThrow(() -> new IllegalStateException("Tenant not found"));
+
+    if (tenant.getStripeCustomerId() == null || tenant.getStripeCustomerId().isBlank()) {
+      return ResponseEntity.badRequest()
+          .body(
+              ProblemDetails.of(
+                  400,
+                  "Bad Request",
+                  "Tenant has no Stripe customer configured",
+                  "/v1/billing/portal-session",
+                  null));
+    }
+
+    String returnUrl = req.getOrDefault("returnUrl", "/billing");
+    String url = billingPort.createBillingPortalSession(tenant.getStripeCustomerId(), returnUrl);
+    return ResponseEntity.ok(Map.of("url", url));
   }
 
   public record CreateSubscriptionRequest(@NotBlank String planSlug) {}

@@ -1,0 +1,44 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-add-stripe-customer-id-to-tenants
+      author: spring-saas-core
+      changes:
+        - addColumn:
+            tableName: tenants
+            columns:
+              - column:
+                  name: stripe_customer_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+
+  - changeSet:
+      id: 010-add-stripe-price-ids-to-plan-definitions
+      author: spring-saas-core
+      changes:
+        - addColumn:
+            tableName: plan_definitions
+            columns:
+              - column:
+                  name: stripe_price_id_monthly
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: stripe_price_id_yearly
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+
+  - changeSet:
+      id: 010-add-stripe-subscription-id-to-subscriptions
+      author: spring-saas-core
+      changes:
+        - addColumn:
+            tableName: subscriptions
+            columns:
+              - column:
+                  name: stripe_subscription_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
