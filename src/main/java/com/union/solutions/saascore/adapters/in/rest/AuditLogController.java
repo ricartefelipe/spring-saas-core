@@ -38,7 +38,9 @@ public class AuditLogController {
     this.objectMapper = objectMapper;
   }
 
-  @Operation(summary = "List audit logs", description = "Returns audit log entries with optional filtering and cursor pagination")
+  @Operation(
+      summary = "List audit logs",
+      description = "Returns audit log entries with optional filtering and cursor pagination")
   @ApiResponse(responseCode = "200", description = "Audit logs listed successfully")
   @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping
@@ -103,7 +105,9 @@ public class AuditLogController {
    * limitar o volume. Usa streaming para não carregar todos os registros na memória. Máximo 10_000
    * registros por requisição.
    */
-  @Operation(summary = "Export audit logs", description = "Exports audit log data for compliance in JSON or CSV format (max 10k records)")
+  @Operation(
+      summary = "Export audit logs",
+      description = "Exports audit log data for compliance in JSON or CSV format (max 10k records)")
   @ApiResponse(responseCode = "200", description = "Audit data exported")
   @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping("/export")
