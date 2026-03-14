@@ -1,11 +1,11 @@
 FROM eclipse-temurin:21-jdk-alpine AS build
+ARG CACHE_BUST=1
 WORKDIR /build
+RUN apk add --no-cache maven
 COPY pom.xml pom.xml
-COPY .mvn .mvn
-COPY mvnw mvnw
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -q -B || true
+RUN mvn dependency:go-offline -q -B || true
 COPY src src
-RUN ./mvnw -q -DskipTests package -B
+RUN mvn -q -DskipTests package -B
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
 RUN apk add --no-cache curl jq
