@@ -1,7 +1,6 @@
 package com.union.solutions.saascore.application.user;
 
 import com.union.solutions.saascore.application.port.AuditLogger;
-import com.union.solutions.saascore.domain.exception.CryptoException;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.PasswordResetTokenRepository;
 import com.union.solutions.saascore.application.port.TenantRepository;
@@ -11,6 +10,7 @@ import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.PasswordResetToken;
 import com.union.solutions.saascore.domain.Tenant;
 import com.union.solutions.saascore.domain.User;
+import com.union.solutions.saascore.domain.exception.CryptoException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

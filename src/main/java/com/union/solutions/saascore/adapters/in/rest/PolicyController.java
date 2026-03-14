@@ -44,7 +44,9 @@ public class PolicyController {
     return ResponseEntity.status(201).body(PolicyDto.from(policy));
   }
 
-  @Operation(summary = "List policies", description = "Returns a paginated list of ABAC policies with optional filtering")
+  @Operation(
+      summary = "List policies",
+      description = "Returns a paginated list of ABAC policies with optional filtering")
   @ApiResponse(responseCode = "200", description = "Policies listed successfully")
   @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping
