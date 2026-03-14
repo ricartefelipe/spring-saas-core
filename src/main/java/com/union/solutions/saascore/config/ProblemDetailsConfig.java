@@ -1,6 +1,10 @@
 package com.union.solutions.saascore.config;
 
 import com.union.solutions.saascore.adapters.in.rest.ProblemDetails;
+import com.union.solutions.saascore.application.user.EmailAlreadyExistsException;
+import com.union.solutions.saascore.application.user.UserAlreadyExistsException;
+import com.union.solutions.saascore.domain.exception.AiServiceException;
+import com.union.solutions.saascore.domain.exception.CryptoException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -110,6 +114,61 @@ public class ProblemDetailsConfig {
                 400,
                 "Bad Request",
                 "Malformed JSON request",
+                req.getRequestURI(),
+                TenantContext.getCorrelationId()));
+  }
+
+  @ExceptionHandler({EmailAlreadyExistsException.class, UserAlreadyExistsException.class})
+  public ResponseEntity<ProblemDetails> handleConflict(RuntimeException ex, HttpServletRequest req) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(
+            ProblemDetails.of(
+                409,
+                "Conflict",
+                ex.getMessage(),
+                req.getRequestURI(),
+                TenantContext.getCorrelationId()));
+  }
+
+  @ExceptionHandler(IllegalStateException.class)
+  public ResponseEntity<ProblemDetails> handleIllegalState(
+      IllegalStateException ex, HttpServletRequest req) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            ProblemDetails.of(
+                400,
+                "Bad Request",
+                ex.getMessage(),
+                req.getRequestURI(),
+                TenantContext.getCorrelationId()));
+  }
+
+  @ExceptionHandler(CryptoException.class)
+  public ResponseEntity<ProblemDetails> handleCrypto(
+      CryptoException ex, HttpServletRequest req) {
+    org.slf4j.LoggerFactory.getLogger(ProblemDetailsConfig.class)
+        .error("Crypto error: {}", ex.getMessage(), ex);
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(
+            ProblemDetails.of(
+                500,
+                "Internal Server Error",
+                "Cryptographic operation failed",
+                req.getRequestURI(),
+                TenantContext.getCorrelationId()));
+  }
+
+  @ExceptionHandler(AiServiceException.class)
+  public ResponseEntity<ProblemDetails> handleAiService(
+      AiServiceException ex, HttpServletRequest req) {
+    org.slf4j.LoggerFactory.getLogger(ProblemDetailsConfig.class)
+        .warn("AI service error: {}", ex.getMessage(), ex);
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        .body(
+            ProblemDetails.of(
+                503,
+                "Service Unavailable",
+                "AI service error: " + ex.getMessage(),
                 req.getRequestURI(),
                 TenantContext.getCorrelationId()));
   }
