@@ -57,7 +57,9 @@ public class UserController {
         .orElse(ResponseEntity.notFound().build());
   }
 
-  @Operation(summary = "Update user", description = "Partially updates a user's name, roles or status")
+  @Operation(
+      summary = "Update user",
+      description = "Partially updates a user's name, roles or status")
   @ApiResponse(responseCode = "200", description = "User updated")
   @ApiResponse(responseCode = "404", description = "User not found")
   @ApiResponse(responseCode = "403", description = "Access denied")
