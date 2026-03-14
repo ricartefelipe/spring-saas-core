@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.union.solutions.saascore.application.abac.AuditLogger;
+import com.union.solutions.saascore.application.port.AuditLogger;
 import com.union.solutions.saascore.application.port.FeatureFlagRepository;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
