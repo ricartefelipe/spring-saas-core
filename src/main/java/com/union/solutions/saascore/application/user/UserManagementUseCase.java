@@ -1,7 +1,10 @@
 package com.union.solutions.saascore.application.user;
 
+import com.union.solutions.saascore.application.email.EmailTemplates;
 import com.union.solutions.saascore.application.port.AuditLogger;
+import com.union.solutions.saascore.application.port.EmailSender;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
+import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.port.UserRepository;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.User;
@@ -10,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,14 +21,25 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserManagementUseCase {
 
   private final UserRepository userRepo;
+  private final TenantRepository tenantRepo;
   private final OutboxPublisherPort outboxPublisher;
   private final AuditLogger auditLogger;
+  private final EmailSender emailSender;
+  private final String frontendUrl;
 
   public UserManagementUseCase(
-      UserRepository userRepo, OutboxPublisherPort outboxPublisher, AuditLogger auditLogger) {
+      UserRepository userRepo,
+      TenantRepository tenantRepo,
+      OutboxPublisherPort outboxPublisher,
+      AuditLogger auditLogger,
+      EmailSender emailSender,
+      @Value("${app.email.frontend-url:http://localhost:4200}") String frontendUrl) {
     this.userRepo = userRepo;
+    this.tenantRepo = tenantRepo;
     this.outboxPublisher = outboxPublisher;
     this.auditLogger = auditLogger;
+    this.emailSender = emailSender;
+    this.frontendUrl = frontendUrl;
   }
 
   @Transactional(readOnly = true)
@@ -147,6 +162,14 @@ public class UserManagementUseCase {
         201,
         TenantContext.getCorrelationId(),
         null);
+
+    String tenantName =
+        tenantRepo.findById(tenantId).map(t -> t.getName()).orElse("your organization");
+    String inviteLink = frontendUrl + "/login";
+    emailSender.send(
+        email,
+        "You've been invited to " + tenantName,
+        EmailTemplates.inviteEmail(name, tenantName, inviteLink));
 
     return user;
   }
