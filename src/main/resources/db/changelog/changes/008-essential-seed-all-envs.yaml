@@ -53,3 +53,27 @@ databaseChangeLog:
                 ('10000000-0000-0000-0000-000000000028', 'ledger:read', 'ALLOW', '["pro","enterprise"]', '[]', true, 'Pro and enterprise can read ledger', NOW(), NOW()),
                 ('10000000-0000-0000-0000-000000000029', 'profile:read', 'ALLOW', '[]', '[]', true, 'All plans can read profile', NOW(), NOW())
               ON CONFLICT (id) DO NOTHING;
+
+  - changeSet:
+      id: essential-initial-admin-user
+      author: saascore
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: "SELECT COUNT(*) FROM users WHERE email = 'felipericartem@gmail.com'"
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO users (id, email, name, password_hash, tenant_id, roles, status, created_at, updated_at)
+              VALUES (
+                '30000000-0000-0000-0000-000000000000',
+                'felipericartem@gmail.com',
+                'Felipe Ricarte Magalhães',
+                '$2b$10$ekMX4UnGbT4ycJfAwHIsjeA7rb0w9CpkwESs2fS0DaaiwBITUB0hG',
+                '00000000-0000-0000-0000-000000000001',
+                'admin',
+                'ACTIVE',
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+              );
