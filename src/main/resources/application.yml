@@ -83,6 +83,7 @@ app:
   billing:
     provider: ${BILLING_PROVIDER:noop}
     stripe-secret-key: ${STRIPE_BILLING_SECRET_KEY:}
+  # Email: convites, reset de senha. Padrão log = só registra no servidor; resend = envia via Resend.
   email:
     provider: ${EMAIL_PROVIDER:log}
     resend-api-key: ${RESEND_API_KEY:}

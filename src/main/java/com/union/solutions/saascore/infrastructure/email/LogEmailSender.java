@@ -14,8 +14,9 @@ public class LogEmailSender implements EmailSender {
 
   @Override
   public void send(String to, String subject, String htmlBody) {
-    log.info(
-        "EMAIL [to={}, subject={}]\n--- HTML body start ---\n{}\n--- HTML body end ---",
+    log.warn(
+        "EMAIL NOT SENT (provider=log). To enable real delivery set app.email.provider=resend and "
+            + "app.email.resend-api-key. [to={}, subject={}]\n--- HTML body start ---\n{}\n--- HTML body end ---",
         to,
         subject,
         htmlBody);
