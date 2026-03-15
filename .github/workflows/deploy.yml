@@ -1,6 +1,6 @@
 # Consolidated: image build & push moved to build-push.yml.
 # This workflow is kept only as a redirect / reference.
-# To push images to GHCR on main, see build-push.yml.
+# To push images to GHCR on master/develop, see build-push.yml.
 name: Deploy (deprecated — use build-push.yml)
 
 on:
