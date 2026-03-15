@@ -13,13 +13,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.union.solutions.saascore.config.ProblemDetailsConfig;
 import com.union.solutions.saascore.adapters.in.rest.AuditLogController;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogEntity;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaRepository;
 import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
+import com.union.solutions.saascore.config.ProblemDetailsConfig;
 import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.List;
@@ -29,12 +29,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.quality.Strictness;
 import org.mockito.junit.jupiter.MockitoSettings;
-import org.springframework.security.access.AccessDeniedException;
+import org.mockito.quality.Strictness;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -54,9 +54,10 @@ class AuditLogControllerTest {
     ObjectMapper om = new ObjectMapper();
     om.registerModule(new JavaTimeModule());
     controller = new AuditLogController(auditRepo, abacEvaluator, om);
-    mvc = MockMvcBuilders.standaloneSetup(controller)
-        .setControllerAdvice(new ProblemDetailsConfig())
-        .build();
+    mvc =
+        MockMvcBuilders.standaloneSetup(controller)
+            .setControllerAdvice(new ProblemDetailsConfig())
+            .build();
   }
 
   @Test
