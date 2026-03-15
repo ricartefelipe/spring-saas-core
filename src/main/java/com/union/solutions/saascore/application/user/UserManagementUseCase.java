@@ -22,7 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserManagementUseCase {
 
-  private static final String TEMP_PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  private static final String TEMP_PASSWORD_CHARS =
+      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
   private static final int TEMP_PASSWORD_LENGTH = 12;
   private static final SecureRandom RNG = new SecureRandom();
 

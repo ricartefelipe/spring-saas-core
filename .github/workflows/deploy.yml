@@ -3,6 +3,9 @@
 # To push images to GHCR on master/develop, see build-push.yml.
 name: Deploy (deprecated — use build-push.yml)
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   workflow_dispatch:
 
