@@ -90,6 +90,9 @@ app:
     frontend-url: ${FRONTEND_URL:http://localhost:4200}
   dev:
     token-endpoint-enabled: false
+  cache:
+    # Se true, usa Redis para cache de GET /v1/tenants. Se false ou em erro de deserialização, usa memória.
+    front-tenants-enabled: ${CACHE_FRONT_TENANTS_ENABLED:true}
 
 resilience4j:
   circuitbreaker:
@@ -113,7 +116,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info,prometheus,cacheevict
   endpoint:
     health:
       show-details: when-authorized
