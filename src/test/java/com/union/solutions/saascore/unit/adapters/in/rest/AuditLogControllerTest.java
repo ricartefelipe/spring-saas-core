@@ -2,8 +2,10 @@ package com.union.solutions.saascore.unit.adapters.in.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -17,6 +19,7 @@ import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaReposito
 import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
+import com.union.solutions.saascore.config.ProblemDetailsConfig;
 import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.List;
@@ -26,14 +29,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class AuditLogControllerTest {
 
   @Mock AuditLogJpaRepository auditRepo;
@@ -47,7 +54,10 @@ class AuditLogControllerTest {
     ObjectMapper om = new ObjectMapper();
     om.registerModule(new JavaTimeModule());
     controller = new AuditLogController(auditRepo, abacEvaluator, om);
-    mvc = MockMvcBuilders.standaloneSetup(controller).build();
+    mvc =
+        MockMvcBuilders.standaloneSetup(controller)
+            .setControllerAdvice(new ProblemDetailsConfig())
+            .build();
   }
 
   @Test
@@ -73,8 +83,9 @@ class AuditLogControllerTest {
 
   @Test
   void list_withoutAuditReadPermission_returns403() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class)))
-        .thenReturn(AbacResult.deny(null, "no_matching_allow_policy"));
+    doThrow(new AccessDeniedException("ABAC denied"))
+        .when(abacEvaluator)
+        .enforceOrThrow(anyString());
 
     mvc.perform(get("/v1/audit")).andExpect(status().isForbidden());
   }
@@ -143,8 +154,9 @@ class AuditLogControllerTest {
 
   @Test
   void export_withoutPermission_returns403() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class)))
-        .thenReturn(AbacResult.deny(null, "no_matching_allow_policy"));
+    doThrow(new AccessDeniedException("ABAC denied"))
+        .when(abacEvaluator)
+        .enforceOrThrow(anyString());
 
     mvc.perform(
             get("/v1/audit/export")

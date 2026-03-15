@@ -10,7 +10,8 @@ class LogEmailSenderTest {
   @Test
   void send_doesNotThrow() {
     LogEmailSender sender = new LogEmailSender();
-    assertThatCode(() -> sender.send("test@example.com", "Subject", "<p>Body</p>")).doesNotThrowAnyException();
+    assertThatCode(() -> sender.send("test@example.com", "Subject", "<p>Body</p>"))
+        .doesNotThrowAnyException();
   }
 
   @Test
