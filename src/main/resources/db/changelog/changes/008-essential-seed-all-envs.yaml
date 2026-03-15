@@ -55,6 +55,18 @@ databaseChangeLog:
               ON CONFLICT (id) DO NOTHING;
 
   - changeSet:
+      id: essential-abac-tenants-policies
+      author: saascore
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO policies (id, permission_code, effect, allowed_plans, allowed_regions, enabled, notes, created_at, updated_at)
+              VALUES
+                ('10000000-0000-0000-0000-000000000030', 'tenants:read', 'ALLOW', '[]', '[]', true, 'All plans can read tenants (Admin Console)', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000031', 'tenants:write', 'ALLOW', '["pro","enterprise"]', '[]', true, 'Pro and enterprise can manage tenants', NOW(), NOW())
+              ON CONFLICT (id) DO NOTHING;
+
+  - changeSet:
       id: essential-initial-admin-user
       author: saascore
       preConditions:
