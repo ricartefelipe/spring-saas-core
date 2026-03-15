@@ -1,0 +1,17 @@
+# =============================================================================
+# spring-saas-core — Staging Profile (Railway, branch develop)
+# =============================================================================
+# Mesmos requisitos de connection que prod, mas com seed completo para testes.
+# SPRING_PROFILES_ACTIVE=staging no Railway staging.
+# =============================================================================
+
+spring:
+  liquibase:
+    # staging + seed: schema, 008 (essencial), 009 (dados realistas)
+    contexts: staging,seed
+
+app:
+  dev:
+    token-endpoint-enabled: ${APP_DEV_TOKEN_ENABLED:true}
+  auth:
+    mode: ${AUTH_MODE:hs256}
