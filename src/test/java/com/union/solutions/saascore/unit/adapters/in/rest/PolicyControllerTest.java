@@ -13,10 +13,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.union.solutions.saascore.config.ProblemDetailsConfig;
 import com.union.solutions.saascore.adapters.in.rest.PolicyController;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.service.PolicyService;
+import com.union.solutions.saascore.config.ProblemDetailsConfig;
 import com.union.solutions.saascore.domain.Policy;
 import java.time.Instant;
 import java.util.List;
