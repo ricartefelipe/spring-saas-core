@@ -57,10 +57,7 @@ public final class EmailTemplates {
         </html>
         """
         .formatted(
-            escapeHtml(userName),
-            escapeHtml(tenantName),
-            passwordBlock,
-            escapeHtml(inviteUrl));
+            escapeHtml(userName), escapeHtml(tenantName), passwordBlock, escapeHtml(inviteUrl));
   }
 
   public static String passwordResetEmail(String userName, String resetUrl) {

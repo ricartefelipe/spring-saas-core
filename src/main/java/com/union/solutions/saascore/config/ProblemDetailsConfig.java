@@ -195,7 +195,12 @@ public class ProblemDetailsConfig {
         .warn("Unhandled exception: {} - {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
     String detail = "An error occurred";
     if (!"prod".equals(activeProfile)) {
-      detail = "An error occurred (" + ex.getClass().getSimpleName() + ": " + (ex.getMessage() != null ? ex.getMessage() : "null") + ")";
+      detail =
+          "An error occurred ("
+              + ex.getClass().getSimpleName()
+              + ": "
+              + (ex.getMessage() != null ? ex.getMessage() : "null")
+              + ")";
     }
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(
