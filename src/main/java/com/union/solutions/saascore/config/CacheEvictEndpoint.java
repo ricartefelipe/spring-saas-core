@@ -7,8 +7,8 @@ import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 
 /**
- * Actuator endpoint para limpar o cache frontTenants (GET /v1/tenants).
- * Útil após deploy quando o formato de serialização do cache mudou.
+ * Actuator endpoint para limpar o cache frontTenants (GET /v1/tenants). Útil após deploy quando o
+ * formato de serialização do cache mudou.
  *
  * <p>POST /actuator/cacheevict
  */
