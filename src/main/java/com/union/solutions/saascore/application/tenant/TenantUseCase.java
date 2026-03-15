@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -82,7 +82,8 @@ public class TenantUseCase {
   @Transactional(readOnly = true)
   @Cacheable(
       cacheNames = "frontTenants",
-      key = "(#status != null ? #status.toString() : '') + '-' + (#plan != null ? #plan : '') + '-' + (#region != null ? #region : '') + '-' + (#name != null ? #name : '') + '-' + (#cursor != null ? #cursor.toString() : '') + '-' + #limit")
+      key =
+          "(#status != null ? #status.toString() : '') + '-' + (#plan != null ? #plan : '') + '-' + (#region != null ? #region : '') + '-' + (#name != null ? #name : '') + '-' + (#cursor != null ? #cursor.toString() : '') + '-' + #limit")
   public List<Tenant> searchCursor(
       Tenant.TenantStatus status,
       String plan,
