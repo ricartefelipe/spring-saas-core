@@ -14,8 +14,8 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
- * Cache Redis para respostas consumidas pelo front (ver docs CACHE-REDIS-FRONT no repo fluxe-b2b-suite).
- * frontTenants: GET /v1/tenants (lista), TTL 120s.
+ * Cache Redis para respostas consumidas pelo front (ver docs CACHE-REDIS-FRONT no repo
+ * fluxe-b2b-suite). frontTenants: GET /v1/tenants (lista), TTL 120s.
  */
 @Configuration
 @EnableCaching
@@ -24,7 +24,8 @@ public class RedisCacheConfig {
   private static final Duration FRONT_TENANTS_TTL = Duration.ofSeconds(120);
 
   @Bean
-  public CacheManager cacheManager(@Autowired(required = false) RedisConnectionFactory connectionFactory) {
+  public CacheManager cacheManager(
+      @Autowired(required = false) RedisConnectionFactory connectionFactory) {
     if (connectionFactory == null) {
       return new org.springframework.cache.concurrent.ConcurrentMapCacheManager();
     }
@@ -32,9 +33,11 @@ public class RedisCacheConfig {
         RedisCacheConfiguration.defaultCacheConfig()
             .entryTtl(FRONT_TENANTS_TTL)
             .serializeKeysWith(
-                RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                RedisSerializationContext.SerializationPair.fromSerializer(
+                    new StringRedisSerializer()))
             .serializeValuesWith(
-                RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()))
+                RedisSerializationContext.SerializationPair.fromSerializer(
+                    new GenericJackson2JsonRedisSerializer()))
             .disableCachingNullValues();
 
     return RedisCacheManager.builder(connectionFactory)
