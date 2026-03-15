@@ -11,6 +11,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 public class ResendEmailSender implements EmailSender {
 
   private static final Logger log = LoggerFactory.getLogger(ResendEmailSender.class);
+  private static final String RESEND_API_URL = "https://api.resend.com/emails";
 
   private final RestTemplate restTemplate;
   private final String apiKey;
@@ -26,8 +28,13 @@ public class ResendEmailSender implements EmailSender {
   public ResendEmailSender(
       @Value("${app.email.resend-api-key:}") String apiKey,
       @Value("${app.email.from:noreply@fluxe.com.br}") String fromAddress) {
-    this.apiKey = apiKey;
-    this.fromAddress = fromAddress;
+    if (apiKey == null || apiKey.isBlank()) {
+      throw new IllegalStateException(
+          "app.email.provider=resend requires app.email.resend-api-key (RESEND_API_KEY). "
+              + "Set RESEND_API_KEY in environment or use app.email.provider=log for dev.");
+    }
+    this.apiKey = apiKey.trim();
+    this.fromAddress = fromAddress != null ? fromAddress : "noreply@fluxe.com.br";
     this.restTemplate = new RestTemplate();
   }
 
@@ -41,8 +48,20 @@ public class ResendEmailSender implements EmailSender {
         Map.of("from", fromAddress, "to", List.of(to), "subject", subject, "html", htmlBody);
 
     HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-    restTemplate.postForEntity("https://api.resend.com/emails", request, String.class);
-
-    log.info("Email sent via Resend to={} subject={}", to, subject);
+    try {
+      restTemplate.postForEntity(RESEND_API_URL, request, String.class);
+      log.info("Email sent via Resend to={} subject={}", to, subject);
+    } catch (RestClientException e) {
+      log.error(
+          "Resend email delivery failed. to={} subject={} error={}. "
+              + "Check RESEND_API_KEY, domain verification at resend.com, and EMAIL_FROM.",
+          to,
+          subject,
+          e.getMessage());
+      throw new IllegalStateException(
+          "Email delivery failed. Check RESEND_API_KEY and Resend dashboard (domain verification). "
+              + "Details: " + e.getMessage(),
+          e);
+    }
   }
 }
