@@ -1,5 +1,8 @@
 package com.union.solutions.saascore.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +31,13 @@ public class RedisCacheConfig {
   @Value("${app.cache.front-tenants-enabled:true}")
   private boolean frontTenantsCacheEnabled;
 
+  private static ObjectMapper redisCacheObjectMapper() {
+    ObjectMapper om = new ObjectMapper();
+    om.registerModule(new JavaTimeModule());
+    om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    return om;
+  }
+
   @Bean
   public CacheManager cacheManager(
       @Autowired(required = false) RedisConnectionFactory connectionFactory) {
@@ -42,7 +52,7 @@ public class RedisCacheConfig {
                     new StringRedisSerializer()))
             .serializeValuesWith(
                 RedisSerializationContext.SerializationPair.fromSerializer(
-                    new GenericJackson2JsonRedisSerializer()))
+                    new GenericJackson2JsonRedisSerializer(redisCacheObjectMapper())))
             .disableCachingNullValues();
 
     return RedisCacheManager.builder(connectionFactory)
