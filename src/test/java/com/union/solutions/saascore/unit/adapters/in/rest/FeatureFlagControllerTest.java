@@ -1,7 +1,9 @@
 package com.union.solutions.saascore.unit.adapters.in.rest;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -10,6 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.union.solutions.saascore.config.ProblemDetailsConfig;
 import com.union.solutions.saascore.adapters.in.rest.FeatureFlagController;
 import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
@@ -25,11 +28,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class FeatureFlagControllerTest {
 
   @Mock FeatureFlagService flagService;
@@ -42,6 +49,7 @@ class FeatureFlagControllerTest {
   void setUp() {
     mvc =
         MockMvcBuilders.standaloneSetup(new FeatureFlagController(flagService, abacEvaluator))
+            .setControllerAdvice(new ProblemDetailsConfig())
             .build();
   }
 
@@ -61,8 +69,9 @@ class FeatureFlagControllerTest {
 
   @Test
   void list_withoutFlagsReadPermission_returns403() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class)))
-        .thenReturn(AbacResult.deny(null, "no_matching_allow_policy"));
+    doThrow(new AccessDeniedException("ABAC denied"))
+        .when(abacEvaluator)
+        .enforceOrThrow(anyString());
 
     mvc.perform(get("/v1/tenants/{tenantId}/flags", tenantId))
         .andExpect(status().isForbidden())
@@ -90,8 +99,9 @@ class FeatureFlagControllerTest {
 
   @Test
   void create_withoutFlagsWritePermission_returns403() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class)))
-        .thenReturn(AbacResult.deny(null, "no_matching_allow_policy"));
+    doThrow(new AccessDeniedException("ABAC denied"))
+        .when(abacEvaluator)
+        .enforceOrThrow(anyString());
 
     mvc.perform(
             post("/v1/tenants/{tenantId}/flags", tenantId)
@@ -142,8 +152,9 @@ class FeatureFlagControllerTest {
 
   @Test
   void delete_withoutPermission_returns403() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class)))
-        .thenReturn(AbacResult.deny(null, "denied_by_policy"));
+    doThrow(new AccessDeniedException("ABAC denied"))
+        .when(abacEvaluator)
+        .enforceOrThrow(anyString());
 
     mvc.perform(delete("/v1/tenants/{tenantId}/flags/{flagName}", tenantId, "dark_mode"))
         .andExpect(status().isForbidden());
