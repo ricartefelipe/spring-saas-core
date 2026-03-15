@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ProblemDetailsConfig {
+
+  @Value("${spring.profiles.active:local}")
+  private String activeProfile;
 
   @ExceptionHandler(AuthenticationException.class)
   public ResponseEntity<ProblemDetails> handleAuth(
@@ -189,12 +193,21 @@ public class ProblemDetailsConfig {
   public ResponseEntity<ProblemDetails> handleOther(Exception ex, HttpServletRequest req) {
     org.slf4j.LoggerFactory.getLogger(ProblemDetailsConfig.class)
         .warn("Unhandled exception: {} - {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
+    String detail = "An error occurred";
+    if (!"prod".equals(activeProfile)) {
+      detail =
+          "An error occurred ("
+              + ex.getClass().getSimpleName()
+              + ": "
+              + (ex.getMessage() != null ? ex.getMessage() : "null")
+              + ")";
+    }
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(
             ProblemDetails.of(
                 500,
                 "Internal Server Error",
-                "An error occurred",
+                detail,
                 req.getRequestURI(),
                 TenantContext.getCorrelationId()));
   }

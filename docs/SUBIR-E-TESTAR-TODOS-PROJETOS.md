@@ -2,6 +2,8 @@
 
 Guia para levantar **spring-saas-core**, **node-b2b-orders**, **py-payments-ledger** e **fluxe-b2b-suite** e rodar os testes de fumaça.
 
+**Config por ambiente (portas/hosts):** [CONFIG-AMBIENTES.md](CONFIG-AMBIENTES.md) e, no monorepo, **fluxe-b2b-suite/config/env/README.md**.
+
 ## Pré-requisitos
 
 - **Docker** e **Docker Compose**
