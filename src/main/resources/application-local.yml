@@ -6,7 +6,8 @@ app:
 
 spring:
   liquibase:
-    contexts: local
+    # local + seed: schema, 008 (essencial), 009 (dados realistas) para testar ao máximo
+    contexts: local,seed
 
 logging:
   pattern:
