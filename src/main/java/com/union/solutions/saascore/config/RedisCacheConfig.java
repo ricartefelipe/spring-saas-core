@@ -2,6 +2,7 @@ package com.union.solutions.saascore.config;
 
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -15,7 +16,8 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
  * Cache Redis para respostas consumidas pelo front (ver docs CACHE-REDIS-FRONT no repo
- * fluxe-b2b-suite). frontTenants: GET /v1/tenants (lista), TTL 120s.
+ * fluxe-b2b-suite). frontTenants: GET /v1/tenants (lista), TTL 120s. Para desativar cache de
+ * tenants (ex.: erro de deserialização Redis), use app.cache.front-tenants-enabled=false.
  */
 @Configuration
 @EnableCaching
@@ -23,10 +25,13 @@ public class RedisCacheConfig {
 
   private static final Duration FRONT_TENANTS_TTL = Duration.ofSeconds(120);
 
+  @Value("${app.cache.front-tenants-enabled:true}")
+  private boolean frontTenantsCacheEnabled;
+
   @Bean
   public CacheManager cacheManager(
       @Autowired(required = false) RedisConnectionFactory connectionFactory) {
-    if (connectionFactory == null) {
+    if (connectionFactory == null || !frontTenantsCacheEnabled) {
       return new org.springframework.cache.concurrent.ConcurrentMapCacheManager();
     }
     RedisCacheConfiguration config =
