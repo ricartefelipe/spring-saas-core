@@ -1,8 +1,10 @@
 package com.union.solutions.saascore.unit.adapters.in.rest;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -12,10 +14,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.union.solutions.saascore.adapters.in.rest.PolicyController;
-import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
-import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.application.service.PolicyService;
+import com.union.solutions.saascore.config.ProblemDetailsConfig;
 import com.union.solutions.saascore.domain.Policy;
 import java.time.Instant;
 import java.util.List;
@@ -30,6 +31,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -46,6 +48,7 @@ class PolicyControllerTest {
   void setUp() {
     mvc =
         MockMvcBuilders.standaloneSetup(new PolicyController(policyService, abacEvaluator))
+            .setControllerAdvice(new ProblemDetailsConfig())
             .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
             .build();
     policyId = UUID.randomUUID();
@@ -53,8 +56,6 @@ class PolicyControllerTest {
 
   @Test
   void create_withPoliciesWritePermission_returns201() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class))).thenReturn(AbacResult.allow());
-
     Policy created =
         makePolicy(
             policyId,
@@ -88,8 +89,9 @@ class PolicyControllerTest {
 
   @Test
   void create_withoutPoliciesWritePermission_returns403() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class)))
-        .thenReturn(AbacResult.deny(null, "no_matching_allow_policy"));
+    doThrow(new AccessDeniedException("ABAC denied"))
+        .when(abacEvaluator)
+        .enforceOrThrow(anyString());
 
     mvc.perform(
             post("/v1/policies")
@@ -104,8 +106,6 @@ class PolicyControllerTest {
 
   @Test
   void list_withPoliciesReadPermission_returns200() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class))).thenReturn(AbacResult.allow());
-
     Policy policy =
         makePolicy(
             policyId,
@@ -127,8 +127,6 @@ class PolicyControllerTest {
 
   @Test
   void getById_found_returns200() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class))).thenReturn(AbacResult.allow());
-
     Policy policy =
         makePolicy(
             policyId,
@@ -148,7 +146,6 @@ class PolicyControllerTest {
 
   @Test
   void getById_notFound_returns404() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class))).thenReturn(AbacResult.allow());
     when(policyService.getById(policyId)).thenReturn(Optional.empty());
 
     mvc.perform(get("/v1/policies/{id}", policyId)).andExpect(status().isNotFound());
@@ -156,8 +153,6 @@ class PolicyControllerTest {
 
   @Test
   void update_withPoliciesWritePermission_returns200() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class))).thenReturn(AbacResult.allow());
-
     Policy updated =
         makePolicy(
             policyId,
@@ -191,7 +186,6 @@ class PolicyControllerTest {
 
   @Test
   void delete_withPoliciesWritePermission_returns204() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class))).thenReturn(AbacResult.allow());
     when(policyService.softDelete(policyId)).thenReturn(true);
 
     mvc.perform(delete("/v1/policies/{id}", policyId)).andExpect(status().isNoContent());
@@ -199,7 +193,6 @@ class PolicyControllerTest {
 
   @Test
   void delete_notFound_returns404() throws Exception {
-    when(abacEvaluator.evaluate(any(AbacContext.class))).thenReturn(AbacResult.allow());
     when(policyService.softDelete(policyId)).thenReturn(false);
 
     mvc.perform(delete("/v1/policies/{id}", policyId)).andExpect(status().isNotFound());

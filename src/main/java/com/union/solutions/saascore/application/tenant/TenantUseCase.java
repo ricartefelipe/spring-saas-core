@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +40,7 @@ public class TenantUseCase {
   }
 
   @Transactional
+  @CacheEvict(cacheNames = "frontTenants", allEntries = true)
   public Tenant create(String name, String plan, String region) {
     UUID id = UUID.randomUUID();
     Instant now = Instant.now();
@@ -77,6 +80,9 @@ public class TenantUseCase {
   }
 
   @Transactional(readOnly = true)
+  @Cacheable(
+      cacheNames = "frontTenants",
+      key = "(#status != null ? #status.toString() : '') + '-' + (#plan != null ? #plan : '') + '-' + (#region != null ? #region : '') + '-' + (#name != null ? #name : '') + '-' + (#cursor != null ? #cursor.toString() : '') + '-' + #limit")
   public List<Tenant> searchCursor(
       Tenant.TenantStatus status,
       String plan,
@@ -88,6 +94,7 @@ public class TenantUseCase {
   }
 
   @Transactional
+  @CacheEvict(cacheNames = "frontTenants", allEntries = true)
   public Optional<Tenant> update(
       UUID id, String name, String plan, String region, Tenant.TenantStatus status) {
     return tenantRepo
@@ -123,6 +130,7 @@ public class TenantUseCase {
   }
 
   @Transactional
+  @CacheEvict(cacheNames = "frontTenants", allEntries = true)
   public boolean softDelete(UUID id) {
     return tenantRepo
         .findById(id)
