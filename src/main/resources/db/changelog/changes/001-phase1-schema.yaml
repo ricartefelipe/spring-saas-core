@@ -2,6 +2,12 @@ databaseChangeLog:
   - changeSet:
       id: phase1-001-tenants
       author: saascore
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: tenants
       changes:
         - createTable:
             tableName: tenants
@@ -67,6 +73,12 @@ databaseChangeLog:
   - changeSet:
       id: phase1-002-policies
       author: saascore
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: policies
       changes:
         - createTable:
             tableName: policies
@@ -132,6 +144,12 @@ databaseChangeLog:
   - changeSet:
       id: phase1-003-feature-flags
       author: saascore
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: feature_flags
       changes:
         - createTable:
             tableName: feature_flags
@@ -198,6 +216,12 @@ databaseChangeLog:
   - changeSet:
       id: phase1-004-audit-log
       author: saascore
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: audit_log
       changes:
         - createTable:
             tableName: audit_log
@@ -284,6 +308,12 @@ databaseChangeLog:
   - changeSet:
       id: phase1-005-outbox
       author: saascore
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: outbox_events
       changes:
         - createTable:
             tableName: outbox_events
