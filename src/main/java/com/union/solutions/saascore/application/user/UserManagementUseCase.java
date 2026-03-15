@@ -8,23 +8,30 @@ import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.port.UserRepository;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.User;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserManagementUseCase {
 
+  private static final String TEMP_PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  private static final int TEMP_PASSWORD_LENGTH = 12;
+  private static final SecureRandom RNG = new SecureRandom();
+
   private final UserRepository userRepo;
   private final TenantRepository tenantRepo;
   private final OutboxPublisherPort outboxPublisher;
   private final AuditLogger auditLogger;
   private final EmailSender emailSender;
+  private final PasswordEncoder passwordEncoder;
   private final String frontendUrl;
 
   public UserManagementUseCase(
@@ -33,13 +40,23 @@ public class UserManagementUseCase {
       OutboxPublisherPort outboxPublisher,
       AuditLogger auditLogger,
       EmailSender emailSender,
+      PasswordEncoder passwordEncoder,
       @Value("${app.email.frontend-url:http://localhost:4200}") String frontendUrl) {
     this.userRepo = userRepo;
     this.tenantRepo = tenantRepo;
     this.outboxPublisher = outboxPublisher;
     this.auditLogger = auditLogger;
     this.emailSender = emailSender;
+    this.passwordEncoder = passwordEncoder;
     this.frontendUrl = frontendUrl;
+  }
+
+  private static String generateTemporaryPassword() {
+    StringBuilder sb = new StringBuilder(TEMP_PASSWORD_LENGTH);
+    for (int i = 0; i < TEMP_PASSWORD_LENGTH; i++) {
+      sb.append(TEMP_PASSWORD_CHARS.charAt(RNG.nextInt(TEMP_PASSWORD_CHARS.length())));
+    }
+    return sb.toString();
   }
 
   @Transactional(readOnly = true)
@@ -125,6 +142,9 @@ public class UserManagementUseCase {
       throw new UserAlreadyExistsException(email, tenantId);
     }
 
+    String temporaryPassword = generateTemporaryPassword();
+    String passwordHash = passwordEncoder.encode(temporaryPassword);
+
     UUID id = UUID.randomUUID();
     Instant now = Instant.now();
     User user =
@@ -132,10 +152,10 @@ public class UserManagementUseCase {
             id,
             email,
             name,
-            null,
+            passwordHash,
             tenantId,
             roles != null ? roles : List.of("member"),
-            User.UserStatus.PENDING,
+            User.UserStatus.ACTIVE,
             now,
             now);
     userRepo.save(user);
@@ -169,7 +189,7 @@ public class UserManagementUseCase {
     emailSender.send(
         email,
         "You've been invited to " + tenantName,
-        EmailTemplates.inviteEmail(name, tenantName, inviteLink));
+        EmailTemplates.inviteEmail(name, tenantName, inviteLink, temporaryPassword));
 
     return user;
   }
