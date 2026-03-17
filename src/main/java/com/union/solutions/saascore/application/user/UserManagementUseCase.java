@@ -194,4 +194,47 @@ public class UserManagementUseCase {
 
     return user;
   }
+
+  /**
+   * Reenvia o email de convite para um usuário existente (nova senha temporária).
+   * Não envia se o usuário estiver com status DELETED.
+   */
+  @Transactional
+  public boolean resendInvite(UUID tenantId, UUID userId) {
+    return userRepo
+        .findByIdAndTenantId(userId, tenantId)
+        .filter(user -> user.getStatus() != User.UserStatus.DELETED)
+        .map(
+            user -> {
+              String temporaryPassword = generateTemporaryPassword();
+              user.setPasswordHash(passwordEncoder.encode(temporaryPassword));
+              user.setUpdatedAt(Instant.now());
+              userRepo.save(user);
+
+              String tenantName =
+                  tenantRepo.findById(tenantId).map(t -> t.getName()).orElse("your organization");
+              String inviteLink = frontendUrl + "/login";
+              emailSender.send(
+                  user.getEmail(),
+                  "You've been invited to " + tenantName,
+                  EmailTemplates.inviteEmail(
+                      user.getName(), tenantName, inviteLink, temporaryPassword));
+
+              auditLogger.log(
+                  tenantId,
+                  TenantContext.getSubject(),
+                  TenantContext.getRoles().toString(),
+                  TenantContext.getPerms().toString(),
+                  "USER_INVITE_RESENT",
+                  "user",
+                  userId.toString(),
+                  null,
+                  null,
+                  200,
+                  TenantContext.getCorrelationId(),
+                  null);
+              return true;
+            })
+        .orElse(false);
+  }
 }
