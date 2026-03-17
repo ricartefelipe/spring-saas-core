@@ -110,6 +110,23 @@ public class UserController {
     return ResponseEntity.status(201).body(UserDto.from(invited));
   }
 
+  @Operation(
+      summary = "Resend invite",
+      description = "Resends the invite email to an existing user with a new temporary password")
+  @ApiResponse(responseCode = "204", description = "Invite resent")
+  @ApiResponse(responseCode = "404", description = "User not found or deleted")
+  @ApiResponse(responseCode = "403", description = "Access denied")
+  @PostMapping("/{id}/resend-invite")
+  public ResponseEntity<Void> resendInvite(@PathVariable @NonNull UUID id) {
+    abacEvaluator.enforceOrThrow("users:write");
+    UUID tenantId = requireTenantId();
+    if (tenantId == null) return ResponseEntity.badRequest().build();
+
+    return userUseCase.resendInvite(tenantId, id)
+        ? ResponseEntity.noContent().build()
+        : ResponseEntity.notFound().build();
+  }
+
   private static UUID requireTenantId() {
     return TenantContext.getTenantId().orElse(null);
   }
