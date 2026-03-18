@@ -17,6 +17,7 @@ public class User {
   private boolean mustChangePassword;
   private Instant createdAt;
   private Instant updatedAt;
+  private Instant lastLoginAt;
 
   public User() {}
 
@@ -134,6 +135,14 @@ public class User {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public Instant getLastLoginAt() {
+    return lastLoginAt;
+  }
+
+  public void setLastLoginAt(Instant lastLoginAt) {
+    this.lastLoginAt = lastLoginAt;
   }
 
   public boolean isActive() {

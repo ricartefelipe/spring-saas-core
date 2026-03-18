@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: post-signup-001-table
+      author: saascore
+      changes:
+        - createTable:
+            tableName: post_signup_email_sent
+            columns:
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: email_type
+                  type: varchar(16)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: sent_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_post_signup_email_sent_type
+            tableName: post_signup_email_sent
+            columns:
+              - column:
+                  name: email_type

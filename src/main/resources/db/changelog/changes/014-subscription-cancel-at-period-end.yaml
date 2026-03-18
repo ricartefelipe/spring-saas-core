@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 014-subscription-cancel-at-period-end
+      author: spring-saas-core
+      changes:
+        - addColumn:
+            tableName: subscriptions
+            columns:
+              - column:
+                  name: cancel_at_period_end
+                  type: boolean
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: false

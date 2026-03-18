@@ -31,5 +31,8 @@ public interface TenantRepository {
   /** Retorno: (plan, status.name(), count) para métricas. */
   List<PlanStatusCount> countByPlanAndStatus();
 
+  /** IDs de todos os tenants com status ACTIVE (para jobs como reativação). */
+  List<UUID> findAllActiveIds();
+
   record PlanStatusCount(String plan, String status, long count) {}
 }
