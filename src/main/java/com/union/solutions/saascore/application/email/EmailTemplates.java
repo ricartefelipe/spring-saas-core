@@ -9,7 +9,6 @@ public final class EmailTemplates {
 
   private EmailTemplates() {}
 
-  /** No convite, "System"/"Sistema" (nome técnico do tenant) deve aparecer como nome do produto. */
   static String productNameForInviteDisplay(String tenantLabel) {
     if (tenantLabel == null || tenantLabel.isBlank()) {
       return PRODUCT_DISPLAY_NAME;
@@ -18,7 +17,7 @@ public final class EmailTemplates {
         Normalizer.normalize(tenantLabel.trim(), Normalizer.Form.NFKC)
             .replaceAll("[\u200B-\u200D\uFEFF]", "");
     String lower = n.toLowerCase(Locale.ROOT);
-    if (lower.equals("system") || lower.equals("sistema")) {
+    if (lower.equals(PRODUCT_DISPLAY_NAME.toLowerCase(Locale.ROOT))) {
       return PRODUCT_DISPLAY_NAME;
     }
     return tenantLabel.trim();
@@ -34,15 +33,11 @@ public final class EmailTemplates {
           <p>Sua conta em <strong>%s</strong> foi ativada com sucesso.</p>
           <p>Agora você pode acessar a plataforma e começar a usar todos os recursos disponíveis.</p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
-          <p style="color: #999; font-size: 12px;">Fluxe B2B Suite</p>
+          <p style="color: #999; font-size: 12px;">%s</p>
         </body>
         </html>
         """
-        .formatted(escapeHtml(userName), escapeHtml(tenantName));
-  }
-
-  public static String inviteEmail(String userName, String tenantName, String inviteUrl) {
-    return inviteEmail(userName, tenantName, inviteUrl, null);
+        .formatted(escapeHtml(userName), escapeHtml(tenantName), PRODUCT_DISPLAY_NAME);
   }
 
   public static String inviteEmail(
@@ -76,7 +71,7 @@ public final class EmailTemplates {
           </p>
           <p style="color: #666; font-size: 13px;">Se você não esperava este convite, pode ignorar este email.</p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
-          <p style="color: #999; font-size: 12px;">Fluxe B2B Suite</p>
+          <p style="color: #999; font-size: 12px;">%s</p>
         </body>
         </html>
         """
@@ -84,7 +79,8 @@ public final class EmailTemplates {
             escapeHtml(userName),
             escapeHtml(productNameForInviteDisplay(tenantName)),
             passwordBlock,
-            escapeHtml(inviteUrl));
+            escapeHtml(inviteUrl),
+            PRODUCT_DISPLAY_NAME);
   }
 
   public static String passwordResetEmail(String userName, String resetUrl) {
@@ -103,11 +99,11 @@ public final class EmailTemplates {
           </p>
           <p style="color: #666; font-size: 13px;">Este link expira em 1 hora. Se você não solicitou esta alteração, ignore este email.</p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
-          <p style="color: #999; font-size: 12px;">Fluxe B2B Suite</p>
+          <p style="color: #999; font-size: 12px;">%s</p>
         </body>
         </html>
         """
-        .formatted(escapeHtml(userName), escapeHtml(resetUrl));
+        .formatted(escapeHtml(userName), escapeHtml(resetUrl), PRODUCT_DISPLAY_NAME);
   }
 
   private static String escapeHtml(String input) {
