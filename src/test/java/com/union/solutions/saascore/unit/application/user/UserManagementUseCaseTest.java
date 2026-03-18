@@ -16,7 +16,6 @@ import com.union.solutions.saascore.application.user.UserManagementUseCase;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.Tenant;
 import com.union.solutions.saascore.domain.User;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -146,7 +145,8 @@ class UserManagementUseCaseTest {
   @Test
   void invite_createsUserWithMustChangePasswordTrue() {
     UUID tenantId = UUID.randomUUID();
-    when(tenantRepo.findById(tenantId)).thenReturn(Optional.of(new Tenant(tenantId, "T", null, null, null, null, null)));
+    when(tenantRepo.findById(tenantId))
+        .thenReturn(Optional.of(new Tenant(tenantId, "T", null, null, null, null, null)));
     when(userRepo.findByEmailAndTenantId(anyString(), eq(tenantId))).thenReturn(Optional.empty());
     when(passwordEncoder.encode(anyString())).thenReturn("hash");
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);

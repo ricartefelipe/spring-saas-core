@@ -39,8 +39,7 @@ class EmailTemplatesTest {
 
     @Test
     void whenTenantNameIsBlank_bodyShowsFluxeB2BSuite() {
-      String html =
-          EmailTemplates.inviteEmail("User", "  ", "https://app.example.com/login", null);
+      String html = EmailTemplates.inviteEmail("User", "  ", "https://app.example.com/login", null);
       assertThat(html).contains(EmailTemplates.PRODUCT_DISPLAY_NAME);
     }
 
