@@ -70,6 +70,8 @@ public class AuthController {
                         "Bearer",
                         "expires_in",
                         3600,
+                        "must_change_password",
+                        result.mustChangePassword(),
                         "user",
                         new UserResponse(
                             result.user().getId(),
@@ -106,6 +108,29 @@ public class AuthController {
       description = "Resets the password using a valid reset token")
   @ApiResponse(responseCode = "200", description = "Password reset successful")
   @ApiResponse(responseCode = "400", description = "Invalid or expired token")
+  @Operation(
+      summary = "Change password",
+      description = "Change password for the authenticated user (required after first login with temporary password)")
+  @ApiResponse(responseCode = "200", description = "Password changed successfully")
+  @ApiResponse(responseCode = "400", description = "Current password is wrong")
+  @PostMapping("/change-password")
+  public ResponseEntity<?> changePassword(
+      @Valid @RequestBody ChangePasswordRequest request) {
+    boolean success =
+        userUseCase.changePassword(request.currentPassword(), request.newPassword());
+    if (success) {
+      return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+    }
+    return ResponseEntity.status(400)
+        .body(
+            ProblemDetails.of(
+                400,
+                "Bad Request",
+                "Current password is incorrect",
+                "/v1/auth/change-password",
+                null));
+  }
+
   @PostMapping("/password-reset/confirm")
   public ResponseEntity<?> confirmPasswordReset(
       @Valid @RequestBody PasswordResetConfirmRequest request) {
@@ -137,6 +162,9 @@ public class AuthController {
 
   public record PasswordResetConfirmRequest(
       UUID tokenId, @NotBlank String token, @NotBlank @Size(min = 8) String newPassword) {}
+
+  public record ChangePasswordRequest(
+      @NotBlank String currentPassword, @NotBlank @Size(min = 8) String newPassword) {}
 
   public record UserResponse(
       UUID id,
