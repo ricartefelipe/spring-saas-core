@@ -41,3 +41,8 @@ Após o deploy da versão correta, **novos convites** passam a sair com "Fluxe B
 - Notificar por e-mail se alguém tentar entrar várias vezes sem completar a troca.
 
 Se alguém convidado **antes** deste fluxo ainda entra sem ser forçado a trocar: usar **Reenviar convite** ou corrigir o flag na base de dados.
+
+## Testes
+
+- **`EmailTemplatesTest`** — Garante que o corpo do e-mail de convite mostra "Fluxe B2B Suite" quando o nome do tenant é "System", "Sistema" ou vazio; e mostra o nome real (ex.: "Acme Distribuidora") nos outros casos. Inclui cenário com senha temporária (bloco "Obrigatório").
+- **`UserManagementUseCaseTest`** — Garante que `invite()` envia e-mail com assunto e corpo contendo "Fluxe B2B Suite" quando o tenant é o de plataforma ou o nome na BD é "System"/"Sistema"; e com nome do tenant nos outros casos. Inclui testes de utilizador já existente e de `mustChangePassword = true` no convite.
