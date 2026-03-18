@@ -25,3 +25,19 @@ Isso indica que o **servidor que envia os e-mails está a correr uma versão ant
    - Corre o JAR ou `mvn spring-boot:run` a partir do código atual em `develop` (ou `master` após merge).
 
 Após o deploy da versão correta, **novos convites** passam a sair com "Fluxe B2B Suite" e com o texto de obrigatoriedade de troca de senha. Utilizadores já convidados antes podem usar **"Reenviar convite"** no Admin para receber o e-mail actualizado e o fluxo de troca obrigatória.
+
+## Troca obrigatória de senha no primeiro uso
+
+**O que fazemos hoje**
+
+1. No convite, o utilizador é criado com `must_change_password = true`.
+2. No login, a API devolve `must_change_password` e o JWT inclui o claim `mcp`.
+3. O front (ops-portal / admin-console) redireciona para `/change-password` e o **guard** impede navegar no resto da app até trocar a senha.
+4. Após trocar, o Core devolve um **novo token** sem `mcp`.
+
+**Sugestões extra (opcional, futuro)**
+
+- Expirar senhas temporárias após N dias (obrigar reenvio de convite).
+- Notificar por e-mail se alguém tentar entrar várias vezes sem completar a troca.
+
+Se alguém convidado **antes** deste fluxo ainda entra sem ser forçado a trocar: usar **Reenviar convite** ou corrigir o flag na base de dados.
