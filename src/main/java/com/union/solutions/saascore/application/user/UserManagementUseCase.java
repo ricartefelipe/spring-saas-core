@@ -187,8 +187,7 @@ public class UserManagementUseCase {
 
     String tenantName =
         tenantRepo.findById(tenantId).map(t -> t.getName()).orElse("your organization");
-    String emailDisplayName =
-        "System".equals(tenantName) ? "Fluxe B2B Suite" : tenantName;
+    String emailDisplayName = "System".equals(tenantName) ? "Fluxe B2B Suite" : tenantName;
     String inviteLink = frontendUrl + "/login";
     emailSender.send(
         email,
@@ -199,8 +198,8 @@ public class UserManagementUseCase {
   }
 
   /**
-   * Reenvia o email de convite para um usuário existente (nova senha temporária).
-   * Não envia se o usuário estiver com status DELETED.
+   * Reenvia o email de convite para um usuário existente (nova senha temporária). Não envia se o
+   * usuário estiver com status DELETED.
    */
   @Transactional
   public boolean resendInvite(UUID tenantId, UUID userId) {

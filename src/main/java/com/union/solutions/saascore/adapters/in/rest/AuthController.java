@@ -110,14 +110,13 @@ public class AuthController {
   @ApiResponse(responseCode = "400", description = "Invalid or expired token")
   @Operation(
       summary = "Change password",
-      description = "Change password for the authenticated user (required after first login with temporary password)")
+      description =
+          "Change password for the authenticated user (required after first login with temporary password)")
   @ApiResponse(responseCode = "200", description = "Password changed successfully")
   @ApiResponse(responseCode = "400", description = "Current password is wrong")
   @PostMapping("/change-password")
-  public ResponseEntity<?> changePassword(
-      @Valid @RequestBody ChangePasswordRequest request) {
-    boolean success =
-        userUseCase.changePassword(request.currentPassword(), request.newPassword());
+  public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+    boolean success = userUseCase.changePassword(request.currentPassword(), request.newPassword());
     if (success) {
       return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
     }
