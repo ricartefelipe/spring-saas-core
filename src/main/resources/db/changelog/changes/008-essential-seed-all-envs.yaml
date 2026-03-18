@@ -22,7 +22,7 @@ databaseChangeLog:
             tableName: tenants
             columns:
               - column: { name: id, value: "00000000-0000-0000-0000-000000000001" }
-              - column: { name: name, value: "System" }
+              - column: { name: name, value: "Fluxe B2B Suite" }
               - column: { name: plan, value: "enterprise" }
               - column: { name: region, value: "global" }
               - column: { name: status, value: "ACTIVE" }

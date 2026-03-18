@@ -557,7 +557,7 @@ public class GovernanceChatbotService {
     String systemStatus = anomalies.anomalies().isEmpty() ? "SAUDÁVEL" : "ATENÇÃO";
 
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("## Status do Sistema: %s\n\n", systemStatus));
+    sb.append(String.format("## Status do Fluxe B2B Suite: %s\n\n", systemStatus));
     sb.append(
         String.format(
             "| Indicador | Valor |\n|---|---|\n"
