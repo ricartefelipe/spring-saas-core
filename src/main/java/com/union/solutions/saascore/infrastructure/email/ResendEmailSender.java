@@ -60,7 +60,8 @@ public class ResendEmailSender implements EmailSender {
           e.getMessage());
       throw new IllegalStateException(
           "Email delivery failed. Check RESEND_API_KEY and Resend dashboard (domain verification). "
-              + "Details: " + e.getMessage(),
+              + "Details: "
+              + e.getMessage(),
           e);
     }
   }
