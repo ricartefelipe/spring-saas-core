@@ -62,8 +62,16 @@ public class UserEntity {
     List<String> roleList =
         (roles == null || roles.isBlank()) ? List.of() : Arrays.asList(roles.split(","));
     return new User(
-        id, email, name, passwordHash, tenantId, roleList, status,
-        mustChangePassword, createdAt, updatedAt);
+        id,
+        email,
+        name,
+        passwordHash,
+        tenantId,
+        roleList,
+        status,
+        mustChangePassword,
+        createdAt,
+        updatedAt);
   }
 
   public UUID getId() {
