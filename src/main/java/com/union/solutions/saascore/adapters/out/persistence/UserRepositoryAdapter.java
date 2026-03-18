@@ -2,6 +2,7 @@ package com.union.solutions.saascore.adapters.out.persistence;
 
 import com.union.solutions.saascore.application.port.UserRepository;
 import com.union.solutions.saascore.domain.User;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,5 +55,20 @@ public class UserRepositoryAdapter implements UserRepository {
   @Override
   public long countByTenantId(UUID tenantId) {
     return jpa.countByTenantId(tenantId);
+  }
+
+  @Override
+  public List<User> findByCreatedAtBetween(Instant start, Instant end) {
+    return jpa.findByCreatedAtBetween(start, end).stream().map(UserEntity::toDomain).toList();
+  }
+
+  @Override
+  public Optional<Instant> findMaxLastLoginAtByTenantId(UUID tenantId) {
+    return jpa.findMaxLastLoginAtByTenantId(tenantId);
+  }
+
+  @Override
+  public long countActiveByTenantId(UUID tenantId) {
+    return jpa.countActiveByTenantId(tenantId);
   }
 }
