@@ -4,6 +4,7 @@ import com.union.solutions.saascore.application.port.TokenIssuer;
 import io.jsonwebtoken.Jwts;
 import java.time.Instant;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,21 +30,28 @@ public class JwtTokenIssuer implements TokenIssuer {
 
   @Override
   public String issue(
-      String sub, String tid, List<String> roles, List<String> perms, String plan, String region) {
+      String sub,
+      String tid,
+      List<String> roles,
+      List<String> perms,
+      String plan,
+      String region,
+      boolean mustChangePassword) {
     Instant now = Instant.now();
+    Map<String, Object> claims = new LinkedHashMap<>();
+    claims.put("tid", tid != null ? tid : "");
+    claims.put("roles", roles != null ? roles : List.of());
+    claims.put("perms", perms != null ? perms : List.of());
+    claims.put("plan", plan != null ? plan : "");
+    claims.put("region", region != null ? region : "");
+    claims.put("mcp", mustChangePassword);
     return Jwts.builder()
         .issuer(issuer)
         .subject(sub)
         .issuedAt(Date.from(now))
         .expiration(Date.from(now.plusSeconds(expirationSeconds)))
         .id(UUID.randomUUID().toString())
-        .claims(
-            Map.of(
-                "tid", tid != null ? tid : "",
-                "roles", roles != null ? roles : List.of(),
-                "perms", perms != null ? perms : List.of(),
-                "plan", plan != null ? plan : "",
-                "region", region != null ? region : ""))
+        .claims(claims)
         .signWith(secretKey)
         .compact();
   }
