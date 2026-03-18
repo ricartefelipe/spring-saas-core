@@ -106,7 +106,7 @@ public class AiController {
   }
 
   @GetMapping("/insights")
-  @Operation(summary = "Auto-generated system insights and health indicators")
+  @Operation(summary = "Fluxe B2B Suite insights and health indicators")
   public ResponseEntity<?> insights() {
     AbacResult abac = abacEvaluator.evaluate(AbacContext.fromCurrentContext("analytics:read"));
     if (!abac.allowed()) {
