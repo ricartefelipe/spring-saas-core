@@ -196,8 +196,8 @@ public class UserUseCase {
   }
 
   /**
-   * Altera a senha do usuário autenticado (obrigatório após login com senha temporária).
-   * Requer a senha atual. Ao concluir, limpa o flag mustChangePassword.
+   * Altera a senha do usuário autenticado (obrigatório após login com senha temporária). Requer a
+   * senha atual. Ao concluir, limpa o flag mustChangePassword.
    */
   @Transactional
   public boolean changePassword(String currentPassword, String newPassword) {
