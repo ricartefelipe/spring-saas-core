@@ -31,7 +31,7 @@ public final class EmailTemplates {
         temporaryPassword != null && !temporaryPassword.isBlank()
             ? """
           <p><strong>Sua senha temporária:</strong> <code style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">%s</code></p>
-          <p style="color: #666; font-size: 13px;">Faça login com seu e-mail e esta senha. Recomendamos alterar a senha após o primeiro acesso.</p>
+          <p style="color: #666; font-size: 13px;">Faça login com seu e-mail e esta senha. É <strong>obrigatório</strong> alterar a senha no primeiro acesso.</p>
           """
                 .formatted(escapeHtml(temporaryPassword))
             : "";
