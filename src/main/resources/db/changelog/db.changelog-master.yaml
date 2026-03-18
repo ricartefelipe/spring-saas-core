@@ -21,3 +21,5 @@ databaseChangeLog:
       file: db/changelog/changes/010-stripe-billing-columns.yaml
   - include:
       file: db/changelog/changes/011-must-change-password.yaml
+  - include:
+      file: db/changelog/changes/012-platform-tenant-display-name.yaml
