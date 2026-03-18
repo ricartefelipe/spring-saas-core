@@ -14,6 +14,7 @@ public class User {
   private UUID tenantId;
   private List<String> roles;
   private UserStatus status;
+  private boolean mustChangePassword;
   private Instant createdAt;
   private Instant updatedAt;
 
@@ -29,6 +30,20 @@ public class User {
       UserStatus status,
       Instant createdAt,
       Instant updatedAt) {
+    this(id, email, name, passwordHash, tenantId, roles, status, false, createdAt, updatedAt);
+  }
+
+  public User(
+      UUID id,
+      String email,
+      String name,
+      String passwordHash,
+      UUID tenantId,
+      List<String> roles,
+      UserStatus status,
+      boolean mustChangePassword,
+      Instant createdAt,
+      Instant updatedAt) {
     this.id = id;
     this.email = email;
     this.name = name;
@@ -36,8 +51,17 @@ public class User {
     this.tenantId = tenantId;
     this.roles = roles != null ? roles : List.of();
     this.status = status;
+    this.mustChangePassword = mustChangePassword;
     this.createdAt = createdAt != null ? createdAt : Instant.now();
     this.updatedAt = updatedAt != null ? updatedAt : Instant.now();
+  }
+
+  public boolean isMustChangePassword() {
+    return mustChangePassword;
+  }
+
+  public void setMustChangePassword(boolean mustChangePassword) {
+    this.mustChangePassword = mustChangePassword;
   }
 
   public UUID getId() {
