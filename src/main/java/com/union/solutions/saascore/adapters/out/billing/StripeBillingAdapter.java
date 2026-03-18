@@ -8,6 +8,7 @@ import com.stripe.model.billingportal.Session;
 import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.SubscriptionCancelParams;
 import com.stripe.param.SubscriptionCreateParams;
+import com.stripe.param.SubscriptionUpdateParams;
 import com.stripe.param.billingportal.SessionCreateParams;
 import com.union.solutions.saascore.application.port.StripeBillingPort;
 import jakarta.annotation.PostConstruct;
@@ -68,6 +69,26 @@ public class StripeBillingAdapter implements StripeBillingPort {
       subscription.cancel(SubscriptionCancelParams.builder().build());
     } catch (StripeException e) {
       throw new BillingException("Failed to cancel Stripe subscription", e);
+    }
+  }
+
+  @Override
+  public void scheduleCancelAtPeriodEnd(String subscriptionId) {
+    try {
+      Subscription subscription = Subscription.retrieve(subscriptionId);
+      subscription.update(SubscriptionUpdateParams.builder().setCancelAtPeriodEnd(true).build());
+    } catch (StripeException e) {
+      throw new BillingException("Failed to schedule cancel at period end", e);
+    }
+  }
+
+  @Override
+  public void undoScheduleCancelAtPeriodEnd(String subscriptionId) {
+    try {
+      Subscription subscription = Subscription.retrieve(subscriptionId);
+      subscription.update(SubscriptionUpdateParams.builder().setCancelAtPeriodEnd(false).build());
+    } catch (StripeException e) {
+      throw new BillingException("Failed to undo schedule cancel", e);
     }
   }
 

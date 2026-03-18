@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 016-reactivation-email-sent
+      author: spring-saas-core
+      changes:
+        - createTable:
+            tableName: reactivation_email_sent
+            columns:
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: sent_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_reactivation_email_sent_at
+            tableName: reactivation_email_sent
+            columns:
+              - column:
+                  name: sent_at

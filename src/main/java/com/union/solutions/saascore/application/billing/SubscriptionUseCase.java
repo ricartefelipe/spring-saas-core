@@ -310,6 +310,49 @@ public class SubscriptionUseCase {
   }
 
   @Transactional
+  public Subscription scheduleCancelAtPeriodEnd(UUID tenantId) {
+    Subscription sub =
+        subscriptionRepo
+            .findCurrentByTenantId(tenantId)
+            .orElseThrow(
+                () -> new IllegalStateException("No current subscription for tenant: " + tenantId));
+    if (sub.getStatus() != SubscriptionStatus.ACTIVE && sub.getStatus() != SubscriptionStatus.TRIAL) {
+      throw new IllegalStateException(
+          "Can only schedule cancel for ACTIVE or TRIAL subscription, current: " + sub.getStatus());
+    }
+    if (sub.getStripeSubscriptionId() != null) {
+      billingPort.scheduleCancelAtPeriodEnd(sub.getStripeSubscriptionId());
+    }
+    Instant now = Instant.now();
+    sub.setCancelAtPeriodEnd(true);
+    sub.setUpdatedAt(now);
+    Subscription saved = subscriptionRepo.save(sub);
+    log.info("Subscription schedule cancel at period end for tenant={}", tenantId);
+    return saved;
+  }
+
+  @Transactional
+  public Subscription undoScheduleCancelAtPeriodEnd(UUID tenantId) {
+    Subscription sub =
+        subscriptionRepo
+            .findCurrentByTenantId(tenantId)
+            .orElseThrow(
+                () -> new IllegalStateException("No current subscription for tenant: " + tenantId));
+    if (!sub.isCancelAtPeriodEnd()) {
+      return sub;
+    }
+    if (sub.getStripeSubscriptionId() != null) {
+      billingPort.undoScheduleCancelAtPeriodEnd(sub.getStripeSubscriptionId());
+    }
+    Instant now = Instant.now();
+    sub.setCancelAtPeriodEnd(false);
+    sub.setUpdatedAt(now);
+    Subscription saved = subscriptionRepo.save(sub);
+    log.info("Subscription undo schedule cancel for tenant={}", tenantId);
+    return saved;
+  }
+
+  @Transactional
   public Subscription reactivate(UUID tenantId) {
     Subscription sub =
         subscriptionRepo

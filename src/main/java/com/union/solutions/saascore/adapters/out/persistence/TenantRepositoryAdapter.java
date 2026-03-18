@@ -65,4 +65,9 @@ public class TenantRepositoryAdapter implements TenantRepository {
                     (String) row[0], ((Tenant.TenantStatus) row[1]).name(), (Long) row[2]))
         .toList();
   }
+
+  @Override
+  public List<UUID> findAllActiveIds() {
+    return jpa.findAllActiveIds();
+  }
 }
