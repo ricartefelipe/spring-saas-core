@@ -70,6 +70,8 @@ public class AuthController {
                         "Bearer",
                         "expires_in",
                         3600,
+                        "must_change_password",
+                        result.mustChangePassword(),
                         "user",
                         new UserResponse(
                             result.user().getId(),
@@ -99,6 +101,43 @@ public class AuthController {
   public ResponseEntity<?> requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
     userUseCase.requestPasswordReset(request.email());
     return ResponseEntity.ok(Map.of("message", "If the email exists, a reset link has been sent"));
+  }
+
+  @Operation(
+      summary = "Change password",
+      description =
+          "Change password for the authenticated user (required after first login with temporary password). "
+              + "Returns a new access_token without must-change-password.")
+  @ApiResponse(responseCode = "200", description = "Password changed successfully")
+  @ApiResponse(responseCode = "400", description = "Current password is wrong")
+  @PostMapping("/change-password")
+  public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+    return userUseCase
+        .changePassword(request.currentPassword(), request.newPassword())
+        .<ResponseEntity<?>>map(
+            accessToken ->
+                ResponseEntity.ok(
+                    Map.of(
+                        "message",
+                        "Password changed successfully",
+                        "access_token",
+                        accessToken,
+                        "token_type",
+                        "Bearer",
+                        "expires_in",
+                        3600,
+                        "must_change_password",
+                        false)))
+        .orElseGet(
+            () ->
+                ResponseEntity.status(400)
+                    .body(
+                        ProblemDetails.of(
+                            400,
+                            "Bad Request",
+                            "Current password is incorrect",
+                            "/v1/auth/change-password",
+                            null)));
   }
 
   @Operation(
@@ -137,6 +176,9 @@ public class AuthController {
 
   public record PasswordResetConfirmRequest(
       UUID tokenId, @NotBlank String token, @NotBlank @Size(min = 8) String newPassword) {}
+
+  public record ChangePasswordRequest(
+      @NotBlank String currentPassword, @NotBlank @Size(min = 8) String newPassword) {}
 
   public record UserResponse(
       UUID id,
