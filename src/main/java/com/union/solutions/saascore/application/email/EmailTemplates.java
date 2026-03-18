@@ -1,8 +1,28 @@
 package com.union.solutions.saascore.application.email;
 
+import java.text.Normalizer;
+import java.util.Locale;
+
 public final class EmailTemplates {
 
+  public static final String PRODUCT_DISPLAY_NAME = "Fluxe B2B Suite";
+
   private EmailTemplates() {}
+
+  /** No convite, "System"/"Sistema" (nome técnico do tenant) deve aparecer como nome do produto. */
+  static String productNameForInviteDisplay(String tenantLabel) {
+    if (tenantLabel == null || tenantLabel.isBlank()) {
+      return PRODUCT_DISPLAY_NAME;
+    }
+    String n =
+        Normalizer.normalize(tenantLabel.trim(), Normalizer.Form.NFKC)
+            .replaceAll("[\u200B-\u200D\uFEFF]", "");
+    String lower = n.toLowerCase(Locale.ROOT);
+    if (lower.equals("system") || lower.equals("sistema")) {
+      return PRODUCT_DISPLAY_NAME;
+    }
+    return tenantLabel.trim();
+  }
 
   public static String welcomeEmail(String userName, String tenantName) {
     return """
@@ -61,7 +81,10 @@ public final class EmailTemplates {
         </html>
         """
         .formatted(
-            escapeHtml(userName), escapeHtml(tenantName), passwordBlock, escapeHtml(inviteUrl));
+            escapeHtml(userName),
+            escapeHtml(productNameForInviteDisplay(tenantName)),
+            passwordBlock,
+            escapeHtml(inviteUrl));
   }
 
   public static String passwordResetEmail(String userName, String resetUrl) {
