@@ -30,8 +30,12 @@ public final class EmailTemplates {
     String passwordBlock =
         temporaryPassword != null && !temporaryPassword.isBlank()
             ? """
+          <div style="background:#fef3c7;border:2px solid #d97706;padding:14px 16px;border-radius:8px;margin:16px 0;">
+            <p style="margin:0 0 8px 0;font-size:15px;color:#92400e;"><strong>Obrigatório</strong></p>
+            <p style="margin:0;font-size:14px;color:#78350f;">Você <strong>deve</strong> definir uma nova senha no primeiro login. Sem isso, o acesso à plataforma permanece bloqueado após entrar.</p>
+          </div>
           <p><strong>Sua senha temporária:</strong> <code style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">%s</code></p>
-          <p style="color: #666; font-size: 13px;">Faça login com seu e-mail e esta senha. É <strong>obrigatório</strong> alterar a senha no primeiro acesso.</p>
+          <p style="color: #666; font-size: 13px;">Use seu e-mail e esta senha para entrar; em seguida o sistema pedirá uma nova senha.</p>
           """
                 .formatted(escapeHtml(temporaryPassword))
             : "";
