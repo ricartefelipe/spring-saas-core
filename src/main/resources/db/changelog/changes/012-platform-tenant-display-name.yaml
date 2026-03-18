@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 012-platform-tenant-rename-fluxe
+      author: saascore
+      changes:
+        - sql:
+            sql: >
+              UPDATE tenants
+              SET name = 'Fluxe B2B Suite', updated_at = CURRENT_TIMESTAMP
+              WHERE id = '00000000-0000-0000-0000-000000000001'
+                AND (LOWER(TRIM(COALESCE(name, ''))) = 'system'
+                     OR TRIM(COALESCE(name, '')) = '');
