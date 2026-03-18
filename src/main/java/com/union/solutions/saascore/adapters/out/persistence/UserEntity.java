@@ -34,6 +34,9 @@ public class UserEntity {
   @Column(name = "status", nullable = false, length = 32)
   private User.UserStatus status;
 
+  @Column(name = "must_change_password", nullable = false)
+  private boolean mustChangePassword;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -49,6 +52,7 @@ public class UserEntity {
     e.tenantId = u.getTenantId();
     e.roles = u.getRoles() != null ? String.join(",", u.getRoles()) : "";
     e.status = u.getStatus();
+    e.mustChangePassword = u.isMustChangePassword();
     e.createdAt = u.getCreatedAt();
     e.updatedAt = u.getUpdatedAt();
     return e;
@@ -58,7 +62,8 @@ public class UserEntity {
     List<String> roleList =
         (roles == null || roles.isBlank()) ? List.of() : Arrays.asList(roles.split(","));
     return new User(
-        id, email, name, passwordHash, tenantId, roleList, status, createdAt, updatedAt);
+        id, email, name, passwordHash, tenantId, roleList, status,
+        mustChangePassword, createdAt, updatedAt);
   }
 
   public UUID getId() {
@@ -131,5 +136,13 @@ public class UserEntity {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public boolean isMustChangePassword() {
+    return mustChangePassword;
+  }
+
+  public void setMustChangePassword(boolean mustChangePassword) {
+    this.mustChangePassword = mustChangePassword;
   }
 }
