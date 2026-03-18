@@ -125,7 +125,7 @@ public class AiDocsService {
               "path",
               "/v1/ai/insights",
               "description",
-              "System insights and health indicators"),
+              "Fluxe B2B Suite insights and health indicators"),
           Map.of("method", "GET", "path", "/v1/me", "description", "Current user claims"),
           Map.of("method", "GET", "path", "/v1/users", "description", "List users (tenant-scoped)"),
           Map.of(
