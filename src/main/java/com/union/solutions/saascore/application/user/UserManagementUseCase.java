@@ -198,7 +198,7 @@ public class UserManagementUseCase {
     emailSender.send(
         email,
         "Convite — " + emailDisplayName,
-        EmailTemplates.inviteEmail(name, emailDisplayName, inviteLink, temporaryPassword));
+        EmailTemplates.inviteEmail(tenantId, name, tenantName, inviteLink, temporaryPassword));
 
     return user;
   }
@@ -228,7 +228,7 @@ public class UserManagementUseCase {
                   user.getEmail(),
                   "Convite — " + emailDisplayName,
                   EmailTemplates.inviteEmail(
-                      user.getName(), emailDisplayName, inviteLink, temporaryPassword));
+                      tenantId, user.getName(), tenantName, inviteLink, temporaryPassword));
 
               auditLogger.log(
                   tenantId,
