@@ -252,8 +252,11 @@ public class UserManagementUseCase {
     if (PLATFORM_TENANT_ID.equals(tenantId)) {
       return PLATFORM_INVITE_DISPLAY_NAME;
     }
-    if (tenantNameFromDb != null && "system".equalsIgnoreCase(tenantNameFromDb.trim())) {
-      return PLATFORM_INVITE_DISPLAY_NAME;
+    if (tenantNameFromDb != null) {
+      String t = tenantNameFromDb.trim();
+      if ("system".equalsIgnoreCase(t) || "sistema".equalsIgnoreCase(t)) {
+        return PLATFORM_INVITE_DISPLAY_NAME;
+      }
     }
     if (tenantNameFromDb == null || tenantNameFromDb.isBlank()) {
       return PLATFORM_INVITE_DISPLAY_NAME;
