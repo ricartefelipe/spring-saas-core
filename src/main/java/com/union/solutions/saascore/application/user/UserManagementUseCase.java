@@ -157,6 +157,7 @@ public class UserManagementUseCase {
             tenantId,
             roles != null ? roles : List.of("member"),
             User.UserStatus.ACTIVE,
+            true,
             now,
             now);
     userRepo.save(user);
@@ -186,11 +187,13 @@ public class UserManagementUseCase {
 
     String tenantName =
         tenantRepo.findById(tenantId).map(t -> t.getName()).orElse("your organization");
+    String emailDisplayName =
+        "System".equals(tenantName) ? "Fluxe B2B Suite" : tenantName;
     String inviteLink = frontendUrl + "/login";
     emailSender.send(
         email,
-        "You've been invited to " + tenantName,
-        EmailTemplates.inviteEmail(name, tenantName, inviteLink, temporaryPassword));
+        "You've been invited to " + emailDisplayName,
+        EmailTemplates.inviteEmail(name, emailDisplayName, inviteLink, temporaryPassword));
 
     return user;
   }
@@ -208,17 +211,20 @@ public class UserManagementUseCase {
             user -> {
               String temporaryPassword = generateTemporaryPassword();
               user.setPasswordHash(passwordEncoder.encode(temporaryPassword));
+              user.setMustChangePassword(true);
               user.setUpdatedAt(Instant.now());
               userRepo.save(user);
 
               String tenantName =
                   tenantRepo.findById(tenantId).map(t -> t.getName()).orElse("your organization");
+              String emailDisplayName =
+                  "System".equals(tenantName) ? "Fluxe B2B Suite" : tenantName;
               String inviteLink = frontendUrl + "/login";
               emailSender.send(
                   user.getEmail(),
-                  "You've been invited to " + tenantName,
+                  "You've been invited to " + emailDisplayName,
                   EmailTemplates.inviteEmail(
-                      user.getName(), tenantName, inviteLink, temporaryPassword));
+                      user.getName(), emailDisplayName, inviteLink, temporaryPassword));
 
               auditLogger.log(
                   tenantId,

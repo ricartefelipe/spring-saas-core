@@ -191,8 +191,46 @@ public class UserUseCase {
               String token =
                   tokenIssuer.issue(
                       u.getEmail(), u.getTenantId().toString(), u.getRoles(), perms, plan, region);
-              return new AuthResult(token, u);
+              return new AuthResult(token, u, u.isMustChangePassword());
             });
+  }
+
+  /**
+   * Altera a senha do usuário autenticado (obrigatório após login com senha temporária).
+   * Requer a senha atual. Ao concluir, limpa o flag mustChangePassword.
+   */
+  @Transactional
+  public boolean changePassword(String currentPassword, String newPassword) {
+    Optional<UUID> tenantIdOpt = TenantContext.getTenantId();
+    String subject = TenantContext.getSubject();
+    if (tenantIdOpt.isEmpty() || subject == null || subject.isBlank()) {
+      return false;
+    }
+    return userRepo
+        .findByEmailAndTenantId(subject, tenantIdOpt.get())
+        .filter(u -> passwordEncoder.matches(currentPassword, u.getPasswordHash()))
+        .map(
+            u -> {
+              u.setPasswordHash(passwordEncoder.encode(newPassword));
+              u.setMustChangePassword(false);
+              u.setUpdatedAt(Instant.now());
+              userRepo.save(u);
+              auditLogger.log(
+                  u.getTenantId(),
+                  u.getEmail(),
+                  "[]",
+                  "[]",
+                  "USER_PASSWORD_CHANGED",
+                  "user",
+                  u.getId().toString(),
+                  null,
+                  null,
+                  200,
+                  TenantContext.getCorrelationId(),
+                  null);
+              return true;
+            })
+        .orElse(false);
   }
 
   @Transactional
@@ -307,7 +345,7 @@ public class UserUseCase {
     }
   }
 
-  public record AuthResult(String accessToken, User user) {}
+  public record AuthResult(String accessToken, User user, boolean mustChangePassword) {}
 
   public record PasswordResetResult(boolean accepted, UUID tokenId, String rawToken) {
     public PasswordResetResult(boolean accepted) {
