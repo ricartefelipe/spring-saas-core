@@ -171,40 +171,48 @@ public class UserUseCase {
     return user;
   }
 
+  private String buildAccessToken(User u) {
+    List<String> perms =
+        u.getRoles().stream()
+            .flatMap(r -> ROLE_PERMISSIONS.getOrDefault(r, List.of()).stream())
+            .distinct()
+            .toList();
+    Optional<Tenant> tenant = tenantRepo.findById(u.getTenantId());
+    String plan = tenant.map(Tenant::getPlan).orElse("starter");
+    String region = tenant.map(Tenant::getRegion).orElse("us-east-1");
+    return tokenIssuer.issue(
+        u.getEmail(),
+        u.getTenantId().toString(),
+        u.getRoles(),
+        perms,
+        plan,
+        region,
+        u.isMustChangePassword());
+  }
+
   @Transactional(readOnly = true)
   public Optional<AuthResult> authenticate(String email, String rawPassword) {
     return userRepo
         .findByEmail(email)
         .filter(User::isActive)
         .filter(u -> passwordEncoder.matches(rawPassword, u.getPasswordHash()))
-        .map(
-            u -> {
-              List<String> perms =
-                  u.getRoles().stream()
-                      .flatMap(r -> ROLE_PERMISSIONS.getOrDefault(r, List.of()).stream())
-                      .distinct()
-                      .toList();
-              Optional<Tenant> tenant = tenantRepo.findById(u.getTenantId());
-              String plan = tenant.map(Tenant::getPlan).orElse("starter");
-              String region = tenant.map(Tenant::getRegion).orElse("us-east-1");
-
-              String token =
-                  tokenIssuer.issue(
-                      u.getEmail(), u.getTenantId().toString(), u.getRoles(), perms, plan, region);
-              return new AuthResult(token, u, u.isMustChangePassword());
-            });
+        .map(u -> new AuthResult(buildAccessToken(u), u, u.isMustChangePassword()));
   }
 
   /**
    * Altera a senha do usuário autenticado (obrigatório após login com senha temporária). Requer a
    * senha atual. Ao concluir, limpa o flag mustChangePassword.
    */
+  /**
+   * @return new access token (JWT without {@code mcp}) on success; empty if credentials or context
+   *     invalid
+   */
   @Transactional
-  public boolean changePassword(String currentPassword, String newPassword) {
+  public Optional<String> changePassword(String currentPassword, String newPassword) {
     Optional<UUID> tenantIdOpt = TenantContext.getTenantId();
     String subject = TenantContext.getSubject();
     if (tenantIdOpt.isEmpty() || subject == null || subject.isBlank()) {
-      return false;
+      return Optional.empty();
     }
     return userRepo
         .findByEmailAndTenantId(subject, tenantIdOpt.get())
@@ -228,9 +236,8 @@ public class UserUseCase {
                   200,
                   TenantContext.getCorrelationId(),
                   null);
-              return true;
-            })
-        .orElse(false);
+              return buildAccessToken(u);
+            });
   }
 
   @Transactional
