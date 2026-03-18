@@ -22,6 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserManagementUseCase {
 
+  /** Platform / system tenant — invites from Admin Console use this id. */
+  private static final UUID PLATFORM_TENANT_ID =
+      UUID.fromString("00000000-0000-0000-0000-000000000001");
+
+  private static final String PLATFORM_INVITE_DISPLAY_NAME = "Fluxe B2B Suite";
+
   private static final String TEMP_PASSWORD_CHARS =
       "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
   private static final int TEMP_PASSWORD_LENGTH = 12;
@@ -157,6 +163,7 @@ public class UserManagementUseCase {
             tenantId,
             roles != null ? roles : List.of("member"),
             User.UserStatus.ACTIVE,
+            true,
             now,
             now);
     userRepo.save(user);
@@ -186,18 +193,19 @@ public class UserManagementUseCase {
 
     String tenantName =
         tenantRepo.findById(tenantId).map(t -> t.getName()).orElse("your organization");
+    String emailDisplayName = resolveInviteDisplayName(tenantId, tenantName);
     String inviteLink = frontendUrl + "/login";
     emailSender.send(
         email,
-        "You've been invited to " + tenantName,
-        EmailTemplates.inviteEmail(name, tenantName, inviteLink, temporaryPassword));
+        "Convite — " + emailDisplayName,
+        EmailTemplates.inviteEmail(name, emailDisplayName, inviteLink, temporaryPassword));
 
     return user;
   }
 
   /**
-   * Reenvia o email de convite para um usuário existente (nova senha temporária).
-   * Não envia se o usuário estiver com status DELETED.
+   * Reenvia o email de convite para um usuário existente (nova senha temporária). Não envia se o
+   * usuário estiver com status DELETED.
    */
   @Transactional
   public boolean resendInvite(UUID tenantId, UUID userId) {
@@ -208,17 +216,19 @@ public class UserManagementUseCase {
             user -> {
               String temporaryPassword = generateTemporaryPassword();
               user.setPasswordHash(passwordEncoder.encode(temporaryPassword));
+              user.setMustChangePassword(true);
               user.setUpdatedAt(Instant.now());
               userRepo.save(user);
 
               String tenantName =
                   tenantRepo.findById(tenantId).map(t -> t.getName()).orElse("your organization");
+              String emailDisplayName = resolveInviteDisplayName(tenantId, tenantName);
               String inviteLink = frontendUrl + "/login";
               emailSender.send(
                   user.getEmail(),
-                  "You've been invited to " + tenantName,
+                  "Convite — " + emailDisplayName,
                   EmailTemplates.inviteEmail(
-                      user.getName(), tenantName, inviteLink, temporaryPassword));
+                      user.getName(), emailDisplayName, inviteLink, temporaryPassword));
 
               auditLogger.log(
                   tenantId,
@@ -236,5 +246,18 @@ public class UserManagementUseCase {
               return true;
             })
         .orElse(false);
+  }
+
+  private static String resolveInviteDisplayName(UUID tenantId, String tenantNameFromDb) {
+    if (PLATFORM_TENANT_ID.equals(tenantId)) {
+      return PLATFORM_INVITE_DISPLAY_NAME;
+    }
+    if (tenantNameFromDb != null && "system".equalsIgnoreCase(tenantNameFromDb.trim())) {
+      return PLATFORM_INVITE_DISPLAY_NAME;
+    }
+    if (tenantNameFromDb == null || tenantNameFromDb.isBlank()) {
+      return PLATFORM_INVITE_DISPLAY_NAME;
+    }
+    return tenantNameFromDb.trim();
   }
 }
