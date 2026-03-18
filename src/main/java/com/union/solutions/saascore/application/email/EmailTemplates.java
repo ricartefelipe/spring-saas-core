@@ -9,19 +9,31 @@ public final class EmailTemplates {
 
   private EmailTemplates() {}
 
-  /** No convite, "System"/"Sistema" (nome técnico do tenant) deve aparecer como nome do produto. */
+  /**
+   * No convite, "System"/"Sistema" (nome técnico do tenant) deve aparecer sempre como "Fluxe B2B
+   * Suite".
+   */
   static String productNameForInviteDisplay(String tenantLabel) {
     if (tenantLabel == null || tenantLabel.isBlank()) {
       return PRODUCT_DISPLAY_NAME;
     }
     String n =
         Normalizer.normalize(tenantLabel.trim(), Normalizer.Form.NFKC)
-            .replaceAll("[\u200B-\u200D\uFEFF]", "");
+            .replaceAll("[\u200B-\u200D\uFEFF]", "")
+            .trim();
     String lower = n.toLowerCase(Locale.ROOT);
     if (lower.equals("system") || lower.equals("sistema")) {
       return PRODUCT_DISPLAY_NAME;
     }
-    return tenantLabel.trim();
+    return n.isEmpty() ? PRODUCT_DISPLAY_NAME : tenantLabel.trim();
+  }
+
+  /** Última garantia: o corpo do e-mail nunca deve exibir "System". */
+  private static String ensureProductDisplayName(String displayName) {
+    if (displayName == null || displayName.isBlank()) return PRODUCT_DISPLAY_NAME;
+    String lower = displayName.trim().toLowerCase(Locale.ROOT);
+    if (lower.equals("system") || lower.equals("sistema")) return PRODUCT_DISPLAY_NAME;
+    return displayName.trim();
   }
 
   public static String welcomeEmail(String userName, String tenantName) {
@@ -82,7 +94,7 @@ public final class EmailTemplates {
         """
         .formatted(
             escapeHtml(userName),
-            escapeHtml(productNameForInviteDisplay(tenantName)),
+            escapeHtml(ensureProductDisplayName(productNameForInviteDisplay(tenantName))),
             passwordBlock,
             escapeHtml(inviteUrl));
   }
