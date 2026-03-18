@@ -2,10 +2,15 @@ package com.union.solutions.saascore.application.email;
 
 import java.text.Normalizer;
 import java.util.Locale;
+import java.util.UUID;
 
 public final class EmailTemplates {
 
   public static final String PRODUCT_DISPLAY_NAME = "Fluxe B2B Suite";
+
+  /** Mesmo UUID que o tenant de plataforma no Core (Admin Console). */
+  private static final UUID PLATFORM_TENANT_ID =
+      UUID.fromString("00000000-0000-0000-0000-000000000001");
 
   private EmailTemplates() {}
 
@@ -28,12 +33,20 @@ public final class EmailTemplates {
     return n.isEmpty() ? PRODUCT_DISPLAY_NAME : tenantLabel.trim();
   }
 
-  /** Última garantia: o corpo do e-mail nunca deve exibir "System". */
-  private static String ensureProductDisplayName(String displayName) {
-    if (displayName == null || displayName.isBlank()) return PRODUCT_DISPLAY_NAME;
-    String lower = displayName.trim().toLowerCase(Locale.ROOT);
-    if (lower.equals("system") || lower.equals("sistema")) return PRODUCT_DISPLAY_NAME;
-    return displayName.trim();
+  /**
+   * Nome a mostrar em «participar de X»: tenant de plataforma → sempre produto; System/Sistema →
+   * produto; caso contrário → nome da empresa na BD.
+   */
+  private static String organizationNameForInvite(UUID inviteTenantId, String tenantNameFromDb) {
+    if (inviteTenantId != null && PLATFORM_TENANT_ID.equals(inviteTenantId)) {
+      return PRODUCT_DISPLAY_NAME;
+    }
+    String normalized = productNameForInviteDisplay(tenantNameFromDb);
+    String lower = normalized.toLowerCase(Locale.ROOT);
+    if (lower.equals("system") || lower.equals("sistema")) {
+      return PRODUCT_DISPLAY_NAME;
+    }
+    return normalized;
   }
 
   public static String welcomeEmail(String userName, String tenantName) {
@@ -54,7 +67,11 @@ public final class EmailTemplates {
   }
 
   public static String inviteEmail(
-      String userName, String tenantName, String inviteUrl, String temporaryPassword) {
+      UUID inviteTenantId,
+      String userName,
+      String tenantNameFromDatabase,
+      String inviteUrl,
+      String temporaryPassword) {
     String passwordBlock =
         temporaryPassword != null && !temporaryPassword.isBlank()
             ? """
@@ -90,7 +107,7 @@ public final class EmailTemplates {
         """
         .formatted(
             escapeHtml(userName),
-            escapeHtml(ensureProductDisplayName(productNameForInviteDisplay(tenantName))),
+            escapeHtml(organizationNameForInvite(inviteTenantId, tenantNameFromDatabase)),
             passwordBlock,
             escapeHtml(inviteUrl),
             PRODUCT_DISPLAY_NAME);
