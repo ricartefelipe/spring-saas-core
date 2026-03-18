@@ -56,7 +56,7 @@ public class AuditRetentionService {
         "deleted=" + totalDeleted + ",cutoff=" + cutoff + ",retention_days=" + retentionDays;
     auditLogger.log(
         null,
-        "system",
+        "Fluxe B2B Suite",
         "[]",
         "[]",
         ACTION_CLEANUP,

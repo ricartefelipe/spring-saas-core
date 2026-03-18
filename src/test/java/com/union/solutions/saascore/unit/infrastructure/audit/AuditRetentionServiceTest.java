@@ -94,7 +94,7 @@ class AuditRetentionServiceTest {
     verify(auditLogger)
         .log(
             isNull(),
-            eq("system"),
+            eq("Fluxe B2B Suite"),
             eq("[]"),
             eq("[]"),
             eq("audit.retention.cleanup"),
