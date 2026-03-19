@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 015-users-last-login-at
+      author: spring-saas-core
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: last_login_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: true

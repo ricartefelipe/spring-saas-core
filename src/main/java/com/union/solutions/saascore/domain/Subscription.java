@@ -19,6 +19,7 @@ public class Subscription {
   private Instant gracePeriodEndsAt;
   private String previousPlanSlug;
   private Instant cancelledAt;
+  private boolean cancelAtPeriodEnd;
   private Instant createdAt;
   private Instant updatedAt;
   private String stripeSubscriptionId;
@@ -130,6 +131,14 @@ public class Subscription {
 
   public void setCancelledAt(Instant cancelledAt) {
     this.cancelledAt = cancelledAt;
+  }
+
+  public boolean isCancelAtPeriodEnd() {
+    return cancelAtPeriodEnd;
+  }
+
+  public void setCancelAtPeriodEnd(boolean cancelAtPeriodEnd) {
+    this.cancelAtPeriodEnd = cancelAtPeriodEnd;
   }
 
   public Instant getCreatedAt() {

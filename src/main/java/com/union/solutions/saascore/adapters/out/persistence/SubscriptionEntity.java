@@ -45,6 +45,9 @@ public class SubscriptionEntity {
   @Column(name = "cancelled_at")
   private Instant cancelledAt;
 
+  @Column(name = "cancel_at_period_end", nullable = false)
+  private boolean cancelAtPeriodEnd;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -66,6 +69,7 @@ public class SubscriptionEntity {
     e.gracePeriodEndsAt = d.getGracePeriodEndsAt();
     e.previousPlanSlug = d.getPreviousPlanSlug();
     e.cancelledAt = d.getCancelledAt();
+    e.cancelAtPeriodEnd = d.isCancelAtPeriodEnd();
     e.createdAt = d.getCreatedAt();
     e.updatedAt = d.getUpdatedAt();
     e.stripeSubscriptionId = d.getStripeSubscriptionId();
@@ -88,6 +92,7 @@ public class SubscriptionEntity {
             createdAt,
             updatedAt);
     s.setStripeSubscriptionId(stripeSubscriptionId);
+    s.setCancelAtPeriodEnd(cancelAtPeriodEnd);
     return s;
   }
 
@@ -169,6 +174,14 @@ public class SubscriptionEntity {
 
   public void setCancelledAt(Instant cancelledAt) {
     this.cancelledAt = cancelledAt;
+  }
+
+  public boolean isCancelAtPeriodEnd() {
+    return cancelAtPeriodEnd;
+  }
+
+  public void setCancelAtPeriodEnd(boolean cancelAtPeriodEnd) {
+    this.cancelAtPeriodEnd = cancelAtPeriodEnd;
   }
 
   public Instant getCreatedAt() {
