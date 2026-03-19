@@ -190,13 +190,20 @@ public class UserUseCase {
         u.isMustChangePassword());
   }
 
-  @Transactional(readOnly = true)
+  @Transactional
   public Optional<AuthResult> authenticate(String email, String rawPassword) {
     return userRepo
         .findByEmail(email)
         .filter(User::isActive)
         .filter(u -> passwordEncoder.matches(rawPassword, u.getPasswordHash()))
-        .map(u -> new AuthResult(buildAccessToken(u), u, u.isMustChangePassword()));
+        .map(
+            u -> {
+              Instant now = Instant.now();
+              u.setLastLoginAt(now);
+              u.setUpdatedAt(now);
+              userRepo.save(u);
+              return new AuthResult(buildAccessToken(u), u, u.isMustChangePassword());
+            });
   }
 
   /**
