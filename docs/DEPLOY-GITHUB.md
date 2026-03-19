@@ -6,8 +6,10 @@ A publicação da imagem Docker para o **GHCR** é feita pelos workflows do GitH
 
 | Workflow | Ficheiro | Quando corre | O que faz |
 |----------|----------|--------------|-----------|
-| **CI** | `.github/workflows/ci.yml` | Push/PR em `develop` e `master` | Build Maven, Spotless, verificação OpenAPI |
+| **CI** | `.github/workflows/ci.yml` | Push/PR em `develop` e `master`, ou **Run workflow** | Build Maven, Spotless, verificação OpenAPI |
 | **Build & Push Docker** | `.github/workflows/build-push.yml` | Push em `develop` e `master`, ou **Run workflow** manual | `./mvnw test`, build da imagem (`docker/app.Dockerfile`), push para **GHCR** com tags `develop`, `master`, `latest` (default branch) e SHA |
+
+Não existe workflow separado de “Deploy” no core: imagem e testes ficam em **CI** + **Build & Push** (evita duplicar ou confundir com tentativas antigas de deploy fora do GitHub).
 
 ## Imagem no GHCR
 
