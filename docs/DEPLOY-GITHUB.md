@@ -1,6 +1,8 @@
 # Deploy via GitHub (Actions + GHCR)
 
-O fluxo oficial de publicação deste repositório é **GitHub Actions**: não é necessário script local de build/push.
+Quando o **GitHub Actions** está ativo (billing ok), este é o fluxo recomendado para publicar a imagem automaticamente.
+
+Para publicar **sem** os runners do GitHub: neste repo use `scripts/build-push-image.sh` + `docker/app.Dockerfile.hostbuild`; no repositório **fluxe-b2b-suite** use `docs/DEPLOY-MANUAL.md` e `scripts/deploy-manual.sh`.
 
 ## Workflows
 

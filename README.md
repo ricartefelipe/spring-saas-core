@@ -268,11 +268,10 @@ A API está versionada como **v1** e é estável para integração com node-b2b-
 
 ---
 
-## Deploy (GitHub Actions)
+## Deploy
 
-A publicação da imagem Docker para o **GitHub Container Registry (GHCR)** é feita pelo workflow **Build & Push Docker Image** (`.github/workflows/build-push.yml`) em push para `develop`/`master` ou execução manual em **Actions**.
-
-Detalhes: [docs/DEPLOY-GITHUB.md](docs/DEPLOY-GITHUB.md).
+- **GitHub Actions** (recomendado quando os runners estão ativos): workflow **Build & Push Docker Image** — [docs/DEPLOY-GITHUB.md](docs/DEPLOY-GITHUB.md).
+- **Manual** (sem Actions): `scripts/build-push-image.sh` + `docker/app.Dockerfile.hostbuild` — [docs/DEPLOY-MANUAL.md](docs/DEPLOY-MANUAL.md).
 
 ---
 
