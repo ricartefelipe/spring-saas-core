@@ -977,6 +977,56 @@
         }
       }
     },
+    "/v1/tenants/{id}/health": {
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+        { "$ref": "#/components/parameters/XTenantId" },
+        { "$ref": "#/components/parameters/XCorrelationId" }
+      ],
+      "get": {
+        "tags": ["Snapshot"],
+        "summary": "Saúde do tenant (última atividade e usuários ativos)",
+        "operationId": "tenantHealth",
+        "responses": {
+          "200": {
+            "description": "Métricas de saúde do tenant",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TenantHealth" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/v1/tenants/{id}/export": {
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+        { "$ref": "#/components/parameters/XTenantId" },
+        { "$ref": "#/components/parameters/XCorrelationId" }
+      ],
+      "get": {
+        "tags": ["Snapshot"],
+        "summary": "Exportar dados do tenant (compliance; apenas o próprio tenant)",
+        "operationId": "tenantExport",
+        "responses": {
+          "200": {
+            "description": "Dados do tenant (tenant, users, policies, featureFlags)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TenantExport" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/v1/me": {
       "parameters": [
         {
@@ -1709,6 +1759,74 @@
           "count",
           "items"
         ]
+      },
+      "TenantHealth": {
+        "type": "object",
+        "properties": {
+          "tenantId": { "type": "string", "format": "uuid" },
+          "lastActivityAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Último login de qualquer usuário do tenant" },
+          "activeUsersCount": { "type": "integer", "format": "int64", "minimum": 0, "description": "Número de usuários ativos no tenant" }
+        },
+        "required": ["tenantId", "lastActivityAt", "activeUsersCount"]
+      },
+      "TenantExport": {
+        "type": "object",
+        "properties": {
+          "tenant": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "name": { "type": "string" },
+              "plan": { "type": "string" },
+              "region": { "type": "string" },
+              "status": { "$ref": "#/components/schemas/TenantStatus" },
+              "createdAt": { "type": "string", "format": "date-time" },
+              "updatedAt": { "type": "string", "format": "date-time" }
+            },
+            "required": ["id", "name", "plan", "region", "status", "createdAt", "updatedAt"]
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "email": { "type": "string" },
+                "name": { "type": "string" },
+                "roles": { "type": "array", "items": { "type": "string" } },
+                "status": { "type": "string" },
+                "createdAt": { "type": "string", "format": "date-time" },
+                "updatedAt": { "type": "string", "format": "date-time" },
+                "lastLoginAt": { "type": "string", "format": "date-time", "nullable": true }
+              }
+            }
+          },
+          "policies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "permissionCode": { "type": "string" },
+                "effect": { "type": "string" },
+                "allowedPlans": { "type": "array", "items": { "type": "string" } },
+                "allowedRegions": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          },
+          "featureFlags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "name": { "type": "string" },
+                "enabled": { "type": "boolean" }
+              }
+            }
+          }
+        },
+        "required": ["tenant", "users", "policies", "featureFlags"]
       },
       "TenantSnapshot": {
         "type": "object",

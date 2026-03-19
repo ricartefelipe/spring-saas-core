@@ -80,4 +80,51 @@ class EmailTemplatesTest {
       assertThat(html).contains(EmailTemplates.PRODUCT_DISPLAY_NAME);
     }
   }
+
+  @Nested
+  class ReactivationEmail {
+
+    @Test
+    void containsUserNameTenantNameAndLoginUrl() {
+      String html =
+          EmailTemplates.reactivationEmail("Maria", "Acme Corp", "https://app.example.com/login");
+      assertThat(html).contains("Maria");
+      assertThat(html).contains("Acme Corp");
+      assertThat(html).contains("https://app.example.com/login");
+      assertThat(html).contains("Acessar agora");
+      assertThat(html).contains(EmailTemplates.PRODUCT_DISPLAY_NAME);
+    }
+
+    @Test
+    void escapesHtmlInInputs() {
+      String html =
+          EmailTemplates.reactivationEmail("Maria <script>", "Acme & Co", "https://example.com");
+      assertThat(html).doesNotContain("<script>");
+      assertThat(html).contains("&amp;");
+    }
+  }
+
+  @Nested
+  class PostSignupDay3Email {
+
+    @Test
+    void containsUserNameAndTenantName() {
+      String html = EmailTemplates.postSignupDay3Email("João", "Minha Empresa");
+      assertThat(html).contains("João");
+      assertThat(html).contains("Minha Empresa");
+      assertThat(html).contains(EmailTemplates.PRODUCT_DISPLAY_NAME);
+    }
+  }
+
+  @Nested
+  class PostSignupDay7Email {
+
+    @Test
+    void containsUserNameAndTenantName() {
+      String html = EmailTemplates.postSignupDay7Email("Ana", "Tech Ltda");
+      assertThat(html).contains("Ana");
+      assertThat(html).contains("Tech Ltda");
+      assertThat(html).contains(EmailTemplates.PRODUCT_DISPLAY_NAME);
+    }
+  }
 }

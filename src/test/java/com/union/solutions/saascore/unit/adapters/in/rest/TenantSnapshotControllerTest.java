@@ -10,16 +10,20 @@ import com.union.solutions.saascore.adapters.in.rest.TenantSnapshotController;
 import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
+import com.union.solutions.saascore.application.port.UserRepository;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.application.service.PolicyService;
 import com.union.solutions.saascore.application.tenant.TenantUseCase;
+import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.FeatureFlag;
 import com.union.solutions.saascore.domain.Policy;
 import com.union.solutions.saascore.domain.Tenant;
+import com.union.solutions.saascore.domain.User;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +38,7 @@ class TenantSnapshotControllerTest {
   @Mock TenantUseCase tenantUseCase;
   @Mock PolicyService policyService;
   @Mock FeatureFlagService flagService;
+  @Mock UserRepository userRepo;
   @Mock AbacEvaluator abacEvaluator;
 
   private MockMvc mvc;
@@ -46,7 +51,7 @@ class TenantSnapshotControllerTest {
     mvc =
         MockMvcBuilders.standaloneSetup(
                 new TenantSnapshotController(
-                    tenantUseCase, policyService, flagService, abacEvaluator))
+                    tenantUseCase, policyService, flagService, userRepo, abacEvaluator))
             .build();
     tenantId = UUID.randomUUID();
     tenant =
@@ -58,6 +63,11 @@ class TenantSnapshotControllerTest {
             Tenant.TenantStatus.ACTIVE,
             Instant.now(),
             Instant.now());
+  }
+
+  @AfterEach
+  void tearDown() {
+    TenantContext.clear();
   }
 
   @Test
@@ -171,5 +181,71 @@ class TenantSnapshotControllerTest {
         .andExpect(jsonPath("$.flags").isArray())
         .andExpect(jsonPath("$.flags[0].name").value("beta_ui"))
         .andExpect(jsonPath("$.flags[0].enabled").value(true));
+  }
+
+  @Test
+  void getHealth_returnsLastActivityAndActiveUsersCount() throws Exception {
+    when(tenantUseCase.getById(tenantId)).thenReturn(Optional.of(tenant));
+    Instant lastLogin = Instant.now().minusSeconds(3600);
+    when(userRepo.findMaxLastLoginAtByTenantId(tenantId)).thenReturn(Optional.of(lastLogin));
+    when(userRepo.countActiveByTenantId(tenantId)).thenReturn(3L);
+
+    mvc.perform(get("/v1/tenants/{id}/health", tenantId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.tenantId").value(tenantId.toString()))
+        .andExpect(jsonPath("$.lastActivityAt").value(lastLogin.toString()))
+        .andExpect(jsonPath("$.activeUsersCount").value(3));
+  }
+
+  @Test
+  void getHealth_nonExistentTenant_returns404() throws Exception {
+    UUID missingId = UUID.randomUUID();
+    when(tenantUseCase.getById(missingId)).thenReturn(Optional.empty());
+
+    mvc.perform(get("/v1/tenants/{id}/health", missingId)).andExpect(status().isNotFound());
+  }
+
+  @Test
+  void getExport_returnsTenantUsersPoliciesFlags_whenContextMatchesTenant() throws Exception {
+    TenantContext.setTenantId(tenantId);
+    when(tenantUseCase.getById(tenantId)).thenReturn(Optional.of(tenant));
+    User user =
+        new User(
+            UUID.randomUUID(),
+            "admin@acme.com",
+            "Admin",
+            "hash",
+            tenantId,
+            List.of("admin"),
+            User.UserStatus.ACTIVE,
+            Instant.now(),
+            Instant.now());
+    user.setLastLoginAt(Instant.now().minusSeconds(7200));
+    when(userRepo.findByTenantId(tenantId)).thenReturn(List.of(user));
+    when(policyService.getApplicablePolicies("pro", "us-east-1")).thenReturn(List.of());
+    when(flagService.listByTenant(tenantId)).thenReturn(List.of());
+
+    mvc.perform(get("/v1/tenants/{id}/export", tenantId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.tenant.id").value(tenantId.toString()))
+        .andExpect(jsonPath("$.tenant.name").value("Acme"))
+        .andExpect(jsonPath("$.users").isArray())
+        .andExpect(jsonPath("$.users[0].email").value("admin@acme.com"))
+        .andExpect(jsonPath("$.users[0].lastLoginAt").exists())
+        .andExpect(jsonPath("$.policies").isArray())
+        .andExpect(jsonPath("$.featureFlags").isArray());
+  }
+
+  @Test
+  void getExport_whenContextTenantDifferent_returns403() throws Exception {
+    UUID otherTenantId = UUID.randomUUID();
+    TenantContext.setTenantId(otherTenantId);
+
+    mvc.perform(get("/v1/tenants/{id}/export", tenantId)).andExpect(status().isForbidden());
+  }
+
+  @Test
+  void getExport_whenNoTenantContext_returns403() throws Exception {
+    mvc.perform(get("/v1/tenants/{id}/export", tenantId)).andExpect(status().isForbidden());
   }
 }
