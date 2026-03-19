@@ -1,3 +1,5 @@
+# Imagem oficial: push para GHCR em develop/master ou workflow_dispatch.
+# Ver docs/DEPLOY-GITHUB.md
 name: Build & Push Docker Image
 
 on:
