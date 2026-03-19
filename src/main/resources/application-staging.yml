@@ -15,3 +15,6 @@ app:
     token-endpoint-enabled: ${APP_DEV_TOKEN_ENABLED:true}
   auth:
     mode: ${AUTH_MODE:hs256}
+  email:
+    # Staging: convite cria usuário mesmo se Resend falhar (ex.: domínio não verificado)
+    fail-on-delivery-error: ${EMAIL_FAIL_ON_DELIVERY_ERROR:false}
