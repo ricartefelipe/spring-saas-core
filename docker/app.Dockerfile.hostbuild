@@ -1,0 +1,12 @@
+# Build do JAR no host: ./mvnw -B package -DskipTests
+# Depois: docker build -f docker/app.Dockerfile.hostbuild -t ghcr.io/org/spring-saas-core:latest .
+# Evita Maven dentro do container (útil quando apk/rede falham no build completo).
+
+FROM eclipse-temurin:21-jre-alpine AS runtime
+RUN apk add --no-cache curl jq
+WORKDIR /app
+RUN adduser -D -s /bin/sh appuser
+USER appuser
+COPY target/spring-saas-core-*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS:-} -Dserver.port=${PORT:-8080} -jar app.jar"]
