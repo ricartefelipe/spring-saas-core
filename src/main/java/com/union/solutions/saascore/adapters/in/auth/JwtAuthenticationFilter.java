@@ -24,6 +24,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private static final String ACTION_JWT_VERIFIED_PREVIOUS_KEY = "JWT_VERIFIED_WITH_PREVIOUS_KEY";
 
+  /** Platform tenant — used when JWT tid is "*" (super admin / dev). */
+  private static final UUID PLATFORM_TENANT_ID =
+      UUID.fromString("00000000-0000-0000-0000-000000000001");
+
   private final TokenParser tokenParser;
   private final AuditLogger auditLogger;
 
@@ -86,22 +90,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 String tenantHeader = request.getHeader("X-Tenant-Id");
                 if (tid != null && !tid.isBlank()) {
-                  try {
-                    UUID tenantUuid = UUID.fromString(tid);
+                  UUID tenantUuid = null;
+                  if ("*".equals(tid.trim())) {
+                    tenantUuid = PLATFORM_TENANT_ID;
+                  } else {
+                    try {
+                      tenantUuid = UUID.fromString(tid);
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                  }
+                  if (tenantUuid != null) {
                     if (tenantHeader != null && !tenantHeader.isBlank()) {
-                      UUID headerUuid = UUID.fromString(tenantHeader);
-                      if (!tenantUuid.equals(headerUuid) && !"*".equals(tid)) {
-                        response.setStatus(403);
-                        return;
+                      try {
+                        UUID headerUuid = UUID.fromString(tenantHeader);
+                        if (!tenantUuid.equals(headerUuid) && !"*".equals(tid.trim())) {
+                          response.setStatus(403);
+                          return;
+                        }
+                      } catch (IllegalArgumentException ignored) {
                       }
                     }
                     TenantContext.setTenantId(tenantUuid);
-                  } catch (IllegalArgumentException ignored) {
                   }
-                } else if (tenantHeader != null && !tenantHeader.isBlank()) {
-                  try {
-                    TenantContext.setTenantId(UUID.fromString(tenantHeader));
-                  } catch (IllegalArgumentException ignored) {
+                }
+                if (TenantContext.getTenantId().isEmpty()
+                    && tenantHeader != null
+                    && !tenantHeader.isBlank()) {
+                  if ("*".equals(tenantHeader.trim())) {
+                    TenantContext.setTenantId(PLATFORM_TENANT_ID);
+                  } else {
+                    try {
+                      TenantContext.setTenantId(UUID.fromString(tenantHeader));
+                    } catch (IllegalArgumentException ignored) {
+                    }
                   }
                 }
 
