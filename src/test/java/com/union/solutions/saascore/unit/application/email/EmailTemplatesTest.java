@@ -87,8 +87,7 @@ class EmailTemplatesTest {
     @Test
     void containsUserNameTenantNameAndLoginUrl() {
       String html =
-          EmailTemplates.reactivationEmail(
-              "Maria", "Acme Corp", "https://app.example.com/login");
+          EmailTemplates.reactivationEmail("Maria", "Acme Corp", "https://app.example.com/login");
       assertThat(html).contains("Maria");
       assertThat(html).contains("Acme Corp");
       assertThat(html).contains("https://app.example.com/login");
@@ -99,8 +98,7 @@ class EmailTemplatesTest {
     @Test
     void escapesHtmlInInputs() {
       String html =
-          EmailTemplates.reactivationEmail(
-              "Maria <script>", "Acme & Co", "https://example.com");
+          EmailTemplates.reactivationEmail("Maria <script>", "Acme & Co", "https://example.com");
       assertThat(html).doesNotContain("<script>");
       assertThat(html).contains("&amp;");
     }

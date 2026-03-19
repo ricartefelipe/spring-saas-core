@@ -118,7 +118,11 @@ public class SubscriptionController {
       return ResponseEntity.badRequest()
           .body(
               ProblemDetails.of(
-                  400, "Bad Request", e.getMessage(), "/v1/subscriptions/undo-schedule-cancel", null));
+                  400,
+                  "Bad Request",
+                  e.getMessage(),
+                  "/v1/subscriptions/undo-schedule-cancel",
+                  null));
     }
   }
 

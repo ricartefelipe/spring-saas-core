@@ -71,10 +71,7 @@ public class PostSignupEmailScheduler {
         continue;
       }
       String tenantName =
-          tenantRepo
-              .findById(user.getTenantId())
-              .map(t -> t.getName())
-              .orElse("sua organização");
+          tenantRepo.findById(user.getTenantId()).map(t -> t.getName()).orElse("sua organização");
       try {
         emailSender.send(
             user.getEmail(),
@@ -83,7 +80,11 @@ public class PostSignupEmailScheduler {
         sentRepo.recordSent(user.getId(), emailType);
         log.info("Post-signup {} email sent to user {}", emailType, user.getId());
       } catch (Exception e) {
-        log.warn("Failed to send post-signup {} email to user {}: {}", emailType, user.getId(), e.getMessage());
+        log.warn(
+            "Failed to send post-signup {} email to user {}: {}",
+            emailType,
+            user.getId(),
+            e.getMessage());
       }
     }
   }

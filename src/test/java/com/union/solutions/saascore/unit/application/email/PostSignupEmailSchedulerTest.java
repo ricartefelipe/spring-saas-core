@@ -65,7 +65,10 @@ class PostSignupEmailSchedulerTest {
         .thenReturn(List.of());
     when(sentRepo.existsByUserIdAndEmailType(userId, "DAY3")).thenReturn(false);
     when(tenantRepo.findById(tenantId))
-        .thenReturn(Optional.of(new Tenant(tenantId, "Acme", "pro", "us-east-1", Tenant.TenantStatus.ACTIVE, now, now)));
+        .thenReturn(
+            Optional.of(
+                new Tenant(
+                    tenantId, "Acme", "pro", "us-east-1", Tenant.TenantStatus.ACTIVE, now, now)));
 
     scheduler.sendScheduledPostSignupEmails();
 

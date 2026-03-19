@@ -53,10 +53,21 @@ public class PostSignupEmailSentEntity {
       this.emailType = emailType;
     }
 
-    public UUID getUserId() { return userId; }
-    public void setUserId(UUID userId) { this.userId = userId; }
-    public String getEmailType() { return emailType; }
-    public void setEmailType(String emailType) { this.emailType = emailType; }
+    public UUID getUserId() {
+      return userId;
+    }
+
+    public void setUserId(UUID userId) {
+      this.userId = userId;
+    }
+
+    public String getEmailType() {
+      return emailType;
+    }
+
+    public void setEmailType(String emailType) {
+      this.emailType = emailType;
+    }
 
     @Override
     public boolean equals(Object o) {
