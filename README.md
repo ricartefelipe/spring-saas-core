@@ -1,6 +1,7 @@
 # spring-saas-core
 
 [![CI](https://github.com/ricartefelipe/spring-saas-core/actions/workflows/ci.yml/badge.svg)](https://github.com/ricartefelipe/spring-saas-core/actions/workflows/ci.yml)
+[![Build & Push](https://github.com/ricartefelipe/spring-saas-core/actions/workflows/build-push.yml/badge.svg)](https://github.com/ricartefelipe/spring-saas-core/actions/workflows/build-push.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -26,6 +27,7 @@ Núcleo de governança multi-tenant para SaaS: tenants, RBAC/ABAC, feature flags
 - [Identidade e headers](#identidade-e-headers)
 - [Variáveis de ambiente](#variáveis-de-ambiente)
 - [Scripts e automação](#scripts-e-automação)
+- [Deploy (GitHub Actions)](#deploy-github-actions)
 - [Observabilidade](#observabilidade)
 - [Arquitetura do código](#arquitetura-do-código)
 - [Testes](#testes)
@@ -263,6 +265,14 @@ A API está versionada como **v1** e é estável para integração com node-b2b-
 | `./scripts/seed.sh` | Verifica dados seed (aplicados via Liquibase) |
 | `./scripts/smoke.sh` | Smoke tests automatizados (health, CRUD, ABAC, audit) |
 | `./scripts/api-export.sh` | Exporta OpenAPI JSON/YAML para `docs/api/` |
+
+---
+
+## Deploy (GitHub Actions)
+
+A publicação da imagem para o **GHCR** é feita pelo workflow **Build & Push Docker Image** (`.github/workflows/build-push.yml`) em push para `develop`/`master` ou execução manual em **Actions**.
+
+Detalhes: [docs/DEPLOY-GITHUB.md](docs/DEPLOY-GITHUB.md).
 
 ---
 
