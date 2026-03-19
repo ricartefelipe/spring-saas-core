@@ -13,7 +13,8 @@ echo "[build-push] Packaging..."
 (cd "$REPO_DIR" && ./mvnw -B -q package -DskipTests)
 
 echo "[build-push] Building image $IMAGE..."
-(cd "$REPO_DIR" && docker build -f docker/app.Dockerfile -t "$IMAGE" .)
+# Usa hostbuild para não depender de Maven/rede dentro do container
+(cd "$REPO_DIR" && docker build -f docker/app.Dockerfile.hostbuild -t "$IMAGE" .)
 
 echo "[build-push] Pushing $IMAGE ..."
 docker push "$IMAGE"
