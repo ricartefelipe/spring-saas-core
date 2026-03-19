@@ -19,10 +19,10 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-      - name: Build
+      - name: Build and test
         run: |
           chmod +x mvnw
-          ./mvnw -B -e -DskipTests package 2>&1 | tee build-output.txt; BUILD_RC=$?
+          ./mvnw -B -e package 2>&1 | tee build-output.txt; BUILD_RC=$?
           if [ $BUILD_RC -ne 0 ]; then
             echo '## Build Failed' >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
