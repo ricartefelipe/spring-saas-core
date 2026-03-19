@@ -58,4 +58,7 @@ public interface TenantJpaRepository extends JpaRepository<TenantEntity, UUID> {
 
   @Query("SELECT t.region, COUNT(t) FROM TenantEntity t GROUP BY t.region")
   List<Object[]> countGroupByRegion();
+
+  @Query("SELECT t.id FROM TenantEntity t WHERE t.status = 'ACTIVE'")
+  List<UUID> findAllActiveIds();
 }

@@ -14,7 +14,7 @@
 #   OIDC_CLIENT_ID          — OIDC client ID
 #   CORS_ALLOWED_ORIGINS    — Comma-separated allowed origins (e.g. https://app.example.com)
 # Optional:
-#   SERVER_PORT             — Server port (default 8080)
+#   PORT / SERVER_PORT      — Porta HTTP (Railway define PORT; use a mesma no healthcheck)
 #   REDIS_PORT              — Redis port (default 6379)
 #   RABBITMQ_PORT           — RabbitMQ port (default 5672)
 #   OIDC_AUDIENCE           — OIDC audience claim
