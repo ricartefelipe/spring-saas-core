@@ -34,8 +34,9 @@ spring:
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASS:guest}
 
+# Railway / Render / Fly: expõem PORT; Spring usa SERVER_PORT se definido.
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${PORT:${SERVER_PORT:8080}}
   shutdown: graceful
 
 app:
@@ -91,6 +92,11 @@ app:
     frontend-url: ${FRONTEND_URL:http://localhost:4200}
   dev:
     token-endpoint-enabled: false
+  # Reativação: e-mail para tenants inativos (sem login há N dias)
+  reactivation:
+    cron: ${REACTIVATION_CRON:0 0 10 * * *}
+    inactive-days: ${REACTIVATION_INACTIVE_DAYS:14}
+    cooldown-days: ${REACTIVATION_COOLDOWN_DAYS:30}
   cache:
     # Se true, usa Redis para cache de GET /v1/tenants. Se false ou em erro de deserialização, usa memória.
     front-tenants-enabled: ${CACHE_FRONT_TENANTS_ENABLED:true}

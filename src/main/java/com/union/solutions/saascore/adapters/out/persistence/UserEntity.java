@@ -43,6 +43,9 @@ public class UserEntity {
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;
 
+  @Column(name = "last_login_at")
+  private Instant lastLoginAt;
+
   public static UserEntity from(User u) {
     UserEntity e = new UserEntity();
     e.id = u.getId();
@@ -55,23 +58,27 @@ public class UserEntity {
     e.mustChangePassword = u.isMustChangePassword();
     e.createdAt = u.getCreatedAt();
     e.updatedAt = u.getUpdatedAt();
+    e.lastLoginAt = u.getLastLoginAt();
     return e;
   }
 
   public User toDomain() {
     List<String> roleList =
         (roles == null || roles.isBlank()) ? List.of() : Arrays.asList(roles.split(","));
-    return new User(
-        id,
-        email,
-        name,
-        passwordHash,
-        tenantId,
-        roleList,
-        status,
-        mustChangePassword,
-        createdAt,
-        updatedAt);
+    User u =
+        new User(
+            id,
+            email,
+            name,
+            passwordHash,
+            tenantId,
+            roleList,
+            status,
+            mustChangePassword,
+            createdAt,
+            updatedAt);
+    u.setLastLoginAt(lastLoginAt);
+    return u;
   }
 
   public UUID getId() {
@@ -144,6 +151,14 @@ public class UserEntity {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public Instant getLastLoginAt() {
+    return lastLoginAt;
+  }
+
+  public void setLastLoginAt(Instant lastLoginAt) {
+    this.lastLoginAt = lastLoginAt;
   }
 
   public boolean isMustChangePassword() {
