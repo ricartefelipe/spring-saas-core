@@ -24,10 +24,12 @@ public class ResendEmailSender implements EmailSender {
   private final RestTemplate restTemplate;
   private final String apiKey;
   private final String fromAddress;
+  private final boolean failOnDeliveryError;
 
   public ResendEmailSender(
       @Value("${app.email.resend-api-key:}") String apiKey,
-      @Value("${app.email.from:noreply@fluxe.com.br}") String fromAddress) {
+      @Value("${app.email.from:noreply@fluxe.com.br}") String fromAddress,
+      @Value("${app.email.fail-on-delivery-error:true}") boolean failOnDeliveryError) {
     if (apiKey == null || apiKey.isBlank()) {
       throw new IllegalStateException(
           "app.email.provider=resend requires app.email.resend-api-key (RESEND_API_KEY). "
@@ -35,6 +37,7 @@ public class ResendEmailSender implements EmailSender {
     }
     this.apiKey = apiKey.trim();
     this.fromAddress = fromAddress != null ? fromAddress : "noreply@fluxe.com.br";
+    this.failOnDeliveryError = failOnDeliveryError;
     this.restTemplate = new RestTemplate();
   }
 
@@ -58,11 +61,16 @@ public class ResendEmailSender implements EmailSender {
           to,
           subject,
           e.getMessage());
-      throw new IllegalStateException(
-          "Email delivery failed. Check RESEND_API_KEY and Resend dashboard (domain verification). "
-              + "Details: "
-              + e.getMessage(),
-          e);
+      if (failOnDeliveryError) {
+        throw new IllegalStateException(
+            "Email delivery failed. Check RESEND_API_KEY and Resend dashboard (domain verification). "
+                + "Details: "
+                + e.getMessage(),
+            e);
+      }
+      log.warn(
+          "app.email.fail-on-delivery-error=false: user created but invite email not sent. "
+              + "Use Resend invite or verify domain at resend.com/domains.");
     }
   }
 }
