@@ -14,4 +14,5 @@ RUN adduser -D -s /bin/sh appuser
 USER appuser
 COPY --from=build /build/target/spring-saas-core-*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Garante escuta na porta que o PaaS injeta (Railway: PORT).
+ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS:-} -Dserver.port=${PORT:-8080} -jar app.jar"]

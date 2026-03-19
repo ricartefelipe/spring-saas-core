@@ -94,6 +94,38 @@ public class SubscriptionController {
     }
   }
 
+  @PostMapping("/schedule-cancel")
+  public ResponseEntity<?> scheduleCancelAtPeriodEnd() {
+    UUID tenantId = requireTenantId();
+    try {
+      Subscription sub = subscriptionUseCase.scheduleCancelAtPeriodEnd(tenantId);
+      return ResponseEntity.ok(SubscriptionResponse.from(sub));
+    } catch (IllegalStateException e) {
+      return ResponseEntity.badRequest()
+          .body(
+              ProblemDetails.of(
+                  400, "Bad Request", e.getMessage(), "/v1/subscriptions/schedule-cancel", null));
+    }
+  }
+
+  @PostMapping("/undo-schedule-cancel")
+  public ResponseEntity<?> undoScheduleCancelAtPeriodEnd() {
+    UUID tenantId = requireTenantId();
+    try {
+      Subscription sub = subscriptionUseCase.undoScheduleCancelAtPeriodEnd(tenantId);
+      return ResponseEntity.ok(SubscriptionResponse.from(sub));
+    } catch (IllegalStateException e) {
+      return ResponseEntity.badRequest()
+          .body(
+              ProblemDetails.of(
+                  400,
+                  "Bad Request",
+                  e.getMessage(),
+                  "/v1/subscriptions/undo-schedule-cancel",
+                  null));
+    }
+  }
+
   @PostMapping("/reactivate")
   public ResponseEntity<?> reactivate() {
     UUID tenantId = requireTenantId();
@@ -137,6 +169,7 @@ public class SubscriptionController {
       Instant gracePeriodEndsAt,
       String previousPlanSlug,
       Instant cancelledAt,
+      boolean cancelAtPeriodEnd,
       Instant createdAt,
       Instant updatedAt) {
 
@@ -152,6 +185,7 @@ public class SubscriptionController {
           s.getGracePeriodEndsAt(),
           s.getPreviousPlanSlug(),
           s.getCancelledAt(),
+          s.isCancelAtPeriodEnd(),
           s.getCreatedAt(),
           s.getUpdatedAt());
     }

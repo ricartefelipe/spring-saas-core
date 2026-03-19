@@ -113,6 +113,71 @@ public final class EmailTemplates {
             PRODUCT_DISPLAY_NAME);
   }
 
+  /** E-mail dia 3 pós-signup: dica de uso. */
+  public static String postSignupDay3Email(String userName, String tenantName) {
+    return """
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head><meta charset="UTF-8"></head>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333;">Olá, %s!</h2>
+          <p>Você está há alguns dias em <strong>%s</strong>. Que tal explorar o painel de uso e convidar sua equipe?</p>
+          <p>No menu Faturamento você vê quantos usuários estão ativos e pode gerenciar seu plano. Qualquer dúvida, estamos à disposição.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
+          <p style="color: #999; font-size: 12px;">%s</p>
+        </body>
+        </html>
+        """
+        .formatted(escapeHtml(userName), escapeHtml(tenantName), PRODUCT_DISPLAY_NAME);
+  }
+
+  /** E-mail dia 7 pós-signup: reengajamento. */
+  public static String postSignupDay7Email(String userName, String tenantName) {
+    return """
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head><meta charset="UTF-8"></head>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333;">Olá, %s!</h2>
+          <p>Já faz uma semana que você está conosco em <strong>%s</strong>.</p>
+          <p>Se ainda não explorou tudo, aproveite para configurar políticas, integrar sistemas e tirar dúvidas na página de ajuda. Estamos aqui para ajudar.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
+          <p style="color: #999; font-size: 12px;">%s</p>
+        </body>
+        </html>
+        """
+        .formatted(escapeHtml(userName), escapeHtml(tenantName), PRODUCT_DISPLAY_NAME);
+  }
+
+  /** E-mail de reativação para tenant inativo (sem login há N dias). */
+  public static String reactivationEmail(String userName, String tenantName, String loginUrl) {
+    return """
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head><meta charset="UTF-8"></head>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333;">Olá, %s!</h2>
+          <p>Notamos que faz um tempo que ninguém acessou <strong>%s</strong> na plataforma.</p>
+          <p>Seu plano e seus dados continuam disponíveis. Acesse quando quiser para continuar de onde parou.</p>
+          <p style="text-align: center; margin: 32px 0;">
+            <a href="%s"
+               style="background: #2563eb; color: #fff; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+              Acessar agora
+            </a>
+          </p>
+          <p style="color: #666; font-size: 13px;">Se precisar de ajuda, responda este e-mail.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
+          <p style="color: #999; font-size: 12px;">%s</p>
+        </body>
+        </html>
+        """
+        .formatted(
+            escapeHtml(userName),
+            escapeHtml(tenantName),
+            escapeHtml(loginUrl),
+            PRODUCT_DISPLAY_NAME);
+  }
+
   public static String passwordResetEmail(String userName, String resetUrl) {
     return """
         <!DOCTYPE html>

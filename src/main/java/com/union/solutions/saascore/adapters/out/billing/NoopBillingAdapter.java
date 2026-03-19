@@ -34,6 +34,16 @@ public class NoopBillingAdapter implements StripeBillingPort {
   }
 
   @Override
+  public void scheduleCancelAtPeriodEnd(String subscriptionId) {
+    log.info("NOOP scheduleCancelAtPeriodEnd subscriptionId={}", subscriptionId);
+  }
+
+  @Override
+  public void undoScheduleCancelAtPeriodEnd(String subscriptionId) {
+    log.info("NOOP undoScheduleCancelAtPeriodEnd subscriptionId={}", subscriptionId);
+  }
+
+  @Override
   public String createBillingPortalSession(String customerId, String returnUrl) {
     String fakeUrl = "https://billing.stripe.com/noop-session";
     log.info(

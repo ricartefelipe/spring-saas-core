@@ -8,5 +8,11 @@ public interface StripeBillingPort {
 
   void cancelSubscription(String subscriptionId);
 
+  /** Schedule cancellation at period end (Stripe cancel_at_period_end = true). */
+  void scheduleCancelAtPeriodEnd(String subscriptionId);
+
+  /** Undo schedule: cancel_at_period_end = false. */
+  void undoScheduleCancelAtPeriodEnd(String subscriptionId);
+
   String createBillingPortalSession(String customerId, String returnUrl);
 }

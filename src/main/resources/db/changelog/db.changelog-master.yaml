@@ -23,3 +23,11 @@ databaseChangeLog:
       file: db/changelog/changes/011-must-change-password.yaml
   - include:
       file: db/changelog/changes/012-platform-tenant-display-name.yaml
+  - include:
+      file: db/changelog/changes/013-post-signup-emails.yaml
+  - include:
+      file: db/changelog/changes/014-subscription-cancel-at-period-end.yaml
+  - include:
+      file: db/changelog/changes/015-users-last-login-at.yaml
+  - include:
+      file: db/changelog/changes/016-reactivation-email-sent.yaml
