@@ -85,10 +85,12 @@ app:
     provider: ${BILLING_PROVIDER:noop}
     stripe-secret-key: ${STRIPE_BILLING_SECRET_KEY:}
   # Email: convites, reset de senha. Padrão log = só registra no servidor; resend = envia via Resend.
+  # fail-on-delivery-error: se true (prod), convite falha quando Resend falha; se false (staging), cria usuário e loga erro.
   email:
     provider: ${EMAIL_PROVIDER:log}
     resend-api-key: ${RESEND_API_KEY:}
     from: ${EMAIL_FROM:noreply@fluxe.com.br}
+    fail-on-delivery-error: ${EMAIL_FAIL_ON_DELIVERY_ERROR:true}
     frontend-url: ${FRONTEND_URL:http://localhost:4200}
   dev:
     token-endpoint-enabled: false
