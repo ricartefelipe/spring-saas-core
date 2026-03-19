@@ -1,5 +1,10 @@
 # E-mail de convite — Fluxe B2B Suite e troca obrigatória de senha
 
+## Resend: domínio e tier gratuito
+
+- **Tier gratuito Resend:** só permite enviar para o teu próprio e-mail verificado. Para enviar a qualquer destinatário, verifica um domínio em [resend.com/domains](https://resend.com/domains) e usa `EMAIL_FROM` com esse domínio (ex.: `noreply@seudominio.com.br`).
+- **Staging sem domínio:** com perfil `staging`, `app.email.fail-on-delivery-error=false` por defeito — o convite cria o utilizador mesmo quando o Resend falha (403 domain not verified). Usa "Reenviar convite" depois de verificar o domínio, ou convida apenas para o teu e-mail em testes.
+
 ## Comportamento atual (a partir de `develop` após PR #42)
 
 - **Nome no e-mail:** Para o tenant de plataforma (UUID `00000000-0000-0000-0000-000000000001`), o convite mostra sempre **"Fluxe B2B Suite"**, nunca "System".
