@@ -45,6 +45,20 @@ public class AbacEvaluator {
     }
   }
 
+  /**
+   * Allows access if the user has any of the given permissions. Used when admin:write implies
+   * users:write.
+   */
+  public void enforceAnyOrThrow(String... permissions) {
+    for (String p : permissions) {
+      if (evaluate(AbacContext.fromCurrentContext(p)).allowed()) {
+        return;
+      }
+    }
+    throw new org.springframework.security.access.AccessDeniedException(
+        "ABAC denied: need one of " + java.util.Arrays.toString(permissions));
+  }
+
   @Transactional(readOnly = true)
   public AbacResult evaluate(AbacContext ctx) {
     Optional<List<String>> jwtPerms = TenantContext.getPermsIfSet();
