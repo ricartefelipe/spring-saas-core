@@ -33,7 +33,7 @@ public class UserController {
   @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping
   public ResponseEntity<?> list() {
-    abacEvaluator.enforceOrThrow("users:read");
+    abacEvaluator.enforceAnyOrThrow("users:read", "admin:write");
     UUID tenantId = requireTenantId();
     if (tenantId == null) return tenantRequired();
 
@@ -47,7 +47,7 @@ public class UserController {
   @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable @NonNull UUID id) {
-    abacEvaluator.enforceOrThrow("users:read");
+    abacEvaluator.enforceAnyOrThrow("users:read", "admin:write");
     UUID tenantId = requireTenantId();
     if (tenantId == null) return tenantRequired();
 
@@ -66,7 +66,7 @@ public class UserController {
   @PatchMapping("/{id}")
   public ResponseEntity<?> update(
       @PathVariable @NonNull UUID id, @RequestBody UpdateUserRequest request) {
-    abacEvaluator.enforceOrThrow("users:write");
+    abacEvaluator.enforceAnyOrThrow("users:write", "admin:write");
     UUID tenantId = requireTenantId();
     if (tenantId == null) return tenantRequired();
 
@@ -87,7 +87,7 @@ public class UserController {
   @ApiResponse(responseCode = "403", description = "Access denied")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> delete(@PathVariable @NonNull UUID id) {
-    abacEvaluator.enforceOrThrow("users:write");
+    abacEvaluator.enforceAnyOrThrow("users:write", "admin:write");
     UUID tenantId = requireTenantId();
     if (tenantId == null) return ResponseEntity.status(400).build();
 
@@ -102,7 +102,7 @@ public class UserController {
   @ApiResponse(responseCode = "403", description = "Access denied")
   @PostMapping("/invite")
   public ResponseEntity<?> invite(@Valid @RequestBody InviteUserRequest request) {
-    abacEvaluator.enforceOrThrow("users:write");
+    abacEvaluator.enforceAnyOrThrow("users:write", "admin:write");
     UUID tenantId = requireTenantId();
     if (tenantId == null) return tenantRequired();
 
@@ -118,7 +118,7 @@ public class UserController {
   @ApiResponse(responseCode = "403", description = "Access denied")
   @PostMapping("/{id}/resend-invite")
   public ResponseEntity<Void> resendInvite(@PathVariable @NonNull UUID id) {
-    abacEvaluator.enforceOrThrow("users:write");
+    abacEvaluator.enforceAnyOrThrow("users:write", "admin:write");
     UUID tenantId = requireTenantId();
     if (tenantId == null) return ResponseEntity.badRequest().build();
 
