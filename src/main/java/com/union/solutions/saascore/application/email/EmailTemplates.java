@@ -171,7 +171,11 @@ public final class EmailTemplates {
         </body>
         </html>
         """
-        .formatted(escapeHtml(userName), escapeHtml(tenantName), escapeHtml(loginUrl), PRODUCT_DISPLAY_NAME);
+        .formatted(
+            escapeHtml(userName),
+            escapeHtml(tenantName),
+            escapeHtml(loginUrl),
+            PRODUCT_DISPLAY_NAME);
   }
 
   public static String passwordResetEmail(String userName, String resetUrl) {
