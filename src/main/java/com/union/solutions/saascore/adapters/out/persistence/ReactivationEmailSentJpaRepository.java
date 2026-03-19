@@ -12,5 +12,6 @@ public interface ReactivationEmailSentJpaRepository
   @Query(
       "SELECT COUNT(r) > 0 FROM ReactivationEmailSentEntity r WHERE r.tenantId = :tenantId AND"
           + " r.sentAt > :after")
-  boolean existsByTenantIdAndSentAtAfter(@Param("tenantId") UUID tenantId, @Param("after") Instant after);
+  boolean existsByTenantIdAndSentAtAfter(
+      @Param("tenantId") UUID tenantId, @Param("after") Instant after);
 }

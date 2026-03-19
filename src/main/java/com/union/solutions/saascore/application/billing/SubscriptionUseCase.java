@@ -316,7 +316,8 @@ public class SubscriptionUseCase {
             .findCurrentByTenantId(tenantId)
             .orElseThrow(
                 () -> new IllegalStateException("No current subscription for tenant: " + tenantId));
-    if (sub.getStatus() != SubscriptionStatus.ACTIVE && sub.getStatus() != SubscriptionStatus.TRIAL) {
+    if (sub.getStatus() != SubscriptionStatus.ACTIVE
+        && sub.getStatus() != SubscriptionStatus.TRIAL) {
       throw new IllegalStateException(
           "Can only schedule cancel for ACTIVE or TRIAL subscription, current: " + sub.getStatus());
     }

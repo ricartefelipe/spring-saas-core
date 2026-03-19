@@ -63,8 +63,7 @@ public class ReactivationEmailScheduler {
     for (UUID tenantId : tenantIds) {
       try {
         Optional<Instant> maxLogin = userRepo.findMaxLastLoginAtByTenantId(tenantId);
-        boolean inactive =
-            maxLogin.isEmpty() || maxLogin.get().isBefore(cutoff);
+        boolean inactive = maxLogin.isEmpty() || maxLogin.get().isBefore(cutoff);
         if (!inactive) continue;
 
         if (reactivationSentRepo.wasSentAfter(tenantId, cooldownAfter)) continue;
@@ -87,7 +86,8 @@ public class ReactivationEmailScheduler {
             "Reative sua conta – " + EmailTemplates.PRODUCT_DISPLAY_NAME,
             EmailTemplates.reactivationEmail(recipient.getName(), tenantName, loginUrl));
         reactivationSentRepo.record(tenantId, Instant.now());
-        log.info("Reactivation email sent to tenant={} recipient={}", tenantId, recipient.getEmail());
+        log.info(
+            "Reactivation email sent to tenant={} recipient={}", tenantId, recipient.getEmail());
       } catch (Exception e) {
         log.warn("Failed to send reactivation email for tenant {}: {}", tenantId, e.getMessage());
       }
