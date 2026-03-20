@@ -3,9 +3,9 @@ builder = "DOCKERFILE"
 dockerfilePath = "docker/app.Dockerfile"
 
 [deploy]
-startCommand = "java -Xmx512m -Dmanagement.tracing.enabled=false -jar app.jar"
+startCommand = "java -Xmx512m -Dserver.port=${PORT:-8080} -Dmanagement.tracing.enabled=false -jar app.jar"
 healthcheckPath = "/actuator/health/liveness"
-healthcheckTimeout = 120
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
 numReplicas = 1

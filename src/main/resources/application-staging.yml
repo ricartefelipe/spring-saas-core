@@ -10,6 +10,10 @@ spring:
     # staging + seed: schema, 008 (essencial), 009 (dados realistas)
     contexts: staging,seed
 
+management:
+  tracing:
+    enabled: false
+
 app:
   dev:
     token-endpoint-enabled: ${APP_DEV_TOKEN_ENABLED:true}
