@@ -3,7 +3,7 @@ builder = "DOCKERFILE"
 dockerfilePath = "docker/app.Dockerfile"
 
 [deploy]
-startCommand = "java -Xmx512m -Dserver.port=${PORT:-8080} -Dmanagement.tracing.enabled=false -jar app.jar"
+# Usa ENTRYPOINT do Dockerfile (evita problemas com expansão de ${PORT})
 healthcheckPath = "/actuator/health/liveness"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
