@@ -90,7 +90,7 @@ app:
     provider: ${EMAIL_PROVIDER:log}
     resend-api-key: ${RESEND_API_KEY:}
     from: ${EMAIL_FROM:noreply@fluxe.com.br}
-    fail-on-delivery-error: ${EMAIL_FAIL_ON_DELIVERY_ERROR:true}
+    fail-on-delivery-error: ${EMAIL_FAIL_ON_DELIVERY_ERROR:false}
     frontend-url: ${FRONTEND_URL:http://localhost:4200}
   dev:
     token-endpoint-enabled: false
