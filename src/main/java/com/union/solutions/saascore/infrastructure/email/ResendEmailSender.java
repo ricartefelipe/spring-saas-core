@@ -29,7 +29,7 @@ public class ResendEmailSender implements EmailSender {
   public ResendEmailSender(
       @Value("${app.email.resend-api-key:}") String apiKey,
       @Value("${app.email.from:noreply@fluxe.com.br}") String fromAddress,
-      @Value("${app.email.fail-on-delivery-error:true}") boolean failOnDeliveryError) {
+      @Value("${app.email.fail-on-delivery-error:false}") boolean failOnDeliveryError) {
     if (apiKey == null || apiKey.isBlank()) {
       throw new IllegalStateException(
           "app.email.provider=resend requires app.email.resend-api-key (RESEND_API_KEY). "
@@ -55,22 +55,27 @@ public class ResendEmailSender implements EmailSender {
       restTemplate.postForEntity(RESEND_API_URL, request, String.class);
       log.info("Email sent via Resend to={} subject={}", to, subject);
     } catch (RestClientException e) {
+      String msg = e.getMessage() != null ? e.getMessage() : "";
+      boolean isResendFreeTierLimit =
+          msg.contains("validation_error")
+              || msg.contains("only send testing emails to your own");
       log.error(
           "Resend email delivery failed. to={} subject={} error={}. "
               + "Check RESEND_API_KEY, domain verification at resend.com, and EMAIL_FROM.",
           to,
           subject,
-          e.getMessage());
-      if (failOnDeliveryError) {
-        throw new IllegalStateException(
-            "Email delivery failed. Check RESEND_API_KEY and Resend dashboard (domain verification). "
-                + "Details: "
-                + e.getMessage(),
-            e);
+          msg);
+      if (isResendFreeTierLimit || !failOnDeliveryError) {
+        log.warn(
+            "User created but invite email not sent (Resend free tier or fail-on-delivery-error=false). "
+                + "Verify domain at resend.com/domains to send to any recipient.");
+        return;
       }
-      log.warn(
-          "app.email.fail-on-delivery-error=false: user created but invite email not sent. "
-              + "Use Resend invite or verify domain at resend.com/domains.");
+      throw new IllegalStateException(
+          "Email delivery failed. Check RESEND_API_KEY and Resend dashboard (domain verification). "
+              + "Details: "
+              + msg,
+          e);
     }
   }
 }
