@@ -52,6 +52,35 @@ Mesmo com domínio verificado, o Resend aplica limites de taxa, quota diária e 
 
 ---
 
+## Workaround imediato: 403 impede cadastro
+
+Se o 403 do Resend **impede o cadastro** de usuários (convite falha), use um destes:
+
+### Opção A — Desativar Resend (usuário criado, senha nos logs)
+
+No Railway, no serviço **spring-saas-core**, defina:
+
+```
+EMAIL_PROVIDER=log
+```
+
+- Remove `RESEND_API_KEY` ou deixe vazio para evitar confusão
+- Com `log`, nenhuma chamada ao Resend é feita; o usuário **é criado**
+- A senha temporária aparece nos **Deploy Logs** do Railway (busque por "EMAIL NOT SENT" ou pelo e-mail do usuário)
+- Compartilhe a senha manualmente com o novo usuário
+
+### Opção B — Manter Resend, garantir que não propague erro
+
+Confirme que no Railway está definido:
+
+```
+EMAIL_FAIL_ON_DELIVERY_ERROR=false
+```
+
+Com isso, quando o Resend retornar 403, o usuário **é criado** e o erro é apenas logado. A senha temporária não é enviada por e-mail; busque nos logs do Railway.
+
+---
+
 ## Checklist rápido para destravar
 
 1. [ ] [resend.com/domains](https://resend.com/domains) → Add Domain (ex.: `mail.seudominio.com`)
