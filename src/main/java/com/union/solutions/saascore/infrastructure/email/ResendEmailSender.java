@@ -23,12 +23,13 @@ public class ResendEmailSender implements EmailSender {
 
   private final RestTemplate restTemplate;
   private final String apiKey;
-  private final String fromAddress;
+  private final String fromAddress; // "email@domain" ou "Name <email@domain>"
   private final boolean failOnDeliveryError;
 
   public ResendEmailSender(
       @Value("${app.email.resend-api-key:}") String apiKey,
       @Value("${app.email.from:noreply@fluxe.com.br}") String fromAddress,
+      @Value("${app.email.from-name:}") String fromName,
       @Value("${app.email.fail-on-delivery-error:false}") boolean failOnDeliveryError) {
     if (apiKey == null || apiKey.isBlank()) {
       throw new IllegalStateException(
@@ -36,9 +37,24 @@ public class ResendEmailSender implements EmailSender {
               + "Set RESEND_API_KEY in environment or use app.email.provider=log for dev.");
     }
     this.apiKey = apiKey.trim();
-    this.fromAddress = fromAddress != null ? fromAddress : "noreply@fluxe.com.br";
+    String rawFrom = fromAddress != null && !fromAddress.isBlank() ? fromAddress.trim() : "noreply@fluxe.com.br";
+    this.fromAddress = buildFromAddress(rawFrom, fromName);
     this.failOnDeliveryError = failOnDeliveryError;
     this.restTemplate = new RestTemplate();
+  }
+
+  /**
+   * Resend aceita "email@domain" ou "Display Name &lt;email@domain&gt;".
+   * Se fromName estiver definido e rawFrom não tiver formato "Name &lt;email&gt;", combina.
+   */
+  private static String buildFromAddress(String rawFrom, String fromName) {
+    if (fromName == null || fromName.isBlank()) {
+      return rawFrom;
+    }
+    if (rawFrom.contains("<") && rawFrom.contains(">")) {
+      return rawFrom;
+    }
+    return fromName.trim() + " <" + rawFrom + ">";
   }
 
   @Override
