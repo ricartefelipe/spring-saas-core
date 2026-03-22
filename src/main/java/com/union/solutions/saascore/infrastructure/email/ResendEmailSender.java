@@ -56,20 +56,16 @@ public class ResendEmailSender implements EmailSender {
       log.info("Email sent via Resend to={} subject={}", to, subject);
     } catch (RestClientException e) {
       String msg = e.getMessage() != null ? e.getMessage() : "";
-      boolean isResendRecoverable =
-          msg.contains("validation_error")
-              || msg.contains("only send testing emails to your own")
-              || (msg.contains("not verified") && msg.contains("domain"))
-              || msg.contains("domain is not verified");
       log.error(
           "Resend email delivery failed. to={} subject={} error={}. "
               + "Domínio não verificado? Vá em resend.com/domains, adicione o domínio do EMAIL_FROM e configure DNS (MX, SPF, DKIM).",
           to,
           subject,
           msg);
-      if (isResendRecoverable || !failOnDeliveryError) {
+      if (!failOnDeliveryError) {
         log.warn(
-            "User created but invite email not sent. Verify domain at resend.com/domains — plan upgrade alone is not enough, domain verification is required.");
+            "User created but invite email not sent (fail-on-delivery-error=false). Senha temp nos logs. "
+                + "Workaround: defina EMAIL_PROVIDER=log no Railway para desativar Resend enquanto não verifica o domínio.");
         return;
       }
       throw new IllegalStateException(
