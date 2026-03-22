@@ -1,9 +1,77 @@
 # E-mail de convite — Fluxe B2B Suite e troca obrigatória de senha
 
-## Resend: domínio e tier gratuito
+## Como liberar e-mails no Resend (documentação verificada)
 
-- **Tier gratuito Resend:** só permite enviar para o teu próprio e-mail verificado. Para enviar a qualquer destinatário, verifica um domínio em [resend.com/domains](https://resend.com/domains) e usa `EMAIL_FROM` com esse domínio (ex.: `noreply@seudominio.com.br`).
-- **Staging sem domínio:** com perfil `staging`, `app.email.fail-on-delivery-error=false` por defeito — o convite cria o utilizador mesmo quando o Resend falha (403 domain not verified). Usa "Reenviar convite" depois de verificar o domínio, ou convida apenas para o teu e-mail em testes.
+Com base na [documentação oficial do Resend](https://resend.com/docs), para enviar para destinatários reais é necessário seguir estes passos.
+
+### 1) Pare de usar `onboarding@resend.dev` ou `resend.dev`
+
+O domínio `resend.dev` é **só para teste** e só pode enviar para o e-mail da conta Resend. Enviar para terceiros retorna **403**.
+
+- ✅ Use um domínio seu verificado
+- ❌ Não use `noreply@resend.dev` ou `onboarding@resend.dev` para clientes reais
+
+### 2) Adicione e verifique seu domínio
+
+1. Acesse [resend.com/domains](https://resend.com/domains)
+2. Clique em **Add Domain**
+3. **Recomendado:** use um **subdomínio** (ex.: `mail.fluxe.com.br` ou `updates.fluxe.com.br`) — isolamento de reputação e melhor deliverability
+4. O Resend exige **SPF (TXT)** e **DKIM (TXT)** no DNS. MX é opcional para Return-Path.
+5. Copie os registros DNS e configure no provedor (Registro.br, Cloudflare, Hostinger, etc.)
+6. Aguarde propagação e clique em **Verify DNS Records**
+7. Status `verified` = pronto para enviar
+
+### 3) Domínio do `from` deve bater exatamente
+
+O `EMAIL_FROM` deve usar **exatamente** o domínio ou subdomínio verificado.
+
+| Verificou no Resend      | EMAIL_FROM correto              | EMAIL_FROM incorreto      |
+|--------------------------|----------------------------------|----------------------------|
+| `mail.fluxe.com.br`      | `noreply@mail.fluxe.com.br`      | `noreply@fluxe.com.br` ❌  |
+| `fluxe.com.br`           | `noreply@fluxe.com.br`           | `noreply@mail.fluxe.com.br`❌ |
+
+Se divergir, dá **403 domain mismatch**. Documentação: [403 Error Domain Mismatch](https://resend.com/docs/knowledge-base/403-error-domain-mismatch).
+
+### 4) API Key e permissões
+
+- Crie em [resend.com/api-keys](https://resend.com/api-keys)
+- `full_access` ou `sending_access` — se restrita, confirme se o domínio está autorizado para essa key
+
+### 5) Variáveis no Railway (spring-saas-core)
+
+```bash
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=re_xxx
+EMAIL_FROM=noreply@mail.fluxe.com.br   # domínio EXATO verificado
+FRONTEND_URL=https://admin-console-staging-b1ab.up.railway.app
+```
+
+### 6) Quotas e limites
+
+Mesmo com domínio verificado, o Resend aplica limites de taxa, quota diária e mensal. Erros 429 = quota excedida — verifique em [resend.com](https://resend.com) o plano atual.
+
+---
+
+## Checklist rápido para destravar
+
+1. [ ] [resend.com/domains](https://resend.com/domains) → Add Domain (ex.: `mail.seudominio.com`)
+2. [ ] Configurar SPF e DKIM no DNS
+3. [ ] Verificar até status `verified`
+4. [ ] `EMAIL_FROM` = endereço do domínio/subdomínio verificado
+5. [ ] `RESEND_API_KEY` correta e com permissão
+6. [ ] Redeploy do spring-saas-core após alterar variáveis
+
+---
+
+## Se ainda falha
+
+| Erro / sintoma | Causa provável | Solução |
+|----------------|----------------|---------|
+| 403 + `resend.dev` | Enviando para terceiros com domínio de teste | Verificar domínio e trocar `from` |
+| 403 + `domain is not verified` | Domínio do `from` não verificado | Verificar em resend.com/domains |
+| 403 domain mismatch | `from` não bate com domínio verificado | Igualar `EMAIL_FROM` ao domínio/subdomínio verificado |
+| 401 / 403 | API key incorreta ou restrita | Gerar nova key ou conferir permissões |
+| 429 | Quota diária/mensal excedida | Upgrade de plano ou aguardar reset |
 
 ## Comportamento atual (a partir de `develop` após PR #42)
 
