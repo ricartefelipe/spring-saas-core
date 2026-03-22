@@ -19,3 +19,6 @@ app:
     token-endpoint-enabled: ${APP_DEV_TOKEN_ENABLED:true}
   auth:
     mode: ${AUTH_MODE:hs256}
+  email:
+    # Staging: nunca falhar o convite por erro de entrega; usuário é criado, senha temp nos logs
+    fail-on-delivery-error: ${EMAIL_FAIL_ON_DELIVERY_ERROR:false}
