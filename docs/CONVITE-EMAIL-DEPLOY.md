@@ -1,5 +1,21 @@
 # E-mail de convite — Fluxe B2B Suite e troca obrigatória de senha
 
+## Usar Resend já (checklist rápido)
+
+1. [resend.com/domains](https://resend.com/domains) → **Add Domain** (ex.: `mail.fluxe.com.br`)
+2. Configure **SPF** e **DKIM** no DNS do domínio
+3. Clique em **Verify DNS Records** até status `verified`
+4. [resend.com/api-keys](https://resend.com/api-keys) → crie uma API key
+5. No **Railway** (spring-saas-core) → Settings → Variables:
+   - `EMAIL_PROVIDER` = `resend`
+   - `RESEND_API_KEY` = `re_xxx` (sua key)
+   - `EMAIL_FROM` = `noreply@mail.fluxe.com.br` (domínio **exato** verificado)
+   - `EMAIL_FROM_NAME` = `Fluxe B2B Suite`
+6. Teste localmente: `RESEND_API_KEY=re_xxx EMAIL_FROM=noreply@mail.fluxe.com.br ./scripts/test-resend.sh seu@email.com`
+7. Redeploy do spring-saas-core no Railway
+
+---
+
 ## Como liberar e-mails no Resend (documentação verificada)
 
 Com base na [documentação oficial do Resend](https://resend.com/docs), para enviar para destinatários reais é necessário seguir estes passos.
@@ -42,9 +58,20 @@ Se divergir, dá **403 domain mismatch**. Documentação: [403 Error Domain Mism
 ```bash
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=re_xxx
-EMAIL_FROM=noreply@mail.fluxe.com.br   # domínio EXATO verificado
+EMAIL_FROM=noreply@mail.fluxe.com.br   # domínio EXATO verificado em resend.com/domains
+EMAIL_FROM_NAME=Fluxe B2B Suite        # opcional; melhora deliverability
 FRONTEND_URL=https://admin-console-staging-b1ab.up.railway.app
 ```
+
+**Testar Resend antes do deploy:**
+
+```bash
+cd spring-saas-core
+chmod +x scripts/test-resend.sh
+RESEND_API_KEY=re_xxx EMAIL_FROM=noreply@mail.fluxe.com.br ./scripts/test-resend.sh seu@email.com
+```
+
+Se retornar HTTP 200/201, o Resend está OK. Se 403, verifique domínio e `EMAIL_FROM` em [resend.com/domains](https://resend.com/domains).
 
 ### 6) Quotas e limites
 
