@@ -81,8 +81,11 @@ public class ResendEmailSender implements EmailSender {
           msg);
       if (!failOnDeliveryError) {
         log.warn(
-            "User created but invite email not sent (fail-on-delivery-error=false). Senha temp nos logs. "
-                + "Workaround: defina EMAIL_PROVIDER=log no Railway para desativar Resend enquanto não verifica o domínio.");
+            "Resend falhou; convite não chegou ao destinatário (fail-on-delivery-error=false). "
+                + "Verifique RESEND_API_KEY, domínio em resend.com/domains e que EMAIL_FROM coincide com o domínio verificado.");
+        log.warn(
+            "Conteúdo HTML do convite (recuperação manual da senha provisória até o Resend corrigir):\n{}",
+            htmlBody);
         return;
       }
       throw new IllegalStateException(
