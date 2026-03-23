@@ -85,6 +85,7 @@ app:
     provider: ${BILLING_PROVIDER:noop}
     stripe-secret-key: ${STRIPE_BILLING_SECRET_KEY:}
   # Email: convites, reset de senha. Padrão log = só registra no servidor; resend = envia via Resend.
+  # EMAIL_PROVIDER vazio ou só espaços = tratado como log (API devolve temporaryPassword no Admin).
   # fail-on-delivery-error: se true (prod), convite falha quando Resend falha; se false (staging), cria usuário e loga erro.
   email:
     provider: ${EMAIL_PROVIDER:log}
