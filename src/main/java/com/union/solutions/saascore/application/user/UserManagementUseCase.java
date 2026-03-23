@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserManagementUseCase {
+
+  private static final Logger log = LoggerFactory.getLogger(UserManagementUseCase.class);
 
   /** Platform / system tenant — invites from Admin Console use this id. */
   private static final UUID PLATFORM_TENANT_ID =
@@ -39,6 +43,7 @@ public class UserManagementUseCase {
   private final AuditLogger auditLogger;
   private final EmailSender emailSender;
   private final PasswordEncoder passwordEncoder;
+  private final String emailProvider;
   private final String frontendUrl;
 
   public UserManagementUseCase(
@@ -48,6 +53,7 @@ public class UserManagementUseCase {
       AuditLogger auditLogger,
       EmailSender emailSender,
       PasswordEncoder passwordEncoder,
+      @Value("${app.email.provider:log}") String emailProvider,
       @Value("${app.email.frontend-url:http://localhost:4200}") String frontendUrl) {
     this.userRepo = userRepo;
     this.tenantRepo = tenantRepo;
@@ -55,6 +61,7 @@ public class UserManagementUseCase {
     this.auditLogger = auditLogger;
     this.emailSender = emailSender;
     this.passwordEncoder = passwordEncoder;
+    this.emailProvider = emailProvider != null ? emailProvider.trim() : "log";
     this.frontendUrl = frontendUrl;
   }
 
@@ -199,6 +206,15 @@ public class UserManagementUseCase {
         email,
         "Convite — " + emailDisplayName,
         EmailTemplates.inviteEmail(tenantId, name, tenantName, inviteLink, temporaryPassword));
+
+    if ("log".equalsIgnoreCase(this.emailProvider)) {
+      log.warn(
+          "Convite criado; EMAIL_PROVIDER=log — nenhum e-mail foi enviado. "
+              + "Defina EMAIL_PROVIDER=resend, RESEND_API_KEY e EMAIL_FROM (domínio verificado no Resend). "
+              + "Senha temporária para {}: {}",
+          email,
+          temporaryPassword);
+    }
 
     return user;
   }
