@@ -6,12 +6,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.union.solutions.saascore.adapters.in.rest.UserController;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
+import com.union.solutions.saascore.application.user.InviteOutcome;
+import com.union.solutions.saascore.application.user.ResendInviteOutcome;
 import com.union.solutions.saascore.application.user.UserManagementUseCase;
 import com.union.solutions.saascore.config.ProblemDetailsConfig;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.User;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -59,7 +62,7 @@ class UserControllerTest {
                 org.mockito.ArgumentMatchers.eq("Novo Usuário"),
                 org.mockito.ArgumentMatchers.eq("novo.usuario@test.example.com"),
                 org.mockito.ArgumentMatchers.eq(List.of("member"))))
-        .thenReturn(invited);
+        .thenReturn(InviteOutcome.withPasswordForLog(invited, "TempPass123"));
 
     MockMvc mvc =
         MockMvcBuilders.standaloneSetup(new UserController(userUseCase, abacEvaluator)).build();
@@ -73,7 +76,8 @@ class UserControllerTest {
         .andExpect(jsonPath("$.id").value(userId.toString()))
         .andExpect(jsonPath("$.email").value("novo.usuario@test.example.com"))
         .andExpect(jsonPath("$.name").value("Novo Usuário"))
-        .andExpect(jsonPath("$.roles[0]").value("member"));
+        .andExpect(jsonPath("$.roles[0]").value("member"))
+        .andExpect(jsonPath("$.temporaryPassword").value("TempPass123"));
   }
 
   @Test
@@ -96,5 +100,37 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"X\",\"email\":\"x@test.com\",\"roles\":[\"member\"]}"))
         .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void resendInvite_whenFound_returns200WithTemporaryPassword() throws Exception {
+    UUID tenantId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    TenantContext.setTenantId(tenantId);
+
+    org.mockito.Mockito.when(userUseCase.resendInvite(org.mockito.ArgumentMatchers.eq(tenantId), org.mockito.ArgumentMatchers.eq(userId)))
+        .thenReturn(Optional.of(ResendInviteOutcome.withPasswordForLog("NewTemp99")));
+
+    MockMvc mvc =
+        MockMvcBuilders.standaloneSetup(new UserController(userUseCase, abacEvaluator)).build();
+
+    mvc.perform(post("/v1/users/" + userId + "/resend-invite"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.temporaryPassword").value("NewTemp99"));
+  }
+
+  @Test
+  void resendInvite_whenUserMissing_returns404() throws Exception {
+    UUID tenantId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    TenantContext.setTenantId(tenantId);
+
+    org.mockito.Mockito.when(userUseCase.resendInvite(org.mockito.ArgumentMatchers.eq(tenantId), org.mockito.ArgumentMatchers.eq(userId)))
+        .thenReturn(Optional.empty());
+
+    MockMvc mvc =
+        MockMvcBuilders.standaloneSetup(new UserController(userUseCase, abacEvaluator)).build();
+
+    mvc.perform(post("/v1/users/" + userId + "/resend-invite")).andExpect(status().isNotFound());
   }
 }
