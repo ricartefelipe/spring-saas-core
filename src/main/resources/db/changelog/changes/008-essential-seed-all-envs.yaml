@@ -12,6 +12,9 @@ databaseChangeLog:
   - changeSet:
       id: essential-system-tenant-insert
       author: saascore
+      validCheckSum:
+        - 9:0445c6dc04e1e1d1ac1c997204917daf
+        - 9:42a90c1df1cd98ae924c378c0a50ea16
       preConditions:
         - onFail: MARK_RAN
         - sqlCheck:

@@ -264,6 +264,7 @@ A API está versionada como **v1** e é estável para integração com node-b2b-
 | `./scripts/migrate.sh` | Verifica status das migrações Liquibase |
 | `./scripts/seed.sh` | Verifica dados seed (aplicados via Liquibase) |
 | `./scripts/smoke.sh` | Smoke tests automatizados (health, CRUD, ABAC, audit) |
+| `./scripts/e2e-invite-user.sh` | E2E HTTP: `POST /v1/users/invite` com dev token (requer API em `BASE_URL`) |
 | `./scripts/api-export.sh` | Exporta OpenAPI JSON/YAML para `docs/api/` |
 
 ---
@@ -328,6 +329,7 @@ Diagramas C4 e ERD em `docs/architecture/`.
 | 403 tenant mismatch | `X-Tenant-Id` deve coincidir com claim `tid`. |
 | App não inicia (Docker) | `docker compose logs app`. |
 | Migrations falham | Verificar conectividade com PostgreSQL e credenciais. |
+| Liquibase checksum mismatch | Changesets críticos têm `validCheckSum` com versões antigas e atuais; em último caso `docker compose down -v` (apaga dados locais). |
 
 ---
 
@@ -337,7 +339,8 @@ Diagramas C4 e ERD em `docs/architecture/`.
 2. **Health e docs** (30 s): http://localhost:8080/actuator/health e http://localhost:8080/docs
 3. **Token e CRUD** (1 min): `./scripts/seed.sh` e mostrar tenants/flags no terminal
 4. **Smoke** (1 min): `./scripts/smoke.sh`
-5. **Observabilidade** (1 min): Grafana http://localhost:3030 (admin/admin)
+5. **Convite de utilizador (E2E)** (30 s): `./scripts/e2e-invite-user.sh` — cria utilizador via `POST /v1/users/invite` (email único por execução)
+6. **Observabilidade** (1 min): Grafana http://localhost:3030 (admin/admin)
 
 ---
 
