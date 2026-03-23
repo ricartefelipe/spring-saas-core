@@ -4,6 +4,7 @@ import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.user.UserManagementUseCase;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.User;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
@@ -106,25 +107,34 @@ public class UserController {
     UUID tenantId = requireTenantId();
     if (tenantId == null) return tenantRequired();
 
-    User invited = userUseCase.invite(tenantId, request.name(), request.email(), request.roles());
-    return ResponseEntity.status(201).body(UserDto.from(invited));
+    var outcome =
+        userUseCase.invite(tenantId, request.name(), request.email(), request.roles());
+    String tempPassword = outcome.temporaryPasswordForResponse().orElse(null);
+    return ResponseEntity.status(201).body(UserDto.fromInvite(outcome.user(), tempPassword));
   }
 
   @Operation(
       summary = "Resend invite",
-      description = "Resends the invite email to an existing user with a new temporary password")
-  @ApiResponse(responseCode = "204", description = "Invite resent")
+      description =
+          "Resends the invite email to an existing user with a new temporary password. "
+              + "When EMAIL_PROVIDER=log, response includes temporaryPassword (no real email sent).")
+  @ApiResponse(responseCode = "200", description = "Invite resent; body may include temporaryPassword")
   @ApiResponse(responseCode = "404", description = "User not found or deleted")
   @ApiResponse(responseCode = "403", description = "Access denied")
   @PostMapping("/{id}/resend-invite")
-  public ResponseEntity<Void> resendInvite(@PathVariable @NonNull UUID id) {
+  public ResponseEntity<?> resendInvite(@PathVariable @NonNull UUID id) {
     abacEvaluator.enforceAnyOrThrow("users:write", "admin:write");
     UUID tenantId = requireTenantId();
     if (tenantId == null) return ResponseEntity.badRequest().build();
 
-    return userUseCase.resendInvite(tenantId, id)
-        ? ResponseEntity.noContent().build()
-        : ResponseEntity.notFound().build();
+    return userUseCase
+        .resendInvite(tenantId, id)
+        .map(
+            outcome ->
+                ResponseEntity.ok(
+                    new ResendInviteResponse(
+                        outcome.temporaryPasswordForResponse().orElse(null))))
+        .orElse(ResponseEntity.notFound().build());
   }
 
   private static UUID requireTenantId() {
@@ -136,6 +146,7 @@ public class UserController {
         .body(ProblemDetails.of(400, "Bad Request", "Tenant ID is required", "/v1/users", null));
   }
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   public record UserDto(
       UUID id,
       UUID tenantId,
@@ -144,7 +155,9 @@ public class UserController {
       List<String> roles,
       String status,
       Instant createdAt,
-      Instant updatedAt) {
+      Instant updatedAt,
+      /** Present only on POST /invite when {@code EMAIL_PROVIDER=log} (no real email sent). */
+      String temporaryPassword) {
 
     public static UserDto from(User u) {
       return new UserDto(
@@ -155,7 +168,21 @@ public class UserController {
           u.getRoles(),
           u.getStatus().name(),
           u.getCreatedAt(),
-          u.getUpdatedAt());
+          u.getUpdatedAt(),
+          null);
+    }
+
+    public static UserDto fromInvite(User u, String temporaryPasswordOrNull) {
+      return new UserDto(
+          u.getId(),
+          u.getTenantId(),
+          u.getName(),
+          u.getEmail(),
+          u.getRoles(),
+          u.getStatus().name(),
+          u.getCreatedAt(),
+          u.getUpdatedAt(),
+          temporaryPasswordOrNull);
     }
   }
 
@@ -163,4 +190,7 @@ public class UserController {
 
   public record InviteUserRequest(
       @NotBlank String name, @NotBlank @Email String email, List<String> roles) {}
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public record ResendInviteResponse(String temporaryPassword) {}
 }
