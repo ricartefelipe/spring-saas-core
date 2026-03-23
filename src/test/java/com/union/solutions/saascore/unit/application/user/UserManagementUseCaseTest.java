@@ -57,6 +57,7 @@ class UserManagementUseCaseTest {
             auditLogger,
             emailSender,
             passwordEncoder,
+            "log",
             "https://app.test");
   }
 
