@@ -1,5 +1,16 @@
 # E-mail de convite — Fluxe B2B Suite e troca obrigatória de senha
 
+## O e-mail “não chega” — causa n.º 1
+
+O **padrão** no Core é `EMAIL_PROVIDER=log` (`application.yml`). Nesse modo **nenhum e-mail sai do servidor**; o convite só é escrito nos **logs** (Railway → Deploy Logs / observabilidade). Para envio real:
+
+1. No serviço **spring-saas-core** (Railway ou outro): `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM` (domínio **já verificado** no Resend — ver secção abaixo).
+2. Com `log`, procure no log a linha `Convite criado; EMAIL_PROVIDER=log` — lá aparece a **senha temporária** em texto claro para repassar manualmente ao utilizador.
+
+Se já usa `resend` e mesmo assim não chega: caixa de **spam**, domínio/DNS não verificado (403 no Resend), ou `EMAIL_FROM` diferente do subdomínio verificado.
+
+---
+
 ## Usar Resend já (checklist rápido)
 
 1. [resend.com/domains](https://resend.com/domains) → **Add Domain** (ex.: `mail.fluxe.com.br`)
