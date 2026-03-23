@@ -84,9 +84,10 @@ app:
   billing:
     provider: ${BILLING_PROVIDER:noop}
     stripe-secret-key: ${STRIPE_BILLING_SECRET_KEY:}
-  # Email: convites, reset de senha. Padrão log = só registra no servidor; resend = envia via Resend.
+  # Email: convites, reset de senha.
+  # provider: log | resend | smtp
   # EMAIL_PROVIDER vazio ou só espaços = tratado como log (API devolve temporaryPassword no Admin).
-  # fail-on-delivery-error: se true (prod), convite falha quando Resend falha; se false (staging), cria usuário e loga erro.
+  # fail-on-delivery-error: se true (prod), convite falha quando envio falha; se false, loga e segue.
   email:
     provider: ${EMAIL_PROVIDER:log}
     resend-api-key: ${RESEND_API_KEY:}
@@ -94,6 +95,13 @@ app:
     from-name: ${EMAIL_FROM_NAME:}
     fail-on-delivery-error: ${EMAIL_FAIL_ON_DELIVERY_ERROR:false}
     frontend-url: ${FRONTEND_URL:http://localhost:4200}
+    smtp:
+      host: ${SMTP_HOST:}
+      port: ${SMTP_PORT:587}
+      username: ${SMTP_USER:}
+      password: ${SMTP_PASSWORD:}
+      auth: ${SMTP_AUTH:true}
+      starttls: ${SMTP_STARTTLS:true}
   dev:
     token-endpoint-enabled: false
   # Reativação: e-mail para tenants inativos (sem login há N dias)
