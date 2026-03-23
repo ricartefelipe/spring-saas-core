@@ -9,6 +9,19 @@ O **padrão** no Core é `EMAIL_PROVIDER=log` (`application.yml`). **Variável v
 
 Se já usa `resend` e mesmo assim não chega: caixa de **spam**, domínio/DNS não verificado (403 no Resend), ou `EMAIL_FROM` diferente do subdomínio verificado.
 
+### Railway / PaaS: SMTP vs Resend
+
+- **Resend** usa **HTTPS** (porta 443) — costuma **funcionar** em Railway e similares.
+- **SMTP** (portas 25, 465, 587) é **ligação TCP direta** ao servidor de correio. **Muitos** fornecedores de app hosting **bloqueiam ou restringem** saída SMTP para combater spam. Se configuraste `EMAIL_PROVIDER=smtp` e os logs mostram timeout ou “connection refused”, **muda para `EMAIL_PROVIDER=resend`** com domínio verificado.
+
+### Como saber o que o Core está a usar
+
+Ao **arrancar**, o Core regista uma linha como:
+
+`=== E-mail (arranque) === providerEfetivo=resend | RESEND_API_KEY preenchida=true | ...`
+
+Consulta os **Deploy Logs** do serviço no Railway. Se `providerEfetivo=log`, **não há envio real**. Se `resend` e `RESEND_API_KEY preenchida=false`, o envio vai falhar.
+
 ---
 
 ## Enviar por SMTP (em vez do Resend)
