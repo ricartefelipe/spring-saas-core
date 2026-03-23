@@ -1,6 +1,7 @@
 package com.union.solutions.saascore.infrastructure.email;
 
 import com.union.solutions.saascore.application.port.EmailSender;
+import com.union.solutions.saascore.config.ConditionalOnEmailProvider;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
@@ -9,14 +10,13 @@ import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
-@ConditionalOnProperty(name = "app.email.provider", havingValue = "smtp")
+@ConditionalOnEmailProvider("smtp")
 public class SmtpEmailSender implements EmailSender {
 
   private static final Logger log = LoggerFactory.getLogger(SmtpEmailSender.class);
