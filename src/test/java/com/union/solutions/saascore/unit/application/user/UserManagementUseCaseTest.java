@@ -11,6 +11,7 @@ import com.union.solutions.saascore.application.port.EmailSender;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.port.UserRepository;
+import com.union.solutions.saascore.application.user.InviteOutcome;
 import com.union.solutions.saascore.application.user.UserAlreadyExistsException;
 import com.union.solutions.saascore.application.user.UserManagementUseCase;
 import com.union.solutions.saascore.config.TenantContext;
@@ -76,7 +77,8 @@ class UserManagementUseCaseTest {
     when(passwordEncoder.encode(anyString())).thenReturn("encoded");
     when(userRepo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    useCase.invite(tenantId, "New User", "new@example.com", List.of("member"));
+    InviteOutcome out = useCase.invite(tenantId, "New User", "new@example.com", List.of("member"));
+    assertThat(out.temporaryPasswordForResponse()).isPresent();
 
     ArgumentCaptor<String> toCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> subjectCaptor = ArgumentCaptor.forClass(String.class);
@@ -99,7 +101,8 @@ class UserManagementUseCaseTest {
     when(passwordEncoder.encode(anyString())).thenReturn("encoded");
     when(userRepo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    useCase.invite(PLATFORM_TENANT_ID, "User", "u@test.com", List.of("admin"));
+    InviteOutcome out = useCase.invite(PLATFORM_TENANT_ID, "User", "u@test.com", List.of("admin"));
+    assertThat(out.temporaryPasswordForResponse()).isPresent();
 
     ArgumentCaptor<String> subjectCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
@@ -118,7 +121,8 @@ class UserManagementUseCaseTest {
     when(passwordEncoder.encode(anyString())).thenReturn("encoded");
     when(userRepo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    useCase.invite(tenantId, "Admin Acme", "a@acme.com", List.of("admin"));
+    InviteOutcome out = useCase.invite(tenantId, "Admin Acme", "a@acme.com", List.of("admin"));
+    assertThat(out.temporaryPasswordForResponse()).isPresent();
 
     ArgumentCaptor<String> subjectCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
@@ -153,8 +157,59 @@ class UserManagementUseCaseTest {
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
     when(userRepo.save(userCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
 
-    useCase.invite(tenantId, "João", "joao@test.com", List.of("member"));
+    InviteOutcome out = useCase.invite(tenantId, "João", "joao@test.com", List.of("member"));
+    assertThat(out.temporaryPasswordForResponse()).isPresent();
 
     assertThat(userCaptor.getValue().isMustChangePassword()).isTrue();
+  }
+
+  @Test
+  void invite_blankEmailProvider_normalizesToLogAndReturnsPassword() {
+    UserManagementUseCase blankProviderUseCase =
+        new UserManagementUseCase(
+            userRepo,
+            tenantRepo,
+            outboxPublisher,
+            auditLogger,
+            emailSender,
+            passwordEncoder,
+            "   ",
+            "https://app.test");
+    UUID tenantId = UUID.randomUUID();
+    when(tenantRepo.findById(tenantId))
+        .thenReturn(Optional.of(new Tenant(tenantId, "T", null, null, null, null, null)));
+    when(userRepo.findByEmailAndTenantId(anyString(), eq(tenantId))).thenReturn(Optional.empty());
+    when(passwordEncoder.encode(anyString())).thenReturn("hash");
+    when(userRepo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    InviteOutcome out =
+        blankProviderUseCase.invite(tenantId, "X", "blank@test.com", List.of("member"));
+
+    assertThat(out.temporaryPasswordForResponse()).isPresent();
+  }
+
+  @Test
+  void invite_whenEmailProviderIsResend_doesNotExposeTemporaryPasswordInOutcome() {
+    UserManagementUseCase resendUseCase =
+        new UserManagementUseCase(
+            userRepo,
+            tenantRepo,
+            outboxPublisher,
+            auditLogger,
+            emailSender,
+            passwordEncoder,
+            "resend",
+            "https://app.test");
+    UUID tenantId = UUID.randomUUID();
+    when(tenantRepo.findById(tenantId))
+        .thenReturn(Optional.of(new Tenant(tenantId, "T", null, null, null, null, null)));
+    when(userRepo.findByEmailAndTenantId(anyString(), eq(tenantId))).thenReturn(Optional.empty());
+    when(passwordEncoder.encode(anyString())).thenReturn("hash");
+    when(userRepo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    InviteOutcome out =
+        resendUseCase.invite(tenantId, "X", "x@test.com", List.of("member"));
+
+    assertThat(out.temporaryPasswordForResponse()).isEmpty();
   }
 }
