@@ -37,15 +37,16 @@ public class ResendEmailSender implements EmailSender {
               + "Set RESEND_API_KEY in environment or use app.email.provider=log for dev.");
     }
     this.apiKey = apiKey.trim();
-    String rawFrom = fromAddress != null && !fromAddress.isBlank() ? fromAddress.trim() : "noreply@fluxe.com.br";
+    String rawFrom =
+        fromAddress != null && !fromAddress.isBlank() ? fromAddress.trim() : "noreply@fluxe.com.br";
     this.fromAddress = buildFromAddress(rawFrom, fromName);
     this.failOnDeliveryError = failOnDeliveryError;
     this.restTemplate = new RestTemplate();
   }
 
   /**
-   * Resend aceita "email@domain" ou "Display Name &lt;email@domain&gt;".
-   * Se fromName estiver definido e rawFrom não tiver formato "Name &lt;email&gt;", combina.
+   * Resend aceita "email@domain" ou "Display Name &lt;email@domain&gt;". Se fromName estiver
+   * definido e rawFrom não tiver formato "Name &lt;email&gt;", combina.
    */
   private static String buildFromAddress(String rawFrom, String fromName) {
     if (fromName == null || fromName.isBlank()) {
