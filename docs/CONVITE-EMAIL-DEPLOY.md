@@ -15,10 +15,12 @@ Se já usa `resend` e mesmo assim não chega: caixa de **spam**, domínio/DNS n�
 
 O Core também aceita **`EMAIL_PROVIDER=smtp`**: envio por **SMTP clássico** (Gmail com senha de app, SendGrid SMTP, Amazon SES, Mailgun, Postfix, etc.). Não é obrigatório usar o Resend.
 
+**Maiúsculas/minúsculas:** `EMAIL_PROVIDER=SMTP`, `smtp` ou `Smtp` são aceites (normalização interna). Antes, só `smtp` minúsculo ativava o bean — um valor `SMTP` no painel podia **não carregar** o enviador.
+
 1. No Railway (ou `.env`):  
    - `EMAIL_PROVIDER=smtp`  
    - `SMTP_HOST` — ex.: `smtp.gmail.com`, `smtp.sendgrid.net`  
-   - `SMTP_PORT` — em geral **587** (STARTTLS) ou **465** (SSL; nesse caso pode ser preciso `SMTP_STARTTLS=false` e porta 465 conforme o provedor)  
+   - `SMTP_PORT` — **587** (STARTTLS, padrão) ou **465** (SSL implícito: o Core aplica SSL automaticamente na porta 465, ou use `SMTP_SSL_ENABLED=true` na 587 se o provedor exigir)  
    - `SMTP_USER` / `SMTP_PASSWORD` — credenciais do provedor  
    - `EMAIL_FROM` / `EMAIL_FROM_NAME` — o remetente que o servidor SMTP autoriza  
 2. O remetente (`EMAIL_FROM`) deve ser **permitido** pela conta SMTP (e, em produção, ter **SPF/DKIM** no DNS do domínio, como em qualquer e-mail transacional).
