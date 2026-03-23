@@ -1,5 +1,6 @@
 package com.union.solutions.saascore.infrastructure.email;
 
+import com.union.solutions.saascore.application.port.EmailDispatchResult;
 import com.union.solutions.saascore.application.port.EmailSender;
 import com.union.solutions.saascore.config.ConditionalOnEmailProvider;
 import org.slf4j.Logger;
@@ -13,7 +14,7 @@ public class LogEmailSender implements EmailSender {
   private static final Logger log = LoggerFactory.getLogger(LogEmailSender.class);
 
   @Override
-  public void send(String to, String subject, String htmlBody) {
+  public EmailDispatchResult send(String to, String subject, String htmlBody) {
     log.warn(
         "EMAIL NOT SENT (provider=log). For real delivery set app.email.provider=resend (RESEND_API_KEY) "
             + "or app.email.provider=smtp (SMTP_HOST, SMTP_USER, SMTP_PASSWORD, etc.). [to={}, subject={}]\n"
@@ -21,5 +22,6 @@ public class LogEmailSender implements EmailSender {
         to,
         subject,
         htmlBody);
+    return EmailDispatchResult.notAttempted();
   }
 }
