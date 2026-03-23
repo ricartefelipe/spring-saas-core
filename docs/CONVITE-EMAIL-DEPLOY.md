@@ -11,6 +11,23 @@ Se já usa `resend` e mesmo assim não chega: caixa de **spam**, domínio/DNS n�
 
 ---
 
+## Enviar por SMTP (em vez do Resend)
+
+O Core também aceita **`EMAIL_PROVIDER=smtp`**: envio por **SMTP clássico** (Gmail com senha de app, SendGrid SMTP, Amazon SES, Mailgun, Postfix, etc.). Não é obrigatório usar o Resend.
+
+1. No Railway (ou `.env`):  
+   - `EMAIL_PROVIDER=smtp`  
+   - `SMTP_HOST` — ex.: `smtp.gmail.com`, `smtp.sendgrid.net`  
+   - `SMTP_PORT` — em geral **587** (STARTTLS) ou **465** (SSL; nesse caso pode ser preciso `SMTP_STARTTLS=false` e porta 465 conforme o provedor)  
+   - `SMTP_USER` / `SMTP_PASSWORD` — credenciais do provedor  
+   - `EMAIL_FROM` / `EMAIL_FROM_NAME` — o remetente que o servidor SMTP autoriza  
+2. O remetente (`EMAIL_FROM`) deve ser **permitido** pela conta SMTP (e, em produção, ter **SPF/DKIM** no DNS do domínio, como em qualquer e-mail transacional).
+3. Redeploy do `spring-saas-core`.
+
+**Nota:** Com `smtp`, a API **não** devolve `temporaryPassword` no JSON (igual ao `resend`); só em modo `log`.
+
+---
+
 ## Usar Resend já (checklist rápido)
 
 1. [resend.com/domains](https://resend.com/domains) → **Add Domain** (ex.: `mail.fluxe.com.br`)
