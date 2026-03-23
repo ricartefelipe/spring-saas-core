@@ -61,8 +61,21 @@ public class UserManagementUseCase {
     this.auditLogger = auditLogger;
     this.emailSender = emailSender;
     this.passwordEncoder = passwordEncoder;
-    this.emailProvider = emailProvider != null ? emailProvider.trim() : "log";
+    this.emailProvider = normalizeEmailProvider(emailProvider);
     this.frontendUrl = frontendUrl;
+  }
+
+  /**
+   * Blank or missing {@code EMAIL_PROVIDER} must behave as {@code log}; otherwise empty env vars
+   * (common in hosting UIs) skip the {@code log} branch and no temporary password is returned to the
+   * API/client.
+   */
+  private static String normalizeEmailProvider(String raw) {
+    if (raw == null) {
+      return "log";
+    }
+    String t = raw.trim();
+    return t.isEmpty() ? "log" : t;
   }
 
   private static String generateTemporaryPassword() {
@@ -150,7 +163,7 @@ public class UserManagementUseCase {
   }
 
   @Transactional
-  public User invite(UUID tenantId, String name, String email, List<String> roles) {
+  public InviteOutcome invite(UUID tenantId, String name, String email, List<String> roles) {
     Optional<User> existing = userRepo.findByEmailAndTenantId(email, tenantId);
     if (existing.isPresent()) {
       throw new UserAlreadyExistsException(email, tenantId);
@@ -214,9 +227,10 @@ public class UserManagementUseCase {
               + "Senha temporária para {}: {}",
           email,
           temporaryPassword);
+      return InviteOutcome.withPasswordForLog(user, temporaryPassword);
     }
 
-    return user;
+    return InviteOutcome.withoutPassword(user);
   }
 
   /**
@@ -224,7 +238,7 @@ public class UserManagementUseCase {
    * usuário estiver com status DELETED.
    */
   @Transactional
-  public boolean resendInvite(UUID tenantId, UUID userId) {
+  public Optional<ResendInviteOutcome> resendInvite(UUID tenantId, UUID userId) {
     return userRepo
         .findByIdAndTenantId(userId, tenantId)
         .filter(user -> user.getStatus() != User.UserStatus.DELETED)
@@ -259,9 +273,17 @@ public class UserManagementUseCase {
                   200,
                   TenantContext.getCorrelationId(),
                   null);
-              return true;
-            })
-        .orElse(false);
+
+              if ("log".equalsIgnoreCase(this.emailProvider)) {
+                log.warn(
+                    "Reenvio de convite; EMAIL_PROVIDER=log — nenhum e-mail foi enviado. "
+                        + "Senha temporária para {}: {}",
+                    user.getEmail(),
+                    temporaryPassword);
+                return ResendInviteOutcome.withPasswordForLog(temporaryPassword);
+              }
+              return ResendInviteOutcome.withoutPassword();
+            });
   }
 
   private static String resolveInviteDisplayName(UUID tenantId, String tenantNameFromDb) {
