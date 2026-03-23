@@ -7,6 +7,10 @@ O **padrão** no Core é `EMAIL_PROVIDER=log` (`application.yml`). **Variável v
 1. No serviço **spring-saas-core** (Railway ou outro): `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM` (domínio **já verificado** no Resend — ver secção abaixo).
 2. Com `log`, o **Admin Console** mostra um diálogo com a **senha temporária** após convidar (a API devolve `temporaryPassword` no JSON). Também pode ver nos **logs** do Core a linha `Convite criado; EMAIL_PROVIDER=log`.
 
+3. **Resend/SMTP com envio aceite (HTTP 2xx / SMTP OK):** a API **omite** `temporaryPassword` no JSON (a senha não transita pela resposta).
+
+4. **Resend/SMTP em falha com `EMAIL_FAIL_ON_DELIVERY_ERROR=false` (fail-soft):** o utilizador **é criado** e a API **devolve `temporaryPassword`** para o admin repassar manualmente — o mesmo critério de “mostrar senha” que em `log`, mas só quando o fornecedor **tentou** enviar e **não** aceitou a mensagem.
+
 Se já usa `resend` e mesmo assim não chega: caixa de **spam**, domínio/DNS não verificado (403 no Resend), ou `EMAIL_FROM` diferente do subdomínio verificado.
 
 ### Railway / PaaS: SMTP vs Resend
@@ -39,7 +43,7 @@ O Core também aceita **`EMAIL_PROVIDER=smtp`**: envio por **SMTP clássico** (G
 2. O remetente (`EMAIL_FROM`) deve ser **permitido** pela conta SMTP (e, em produção, ter **SPF/DKIM** no DNS do domínio, como em qualquer e-mail transacional).
 3. Redeploy do `spring-saas-core`.
 
-**Nota:** Com `smtp`, a API **não** devolve `temporaryPassword` no JSON (igual ao `resend`); só em modo `log`.
+**Nota:** Com `smtp` ou `resend`, a API **só** omite `temporaryPassword` quando o envio foi **aceite** pelo provedor. Em falha de entrega com fail-soft (`EMAIL_FAIL_ON_DELIVERY_ERROR=false`), a resposta pode incluir `temporaryPassword` como em modo `log`.
 
 ---
 
@@ -147,7 +151,7 @@ Confirme que no Railway está definido:
 EMAIL_FAIL_ON_DELIVERY_ERROR=false
 ```
 
-Com isso, quando o Resend retornar 403, o usuário **é criado** e o erro é apenas logado. A senha temporária não é enviada por e-mail; busque nos logs do Railway.
+Com isso, quando o Resend retornar 403, o usuário **é criado** e o erro é apenas logado. A **senha temporária** pode aparecer na **resposta JSON** do convite (`temporaryPassword`) e nos **logs** do Railway — repasse manualmente ao utilizador.
 
 ---
 

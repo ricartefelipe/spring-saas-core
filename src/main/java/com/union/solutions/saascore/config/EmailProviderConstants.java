@@ -4,7 +4,8 @@ import java.util.Locale;
 
 /**
  * Normaliza {@code app.email.provider} / {@code EMAIL_PROVIDER} para decisões de envio e beans
- * condicionais. Valores desconhecidos caem em {@code log} para não deixar a app sem {@code EmailSender}.
+ * condicionais. Valores desconhecidos caem em {@code log} para não deixar a app sem {@code
+ * EmailSender}.
  */
 public final class EmailProviderConstants {
 

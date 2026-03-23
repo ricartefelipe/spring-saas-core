@@ -1,10 +1,10 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.user.UserManagementUseCase;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.User;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
@@ -107,8 +107,7 @@ public class UserController {
     UUID tenantId = requireTenantId();
     if (tenantId == null) return tenantRequired();
 
-    var outcome =
-        userUseCase.invite(tenantId, request.name(), request.email(), request.roles());
+    var outcome = userUseCase.invite(tenantId, request.name(), request.email(), request.roles());
     String tempPassword = outcome.temporaryPasswordForResponse().orElse(null);
     return ResponseEntity.status(201).body(UserDto.fromInvite(outcome.user(), tempPassword));
   }
@@ -118,7 +117,9 @@ public class UserController {
       description =
           "Resends the invite email to an existing user with a new temporary password. "
               + "When EMAIL_PROVIDER=log, response includes temporaryPassword (no real email sent).")
-  @ApiResponse(responseCode = "200", description = "Invite resent; body may include temporaryPassword")
+  @ApiResponse(
+      responseCode = "200",
+      description = "Invite resent; body may include temporaryPassword")
   @ApiResponse(responseCode = "404", description = "User not found or deleted")
   @ApiResponse(responseCode = "403", description = "Access denied")
   @PostMapping("/{id}/resend-invite")
@@ -132,8 +133,7 @@ public class UserController {
         .map(
             outcome ->
                 ResponseEntity.ok(
-                    new ResendInviteResponse(
-                        outcome.temporaryPasswordForResponse().orElse(null))))
+                    new ResendInviteResponse(outcome.temporaryPasswordForResponse().orElse(null))))
         .orElse(ResponseEntity.notFound().build());
   }
 
