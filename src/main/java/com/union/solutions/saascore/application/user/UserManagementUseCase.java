@@ -6,6 +6,7 @@ import com.union.solutions.saascore.application.port.EmailSender;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.port.UserRepository;
+import com.union.solutions.saascore.config.EmailProviderConstants;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.User;
 import java.security.SecureRandom;
@@ -61,21 +62,8 @@ public class UserManagementUseCase {
     this.auditLogger = auditLogger;
     this.emailSender = emailSender;
     this.passwordEncoder = passwordEncoder;
-    this.emailProvider = normalizeEmailProvider(emailProvider);
+    this.emailProvider = EmailProviderConstants.normalize(emailProvider);
     this.frontendUrl = frontendUrl;
-  }
-
-  /**
-   * Blank or missing {@code EMAIL_PROVIDER} must behave as {@code log}; otherwise empty env vars
-   * (common in hosting UIs) skip the {@code log} branch and no temporary password is returned to the
-   * API/client.
-   */
-  private static String normalizeEmailProvider(String raw) {
-    if (raw == null) {
-      return "log";
-    }
-    String t = raw.trim();
-    return t.isEmpty() ? "log" : t;
   }
 
   private static String generateTemporaryPassword() {
