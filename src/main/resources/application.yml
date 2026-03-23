@@ -102,6 +102,8 @@ app:
       password: ${SMTP_PASSWORD:}
       auth: ${SMTP_AUTH:true}
       starttls: ${SMTP_STARTTLS:true}
+      ssl:
+        enabled: ${SMTP_SSL_ENABLED:false}
   dev:
     token-endpoint-enabled: false
   # Reativação: e-mail para tenants inativos (sem login há N dias)
