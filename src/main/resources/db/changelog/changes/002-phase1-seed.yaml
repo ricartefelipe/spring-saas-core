@@ -2,6 +2,10 @@ databaseChangeLog:
   - changeSet:
       id: phase1-seed-tenants
       author: saascore
+      # Aceita BD já migrada (checksum antigo) e código atual
+      validCheckSum:
+        - 9:e4eb3539614500c6c7be265a2e00b0a3
+        - 9:fbabb20e0f7fd95f21e33e140dad4571
       context: "dev or test or local or staging"
       changes:
         - insert:
