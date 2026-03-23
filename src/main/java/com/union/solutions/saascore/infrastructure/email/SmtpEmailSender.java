@@ -1,5 +1,6 @@
 package com.union.solutions.saascore.infrastructure.email;
 
+import com.union.solutions.saascore.application.port.EmailDispatchResult;
 import com.union.solutions.saascore.application.port.EmailSender;
 import com.union.solutions.saascore.config.ConditionalOnEmailProvider;
 import jakarta.mail.MessagingException;
@@ -39,16 +40,18 @@ public class SmtpEmailSender implements EmailSender {
   }
 
   @Override
-  public void send(String to, String subject, String htmlBody) {
+  public EmailDispatchResult send(String to, String subject, String htmlBody) {
     try {
       MimeMessage message = mailSender.createMimeMessage();
-      MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+      MimeMessageHelper helper =
+          new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
       helper.setFrom(buildFrom());
       helper.setTo(to);
       helper.setSubject(subject);
       helper.setText(htmlBody, true);
       mailSender.send(message);
       log.info("Email sent via SMTP to={} subject={}", to, subject);
+      return EmailDispatchResult.accepted();
     } catch (MessagingException | MailException e) {
       String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
       log.error(
@@ -61,10 +64,11 @@ public class SmtpEmailSender implements EmailSender {
         log.warn(
             "SMTP falhou; destinatário pode não ter recebido (fail-on-delivery-error=false). HTML:\n{}",
             htmlBody);
-        return;
+        return EmailDispatchResult.rejectedAfterAttempt();
       }
       throw new IllegalStateException(
-          "Email delivery failed via SMTP. Check app.email.smtp.* and provider limits. Details: " + msg,
+          "Email delivery failed via SMTP. Check app.email.smtp.* and provider limits. Details: "
+              + msg,
           e);
     }
   }

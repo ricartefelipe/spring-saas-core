@@ -10,8 +10,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 /**
- * Configura {@link JavaMailSender} quando {@code app.email.provider=smtp}. Usa host/porta/credenciais
- * próprios (Gmail app password, SendGrid SMTP, SES, Postfix, etc.).
+ * Configura {@link JavaMailSender} quando {@code app.email.provider=smtp}. Usa
+ * host/porta/credenciais próprios (Gmail app password, SendGrid SMTP, SES, Postfix, etc.).
  *
  * <p>Porta 465 costuma exigir SSL implícito (não STARTTLS); isso é aplicado automaticamente ou via
  * {@code app.email.smtp.ssl.enabled}.

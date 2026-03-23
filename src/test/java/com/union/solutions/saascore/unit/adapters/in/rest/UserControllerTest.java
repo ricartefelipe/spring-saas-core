@@ -108,7 +108,9 @@ class UserControllerTest {
     UUID userId = UUID.randomUUID();
     TenantContext.setTenantId(tenantId);
 
-    org.mockito.Mockito.when(userUseCase.resendInvite(org.mockito.ArgumentMatchers.eq(tenantId), org.mockito.ArgumentMatchers.eq(userId)))
+    org.mockito.Mockito.when(
+            userUseCase.resendInvite(
+                org.mockito.ArgumentMatchers.eq(tenantId), org.mockito.ArgumentMatchers.eq(userId)))
         .thenReturn(Optional.of(ResendInviteOutcome.withPasswordForLog("NewTemp99")));
 
     MockMvc mvc =
@@ -125,7 +127,9 @@ class UserControllerTest {
     UUID userId = UUID.randomUUID();
     TenantContext.setTenantId(tenantId);
 
-    org.mockito.Mockito.when(userUseCase.resendInvite(org.mockito.ArgumentMatchers.eq(tenantId), org.mockito.ArgumentMatchers.eq(userId)))
+    org.mockito.Mockito.when(
+            userUseCase.resendInvite(
+                org.mockito.ArgumentMatchers.eq(tenantId), org.mockito.ArgumentMatchers.eq(userId)))
         .thenReturn(Optional.empty());
 
     MockMvc mvc =
