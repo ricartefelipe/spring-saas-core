@@ -2,10 +2,10 @@
 
 ## O e-mail “não chega” — causa n.º 1
 
-O **padrão** no Core é `EMAIL_PROVIDER=log` (`application.yml`). Nesse modo **nenhum e-mail sai do servidor**; o convite só é escrito nos **logs** (Railway → Deploy Logs / observabilidade). Para envio real:
+O **padrão** no Core é `EMAIL_PROVIDER=log` (`application.yml`). **Variável vazia** (`EMAIL_PROVIDER=` sem valor) é tratada como **`log`** — do contrário a API não devolvia `temporaryPassword` e parecia “travado”. Nesse modo **nenhum e-mail sai do servidor**; o convite aparece no **Admin** (senha no diálogo) e nos **logs**. Para envio real:
 
 1. No serviço **spring-saas-core** (Railway ou outro): `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM` (domínio **já verificado** no Resend — ver secção abaixo).
-2. Com `log`, procure no log a linha `Convite criado; EMAIL_PROVIDER=log` — lá aparece a **senha temporária** em texto claro para repassar manualmente ao utilizador.
+2. Com `log`, o **Admin Console** mostra um diálogo com a **senha temporária** após convidar (a API devolve `temporaryPassword` no JSON). Também pode ver nos **logs** do Core a linha `Convite criado; EMAIL_PROVIDER=log`.
 
 Se já usa `resend` e mesmo assim não chega: caixa de **spam**, domínio/DNS não verificado (403 no Resend), ou `EMAIL_FROM` diferente do subdomínio verificado.
 
