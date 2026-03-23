@@ -1,13 +1,13 @@
 package com.union.solutions.saascore.infrastructure.email;
 
 import com.union.solutions.saascore.application.port.EmailSender;
+import com.union.solutions.saascore.config.ConditionalOnEmailProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(name = "app.email.provider", havingValue = "log", matchIfMissing = true)
+@ConditionalOnEmailProvider("log")
 public class LogEmailSender implements EmailSender {
 
   private static final Logger log = LoggerFactory.getLogger(LogEmailSender.class);
