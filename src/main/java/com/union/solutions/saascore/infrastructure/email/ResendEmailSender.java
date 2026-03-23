@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.union.solutions.saascore.config.ConditionalOnEmailProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -15,7 +15,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
-@ConditionalOnProperty(name = "app.email.provider", havingValue = "resend")
+@ConditionalOnEmailProvider("resend")
 public class ResendEmailSender implements EmailSender {
 
   private static final Logger log = LoggerFactory.getLogger(ResendEmailSender.class);
