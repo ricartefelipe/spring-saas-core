@@ -14,5 +14,8 @@ RUN adduser -D -s /bin/sh appuser
 USER appuser
 COPY --from=build /build/target/spring-saas-core-*.jar app.jar
 EXPOSE 8080
+# Imagem Docker (Railway): sem variável no painel, application.yml caía em profile "local".
+# Staging herda este default; em produção defina explicitamente SPRING_PROFILES_ACTIVE=prod.
+ENV SPRING_PROFILES_ACTIVE=staging
 # Garante escuta na porta que o PaaS injeta (Railway: PORT).
 ENTRYPOINT ["sh", "-c", "exec java -Xmx512m ${JAVA_OPTS:-} -Dserver.port=${PORT:-8080} -Dmanagement.tracing.enabled=false -jar app.jar"]

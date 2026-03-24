@@ -86,7 +86,7 @@ O projeto deve habilitar uso de IA/LLM para:
 
 ---
 
-## Uso no Cursor
+## Assistentes de código no repositório
 
 - **Desenvolvimento:** ao sugerir ou implementar mudanças, priorizar itens que aproximem dos critérios acima e habilitem IA/LLM.
 - **Revisão de arquitetura:** garantir que novas features não quebrem contratos com node-b2b-orders e py-payments-ledger.

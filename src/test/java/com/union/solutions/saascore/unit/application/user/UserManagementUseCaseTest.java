@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 import com.union.solutions.saascore.application.email.EmailTemplates;
 import com.union.solutions.saascore.application.port.AuditLogger;
+import com.union.solutions.saascore.application.port.EmailDispatchResult;
 import com.union.solutions.saascore.application.port.EmailSender;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.TenantRepository;
@@ -60,6 +62,9 @@ class UserManagementUseCaseTest {
             passwordEncoder,
             "log",
             "https://app.test");
+    lenient()
+        .when(emailSender.send(anyString(), anyString(), anyString()))
+        .thenReturn(EmailDispatchResult.notAttempted());
   }
 
   @AfterEach
@@ -206,10 +211,37 @@ class UserManagementUseCaseTest {
     when(userRepo.findByEmailAndTenantId(anyString(), eq(tenantId))).thenReturn(Optional.empty());
     when(passwordEncoder.encode(anyString())).thenReturn("hash");
     when(userRepo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(emailSender.send(anyString(), anyString(), anyString()))
+        .thenReturn(EmailDispatchResult.accepted());
 
-    InviteOutcome out =
-        resendUseCase.invite(tenantId, "X", "x@test.com", List.of("member"));
+    InviteOutcome out = resendUseCase.invite(tenantId, "X", "x@test.com", List.of("member"));
 
     assertThat(out.temporaryPasswordForResponse()).isEmpty();
+  }
+
+  @Test
+  void invite_whenResendFailsSoft_disclosesTemporaryPassword() {
+    UserManagementUseCase resendUseCase =
+        new UserManagementUseCase(
+            userRepo,
+            tenantRepo,
+            outboxPublisher,
+            auditLogger,
+            emailSender,
+            passwordEncoder,
+            "resend",
+            "https://app.test");
+    UUID tenantId = UUID.randomUUID();
+    when(tenantRepo.findById(tenantId))
+        .thenReturn(Optional.of(new Tenant(tenantId, "T", null, null, null, null, null)));
+    when(userRepo.findByEmailAndTenantId(anyString(), eq(tenantId))).thenReturn(Optional.empty());
+    when(passwordEncoder.encode(anyString())).thenReturn("hash");
+    when(userRepo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(emailSender.send(anyString(), anyString(), anyString()))
+        .thenReturn(EmailDispatchResult.rejectedAfterAttempt());
+
+    InviteOutcome out = resendUseCase.invite(tenantId, "X", "x@test.com", List.of("member"));
+
+    assertThat(out.temporaryPasswordForResponse()).isPresent();
   }
 }
