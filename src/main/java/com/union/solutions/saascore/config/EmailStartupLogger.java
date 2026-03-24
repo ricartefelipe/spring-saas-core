@@ -32,17 +32,26 @@ public class EmailStartupLogger implements ApplicationRunner {
 
   @Override
   public void run(ApplicationArguments args) {
+    String trimmedRaw = rawProvider == null ? "" : rawProvider.trim();
     String p = EmailProviderConstants.normalize(rawProvider);
     boolean resendKeyOk = resendKey != null && !resendKey.isBlank();
     boolean smtpHostOk = smtpHost != null && !smtpHost.isBlank();
     String fromSafe = from == null || from.isBlank() ? "(não definido)" : from.trim();
 
     log.info(
-        "=== E-mail (arranque) === providerEfetivo={} | RESEND_API_KEY preenchida={} | SMTP_HOST preenchido={} | EMAIL_FROM={}",
+        "=== E-mail (arranque) === EMAIL_PROVIDER_raw={} | providerEfetivo={} | RESEND_API_KEY preenchida={} | SMTP_HOST preenchido={} | EMAIL_FROM={}",
+        trimmedRaw.isEmpty() ? "(vazio ou não definido — cai no default log)" : trimmedRaw,
         p,
         resendKeyOk,
         smtpHostOk,
         fromSafe);
+
+    if (!trimmedRaw.isEmpty() && "log".equals(p) && !"log".equalsIgnoreCase(trimmedRaw)) {
+      log.error(
+          "EMAIL_PROVIDER='{}' não é reconhecido — só são aceites: resend, smtp, log. "
+              + "Valores desconhecidos são tratados como log (sem envio real). Corrija o typo no Railway.",
+          trimmedRaw);
+    }
 
     if ("log".equals(p)) {
       log.warn(
