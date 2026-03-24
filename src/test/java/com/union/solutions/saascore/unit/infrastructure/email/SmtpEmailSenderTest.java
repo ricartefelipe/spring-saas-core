@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.union.solutions.saascore.infrastructure.email.SmtpEmailSender;
+import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import java.util.Properties;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
-import jakarta.mail.Session;
 
 @ExtendWith(MockitoExtension.class)
 class SmtpEmailSenderTest {

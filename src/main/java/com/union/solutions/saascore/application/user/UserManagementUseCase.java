@@ -2,6 +2,7 @@ package com.union.solutions.saascore.application.user;
 
 import com.union.solutions.saascore.application.email.EmailTemplates;
 import com.union.solutions.saascore.application.port.AuditLogger;
+import com.union.solutions.saascore.application.port.EmailDispatchResult;
 import com.union.solutions.saascore.application.port.EmailSender;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
 import com.union.solutions.saascore.application.port.TenantRepository;
@@ -203,22 +204,39 @@ public class UserManagementUseCase {
         tenantRepo.findById(tenantId).map(t -> t.getName()).orElse("your organization");
     String emailDisplayName = resolveInviteDisplayName(tenantId, tenantName);
     String inviteLink = frontendUrl + "/login";
-    emailSender.send(
-        email,
-        "Convite — " + emailDisplayName,
-        EmailTemplates.inviteEmail(tenantId, name, tenantName, inviteLink, temporaryPassword));
+    EmailDispatchResult dispatch =
+        emailSender.send(
+            email,
+            "Convite — " + emailDisplayName,
+            EmailTemplates.inviteEmail(tenantId, name, tenantName, inviteLink, temporaryPassword));
 
-    if ("log".equalsIgnoreCase(this.emailProvider)) {
-      log.warn(
-          "Convite criado; EMAIL_PROVIDER=log — nenhum e-mail foi enviado. "
-              + "Defina EMAIL_PROVIDER=resend, RESEND_API_KEY e EMAIL_FROM (domínio verificado no Resend). "
-              + "Senha temporária para {}: {}",
-          email,
-          temporaryPassword);
+    if (shouldDiscloseTemporaryPassword(dispatch)) {
+      if ("log".equalsIgnoreCase(this.emailProvider)) {
+        log.warn(
+            "Convite criado; EMAIL_PROVIDER=log — nenhum e-mail foi enviado. "
+                + "Defina EMAIL_PROVIDER=resend, RESEND_API_KEY e EMAIL_FROM (domínio verificado no Resend). "
+                + "Senha temporária para {}: {}",
+            email,
+            temporaryPassword);
+      } else if (dispatch.wasAttempted() && !dispatch.acceptedByProvider()) {
+        log.warn(
+            "Convite criado mas o fornecedor de e-mail não aceitou o envio (Resend/SMTP). "
+                + "Senha temporária exposta na API para o admin repassar manualmente. destinatário={}",
+            email);
+      }
       return InviteOutcome.withPasswordForLog(user, temporaryPassword);
     }
 
     return InviteOutcome.withoutPassword(user);
+  }
+
+  /**
+   * Mostra senha no JSON quando: modo log; ou houve tentativa real e o fornecedor não aceitou (403,
+   * timeout, SMTP bloqueado, etc.).
+   */
+  private boolean shouldDiscloseTemporaryPassword(EmailDispatchResult dispatch) {
+    return !dispatch.acceptedByProvider()
+        && ("log".equalsIgnoreCase(this.emailProvider) || dispatch.wasAttempted());
   }
 
   /**
@@ -242,11 +260,12 @@ public class UserManagementUseCase {
                   tenantRepo.findById(tenantId).map(t -> t.getName()).orElse("your organization");
               String emailDisplayName = resolveInviteDisplayName(tenantId, tenantName);
               String inviteLink = frontendUrl + "/login";
-              emailSender.send(
-                  user.getEmail(),
-                  "Convite — " + emailDisplayName,
-                  EmailTemplates.inviteEmail(
-                      tenantId, user.getName(), tenantName, inviteLink, temporaryPassword));
+              EmailDispatchResult dispatch =
+                  emailSender.send(
+                      user.getEmail(),
+                      "Convite — " + emailDisplayName,
+                      EmailTemplates.inviteEmail(
+                          tenantId, user.getName(), tenantName, inviteLink, temporaryPassword));
 
               auditLogger.log(
                   tenantId,
@@ -262,12 +281,18 @@ public class UserManagementUseCase {
                   TenantContext.getCorrelationId(),
                   null);
 
-              if ("log".equalsIgnoreCase(this.emailProvider)) {
-                log.warn(
-                    "Reenvio de convite; EMAIL_PROVIDER=log — nenhum e-mail foi enviado. "
-                        + "Senha temporária para {}: {}",
-                    user.getEmail(),
-                    temporaryPassword);
+              if (shouldDiscloseTemporaryPassword(dispatch)) {
+                if ("log".equalsIgnoreCase(this.emailProvider)) {
+                  log.warn(
+                      "Reenvio de convite; EMAIL_PROVIDER=log — nenhum e-mail foi enviado. "
+                          + "Senha temporária para {}: {}",
+                      user.getEmail(),
+                      temporaryPassword);
+                } else if (dispatch.wasAttempted() && !dispatch.acceptedByProvider()) {
+                  log.warn(
+                      "Reenvio: fornecedor não aceitou o envio; senha na API. email={}",
+                      user.getEmail());
+                }
                 return ResendInviteOutcome.withPasswordForLog(temporaryPassword);
               }
               return ResendInviteOutcome.withoutPassword();

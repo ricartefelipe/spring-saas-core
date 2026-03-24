@@ -2,7 +2,9 @@ package com.union.solutions.saascore.application.user;
 
 import java.util.Optional;
 
-/** Result of {@link UserManagementUseCase#resendInvite}; password only when email is not sent (log). */
+/**
+ * Result of {@link UserManagementUseCase#resendInvite}; password only when email is not sent (log).
+ */
 public record ResendInviteOutcome(Optional<String> temporaryPasswordForResponse) {
 
   public static ResendInviteOutcome withPasswordForLog(String plainPassword) {

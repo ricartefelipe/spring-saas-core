@@ -1,11 +1,12 @@
 package com.union.solutions.saascore.infrastructure.email;
 
+import com.union.solutions.saascore.application.port.EmailDispatchResult;
 import com.union.solutions.saascore.application.port.EmailSender;
+import com.union.solutions.saascore.config.ConditionalOnEmailProvider;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.union.solutions.saascore.config.ConditionalOnEmailProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -59,7 +60,7 @@ public class ResendEmailSender implements EmailSender {
   }
 
   @Override
-  public void send(String to, String subject, String htmlBody) {
+  public EmailDispatchResult send(String to, String subject, String htmlBody) {
     HttpHeaders headers = new HttpHeaders();
     headers.setBearerAuth(apiKey);
     headers.setContentType(MediaType.APPLICATION_JSON);
@@ -71,6 +72,7 @@ public class ResendEmailSender implements EmailSender {
     try {
       restTemplate.postForEntity(RESEND_API_URL, request, String.class);
       log.info("Email sent via Resend to={} subject={}", to, subject);
+      return EmailDispatchResult.accepted();
     } catch (RestClientException e) {
       String msg = e.getMessage() != null ? e.getMessage() : "";
       log.error(
@@ -86,7 +88,7 @@ public class ResendEmailSender implements EmailSender {
         log.warn(
             "Conteúdo HTML do convite (recuperação manual da senha provisória até o Resend corrigir):\n{}",
             htmlBody);
-        return;
+        return EmailDispatchResult.rejectedAfterAttempt();
       }
       throw new IllegalStateException(
           "Email delivery failed. Check RESEND_API_KEY and Resend dashboard (domain verification). "
