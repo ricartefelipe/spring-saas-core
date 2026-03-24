@@ -22,9 +22,11 @@ Se já usa `resend` e mesmo assim não chega: caixa de **spam**, domínio/DNS n�
 
 Ao **arrancar**, o Core regista uma linha como:
 
-`=== E-mail (arranque) === providerEfetivo=resend | RESEND_API_KEY preenchida=true | ...`
+`=== E-mail (arranque) === EMAIL_PROVIDER_raw=resend | providerEfetivo=resend | RESEND_API_KEY preenchida=true | ...`
 
 Consulta os **Deploy Logs** do serviço no Railway. Se `providerEfetivo=log`, **não há envio real**. Se `resend` e `RESEND_API_KEY preenchida=false`, o envio vai falhar.
+
+**Typo no nome da variável ou no valor:** só existem `resend`, `smtp` e `log`. Qualquer outro valor (ex.: `resnd`) é tratado como **`log`**; no arranque aparece **ERROR** a explicar. O nome da variável tem de ser exactamente **`EMAIL_PROVIDER`** (não `APP_EMAIL_PROVIDER`, etc.).
 
 ---
 

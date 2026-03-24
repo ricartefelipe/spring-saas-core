@@ -15,7 +15,7 @@ Os **Build Logs** só mostram a construção da imagem. O erro real está nos **
 
 | Variável | Onde obter |
 |----------|------------|
-| `SPRING_PROFILES_ACTIVE` | `staging` |
+| `SPRING_PROFILES_ACTIVE` | `staging` (a partir da imagem Docker o default já é `staging`; se vir `local` nos logs, defina explicitamente no painel) |
 | `DB_URL` ou `DATABASE_URL` | Plugin PostgreSQL → `${{Postgres.DATABASE_URL}}` ou `${{Postgres.JDBC_DATABASE_URL}}` |
 | `DB_USER` | `${{Postgres.PGUSER}}` |
 | `DB_PASS` | `${{Postgres.PGPASSWORD}}` |
