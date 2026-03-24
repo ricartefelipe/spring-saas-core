@@ -87,6 +87,7 @@ app:
   # Email: convites, reset de senha.
   # provider: log | resend | smtp
   # EMAIL_PROVIDER vazio ou só espaços = tratado como log (API devolve temporaryPassword no Admin).
+  # Valor diferente de resend|smtp|log (typo) = também cai em log — ver logs de arranque "EMAIL_PROVIDER_raw".
   # fail-on-delivery-error: se true (prod), convite falha quando envio falha; se false, loga e segue.
   email:
     provider: ${EMAIL_PROVIDER:log}
