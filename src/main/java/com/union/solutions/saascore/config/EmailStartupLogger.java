@@ -51,6 +51,10 @@ public class EmailStartupLogger implements ApplicationRunner {
     } else if ("resend".equals(p) && !resendKeyOk) {
       log.error(
           "EMAIL_PROVIDER=resend mas RESEND_API_KEY vazia — envio vai falhar na primeira chamada.");
+    } else if ("resend".equals(p) && fromSafe.toLowerCase().contains("resend.dev")) {
+      log.warn(
+          "EMAIL_FROM usa resend.dev: o Resend só permite enviar para o e-mail da conta em testes. "
+              + "Para convites a clientes, verifique um domínio em resend.com/domains e use EMAIL_FROM nesse domínio.");
     } else if ("smtp".equals(p) && !smtpHostOk) {
       log.error("EMAIL_PROVIDER=smtp mas SMTP_HOST vazio — envio vai falhar.");
     }
