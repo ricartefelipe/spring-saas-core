@@ -46,7 +46,7 @@ public class EmailStartupLogger implements ApplicationRunner {
         smtpHostOk,
         fromSafe);
 
-    if (!trimmedRaw.isEmpty() && "log".equals(p) && !"log".equalsIgnoreCase(trimmedRaw)) {
+    if (EmailProviderConstants.fallsBackToLogDueToUnknownValue(rawProvider)) {
       log.error(
           "EMAIL_PROVIDER='{}' não é reconhecido — só são aceites: resend, smtp, log. "
               + "Valores desconhecidos são tratados como log (sem envio real). Corrija o typo no Railway.",
@@ -60,6 +60,10 @@ public class EmailStartupLogger implements ApplicationRunner {
     } else if ("resend".equals(p) && !resendKeyOk) {
       log.error(
           "EMAIL_PROVIDER=resend mas RESEND_API_KEY vazia — envio vai falhar na primeira chamada.");
+    } else if ("resend".equals(p) && from != null && from.toLowerCase().contains("resend.dev")) {
+      log.warn(
+          "EMAIL_FROM usa resend.dev: em produção/staging real use um domínio verificado em resend.com/domains; "
+              + "resend.dev só cobre testes limitados (ex.: conta Resend).");
     } else if ("smtp".equals(p) && !smtpHostOk) {
       log.error("EMAIL_PROVIDER=smtp mas SMTP_HOST vazio — envio vai falhar.");
     }

@@ -25,4 +25,21 @@ public final class EmailProviderConstants {
     }
     return "log";
   }
+
+  /**
+   * {@code true} quando o valor em variável de ambiente não é um dos reconhecidos e {@link
+   * #normalize(String)} cai em {@code log} sem ser intenção explícita (ex.: typo {@code resnd}).
+   * Não inclui null, vazio ou {@code log} literal.
+   */
+  public static boolean fallsBackToLogDueToUnknownValue(String raw) {
+    if (raw == null) {
+      return false;
+    }
+    String t = raw.trim();
+    if (t.isEmpty()) {
+      return false;
+    }
+    String lower = t.toLowerCase(Locale.ROOT);
+    return !("resend".equals(lower) || "smtp".equals(lower) || "log".equals(lower));
+  }
 }
