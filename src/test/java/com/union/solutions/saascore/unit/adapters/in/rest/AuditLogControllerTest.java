@@ -143,10 +143,7 @@ class AuditLogControllerTest {
     assertThat(response.getStatusCode().value()).isEqualTo(200);
     assertThat(response.getHeaders().getFirst("Content-Disposition")).contains("audit-export.csv");
 
-    StreamingResponseBody body = (StreamingResponseBody) response.getBody();
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    body.writeTo(out);
-    String csv = out.toString();
+    String csv = (String) response.getBody();
 
     assertThat(csv).startsWith("id,tenantId,");
     assertThat(csv).contains("FLAG_CREATED");
