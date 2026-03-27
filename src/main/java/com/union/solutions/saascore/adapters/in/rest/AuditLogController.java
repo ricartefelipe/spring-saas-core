@@ -125,12 +125,11 @@ public class AuditLogController {
     Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
 
     if ("csv".equalsIgnoreCase(format)) {
-      StreamingResponseBody body =
-          out -> streamCsv(out, tenantId, safeAction, from, to, maxLimit, sort);
+      String csv = buildCsv(tenantId, safeAction, from, to, maxLimit, sort);
       return ResponseEntity.ok()
           .header("Content-Disposition", "attachment; filename=audit-export.csv")
-          .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
-          .body(body);
+          .contentType(MediaType.valueOf("text/csv"))
+          .body(csv);
     }
 
     StreamingResponseBody body =
@@ -138,19 +137,12 @@ public class AuditLogController {
     return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(body);
   }
 
-  private void streamCsv(
-      OutputStream out,
-      UUID tenantId,
-      String action,
-      Instant from,
-      Instant to,
-      int maxLimit,
-      Sort sort)
-      throws IOException {
-    out.write(
-        ("id,tenantId,actorSub,actorRoles,actorPerms,action,resourceType,resourceId,"
-                + "method,path,statusCode,correlationId,details,createdAt\n")
-            .getBytes(StandardCharsets.UTF_8));
+  private String buildCsv(
+      UUID tenantId, String action, Instant from, Instant to, int maxLimit, Sort sort) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(
+        "id,tenantId,actorSub,actorRoles,actorPerms,action,resourceType,resourceId,"
+            + "method,path,statusCode,correlationId,details,createdAt\n");
 
     int remaining = maxLimit;
     int pageNum = 0;
@@ -162,13 +154,13 @@ public class AuditLogController {
       List<AuditLogEntity> content = page.getContent();
       if (content.isEmpty()) break;
       for (AuditLogEntity e : content) {
-        out.write(toCsvRow(AuditDto.from(e)).getBytes(StandardCharsets.UTF_8));
+        sb.append(toCsvRow(AuditDto.from(e)));
       }
-      out.flush();
       remaining -= content.size();
       pageNum++;
       if (!page.hasNext()) break;
     }
+    return sb.toString();
   }
 
   private void streamJson(
