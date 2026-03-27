@@ -1,7 +1,9 @@
 package com.union.solutions.saascore.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,10 +33,21 @@ public class RedisCacheConfig {
   @Value("${app.cache.front-tenants-enabled:true}")
   private boolean frontTenantsCacheEnabled;
 
+  /**
+   * GenericJackson2JsonRedisSerializer requires default typing so cached values like {@code
+   * List<Tenant>} deserialize back to domain types. Without it, list elements become LinkedHashMap
+   * and cause ClassCastException in controllers (e.g. GET /v1/tenants).
+   */
   private static ObjectMapper redisCacheObjectMapper() {
     ObjectMapper om = new ObjectMapper();
     om.registerModule(new JavaTimeModule());
     om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    BasicPolymorphicTypeValidator ptv =
+        BasicPolymorphicTypeValidator.builder()
+            .allowIfSubType("java.util")
+            .allowIfSubType("com.union.solutions.saascore")
+            .build();
+    om.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
     return om;
   }
 
