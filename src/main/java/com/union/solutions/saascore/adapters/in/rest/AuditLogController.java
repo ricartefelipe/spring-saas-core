@@ -138,12 +138,7 @@ public class AuditLogController {
   }
 
   private String buildCsv(
-      UUID tenantId,
-      String action,
-      Instant from,
-      Instant to,
-      int maxLimit,
-      Sort sort) {
+      UUID tenantId, String action, Instant from, Instant to, int maxLimit, Sort sort) {
     StringBuilder sb = new StringBuilder();
     sb.append(
         "id,tenantId,actorSub,actorRoles,actorPerms,action,resourceType,resourceId,"
