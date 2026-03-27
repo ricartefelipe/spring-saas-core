@@ -1,0 +1,21 @@
+name: Post Merge Smoke
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+      - name: Run post-merge smoke
+        run: |
+          chmod +x scripts/smoke-post-merge.sh
+          ./scripts/smoke-post-merge.sh
