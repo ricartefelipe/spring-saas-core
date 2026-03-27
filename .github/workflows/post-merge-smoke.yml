@@ -6,16 +6,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  smoke:
+  smoke-http:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: "21"
-          distribution: "temurin"
-      - name: Run post-merge smoke
+      - name: Smoke HTTP (staging)
         run: |
           chmod +x scripts/smoke-post-merge.sh
           ./scripts/smoke-post-merge.sh
+        env:
+          CORE_SMOKE_URL: ${{ secrets.CORE_SMOKE_URL }}
