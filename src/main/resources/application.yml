@@ -112,10 +112,6 @@ app:
     cron: ${REACTIVATION_CRON:0 0 10 * * *}
     inactive-days: ${REACTIVATION_INACTIVE_DAYS:14}
     cooldown-days: ${REACTIVATION_COOLDOWN_DAYS:30}
-  cache:
-    # Se true, usa Redis para cache de GET /v1/tenants. Se false ou em erro de deserialização, usa memória.
-    front-tenants-enabled: ${CACHE_FRONT_TENANTS_ENABLED:true}
-
 resilience4j:
   circuitbreaker:
     instances:
