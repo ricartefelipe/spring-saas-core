@@ -12,6 +12,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -73,6 +74,16 @@ public class ResendEmailSender implements EmailSender {
       restTemplate.postForEntity(RESEND_API_URL, request, String.class);
       log.info("Email sent via Resend to={} subject={}", to, subject);
       return EmailDispatchResult.accepted();
+    } catch (HttpStatusCodeException e) {
+      String responseBody = e.getResponseBodyAsString();
+      log.error(
+          "Resend email delivery failed (HTTP {}). to={} subject={} responseBody={}. "
+              + "403 comum: domínio não verificado, domain mismatch ou from resend.dev para destinatário externo — ver resend.com/domains.",
+          e.getStatusCode().value(),
+          to,
+          subject,
+          responseBody != null && !responseBody.isBlank() ? responseBody : "(vazio)");
+      return handleResendFailure(htmlBody, e.getMessage());
     } catch (RestClientException e) {
       String msg = e.getMessage() != null ? e.getMessage() : "";
       log.error(
@@ -81,20 +92,23 @@ public class ResendEmailSender implements EmailSender {
           to,
           subject,
           msg);
-      if (!failOnDeliveryError) {
-        log.warn(
-            "Resend falhou; convite não chegou ao destinatário (fail-on-delivery-error=false). "
-                + "Verifique RESEND_API_KEY, domínio em resend.com/domains e que EMAIL_FROM coincide com o domínio verificado.");
-        log.warn(
-            "Conteúdo HTML do convite (recuperação manual da senha provisória até o Resend corrigir):\n{}",
-            htmlBody);
-        return EmailDispatchResult.rejectedAfterAttempt();
-      }
-      throw new IllegalStateException(
-          "Email delivery failed. Check RESEND_API_KEY and Resend dashboard (domain verification). "
-              + "Details: "
-              + msg,
-          e);
+      return handleResendFailure(htmlBody, msg);
     }
+  }
+
+  private EmailDispatchResult handleResendFailure(String htmlBody, String detail) {
+    if (!failOnDeliveryError) {
+      log.warn(
+          "Resend falhou; convite não chegou ao destinatário (fail-on-delivery-error=false). "
+              + "Verifique RESEND_API_KEY, domínio em resend.com/domains e que EMAIL_FROM coincide com o domínio verificado.");
+      log.warn(
+          "Conteúdo HTML do convite (recuperação manual da senha provisória até o Resend corrigir):\n{}",
+          htmlBody);
+      return EmailDispatchResult.rejectedAfterAttempt();
+    }
+    throw new IllegalStateException(
+        "Email delivery failed. Check RESEND_API_KEY and Resend dashboard (domain verification). "
+            + "Details: "
+            + detail);
   }
 }
