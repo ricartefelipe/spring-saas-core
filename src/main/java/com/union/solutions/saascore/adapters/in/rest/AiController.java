@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
@@ -56,18 +58,21 @@ public class AiController {
   @GetMapping("/status")
   @Operation(summary = "AI engine status and capabilities")
   public ResponseEntity<Map<String, Object>> status() {
-    return ResponseEntity.ok(
-        Map.of(
-            "engine", aiProperties.isEnabled() ? "llm" : "rule-engine",
-            "provider", aiProperties.isEnabled() ? aiProperties.getProvider() : "built-in",
-            "model", aiProperties.isEnabled() ? aiProperties.getModel() : "rule-based-v1",
-            "capabilities",
-                java.util.List.of(
-                    "audit-analysis",
-                    "governance-recommendations",
-                    "chat-assistant",
-                    "system-insights",
-                    "anomaly-detection")));
+    Map<String, Object> body = new LinkedHashMap<>();
+    body.put("engine", aiProperties.isEnabled() ? "llm" : "rule-engine");
+    body.put("provider", aiProperties.isEnabled() ? aiProperties.getProvider() : "built-in");
+    body.put("model", aiProperties.isEnabled() ? aiProperties.getModel() : "rule-based-v1");
+    body.put(
+        "capabilities",
+        List.of(
+            "audit-analysis",
+            "governance-recommendations",
+            "chat-assistant",
+            "system-insights",
+            "anomaly-detection"));
+    body.put("aiEnabledProperty", aiProperties.getEnabled());
+    body.put("openaiKeyConfigured", aiProperties.hasApiKey());
+    return ResponseEntity.ok(body);
   }
 
   @PostMapping("/analyze-audit")
@@ -101,8 +106,15 @@ public class AiController {
     }
     UUID tenantId = resolveTenantId(request.tenantId());
     String question = request.question() != null ? request.question() : request.message();
-    GovernanceChatbotService.ChatResponse chatResponse = chatbotService.chat(tenantId, question);
-    return ResponseEntity.ok(chatResponse);
+    if (aiProperties.isEnabled()) {
+      String tenantKey = tenantId != null ? tenantId.toString() : null;
+      AiService.AiResponse aiResponse = aiService.chat(question, tenantKey);
+      String answer = aiResponse.content() != null ? aiResponse.content() : "";
+      String intent = aiResponse.engine() != null ? aiResponse.engine() : "rule-engine";
+      return ResponseEntity.ok(
+          new GovernanceChatbotService.ChatResponse(answer, intent, List.of()));
+    }
+    return ResponseEntity.ok(chatbotService.chat(tenantId, question));
   }
 
   @GetMapping("/insights")
