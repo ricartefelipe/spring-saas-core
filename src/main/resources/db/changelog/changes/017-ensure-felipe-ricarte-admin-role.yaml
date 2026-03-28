@@ -1,0 +1,14 @@
+databaseChangeLog:
+  # Garante role admin para o utilizador seed da plataforma (Felipe Ricarte),
+  # mesmo em bases já migradas onde o campo possa ter sido alterado manualmente.
+  - changeSet:
+      id: ensure-felipe-ricarte-admin-role
+      author: saascore
+      changes:
+        - sql:
+            sql: |
+              UPDATE users
+              SET roles = 'admin',
+                  updated_at = CURRENT_TIMESTAMP
+              WHERE email = 'felipericartem@gmail.com'
+                AND roles IS DISTINCT FROM 'admin';
