@@ -181,7 +181,8 @@ public class AiService {
                   message);
 
           if (!aiProperties.isEnabled()) {
-            return buildRuleBasedChatResponse(message, summary);
+            return buildRuleBasedChatResponse(
+                message, summary, RuleBasedChatMode.NO_LLM_CONFIGURED);
           }
 
           String llmResponse = callLlm(SYSTEM_PROMPT, contextPrompt);
@@ -323,10 +324,41 @@ public class AiService {
 
   @SuppressWarnings("unused")
   private AiResponse chatFallback(String message, String tenantId, Throwable t) {
-    log.warn("AI chat fallback triggered: {}", t.getMessage());
+    log.warn("AI chat fallback triggered: {}", t.getMessage(), t);
     aiFallbackCounter.increment();
     var summary = analyticsService.getSummary();
-    return buildRuleBasedChatResponse(message, summary);
+    AiResponse partial =
+        buildRuleBasedChatResponse(message, summary, RuleBasedChatMode.LLM_CALL_FAILED);
+    if (!aiProperties.isEnabled()) {
+      return partial;
+    }
+    String prefix =
+        "### Modelo indisponível neste pedido\n"
+            + "A configuração já tem **LLM ativo**, mas a chamada à API **falhou** (rede, quota, "
+            + "timeout ou resposta inválida). Verifica logs do Core e o painel OpenAI.\n\n"
+            + "_"
+            + sanitizeClientError(t)
+            + "_\n\n---\n\n";
+    return new AiResponse(partial.engine(), prefix + partial.content(), partial.metadata());
+  }
+
+  /** Primeira linha do erro, curta, para mostrar ao utilizador (sem stack). */
+  private static String sanitizeClientError(Throwable t) {
+    if (t == null) {
+      return "erro desconhecido";
+    }
+    String m = t.getMessage();
+    if (m == null || m.isBlank()) {
+      m = t.getClass().getSimpleName();
+    }
+    int nl = m.indexOf('\n');
+    if (nl > 0) {
+      m = m.substring(0, nl).trim();
+    }
+    if (m.length() > 240) {
+      return m.substring(0, 237) + "...";
+    }
+    return m;
   }
 
   private Map<String, Object> gatherAuditContext(String tenantId, int hoursBack) {
@@ -413,8 +445,20 @@ public class AiService {
     return new AiResponse("rule-engine", text, context);
   }
 
+  private enum RuleBasedChatMode {
+    /** IA desligada ou sem chave — mensagem explica como ativar. */
+    NO_LLM_CONFIGURED,
+    /** Chave OK mas chamada ao modelo falhou — não sugerir "configure OPENAI". */
+    LLM_CALL_FAILED
+  }
+
   private AiResponse buildRuleBasedChatResponse(
       String message, AnalyticsService.SummaryResponse summary) {
+    return buildRuleBasedChatResponse(message, summary, RuleBasedChatMode.NO_LLM_CONFIGURED);
+  }
+
+  private AiResponse buildRuleBasedChatResponse(
+      String message, AnalyticsService.SummaryResponse summary, RuleBasedChatMode mode) {
     long active = summary.tenants().byStatus().getOrDefault("ACTIVE", 0L);
     long totalTenants = summary.tenants().total();
     long totalPolicies = summary.policies().total();
@@ -558,17 +602,29 @@ public class AiService {
               + "Também pode usar os botões ao lado: **Analisar Auditoria**, **Recomendações** e **Insights**.";
 
     } else {
-      answer =
-          String.format(
-              "No **motor de regras** não interpreto conversa aberta como um chatbot geral — só uso "
-                  + "dados agregados do Core.\n\n"
-                  + "**Estado agora:** %d tenants (%d ativos), %d políticas ABAC, %d flags ativas, "
-                  + "%d eventos de auditoria (24h).\n\n"
-                  + "Experimenta perguntas diretas: *quantos tenants*, *políticas*, *auditoria*, "
-                  + "*flags*, *segurança* ou *anomalias*.\n\n"
-                  + "Para respostas em linguagem natural sobre o que quiseres, o Core precisa de "
-                  + "**OPENAI_API_KEY** (e `AI_ENABLED=true`); aí o assistente passa a usar o LLM.",
-              totalTenants, active, totalPolicies, enabledFlags, audit24h);
+      if (mode == RuleBasedChatMode.LLM_CALL_FAILED) {
+        answer =
+            String.format(
+                "Enquanto o modelo não responde, uso só **dados agregados** do Core (sem conversa "
+                    + "livre).\n\n"
+                    + "**Estado agora:** %d tenants (%d ativos), %d políticas ABAC, %d flags ativas, "
+                    + "%d eventos de auditoria (24h).\n\n"
+                    + "Experimenta palavras-chave: *tenants*, *políticas*, *auditoria*, *flags*, "
+                    + "*segurança* ou *anomalias* — ou tenta o mesmo pedido de novo.",
+                totalTenants, active, totalPolicies, enabledFlags, audit24h);
+      } else {
+        answer =
+            String.format(
+                "No **motor de regras** não interpreto conversa aberta como um chatbot geral — só uso "
+                    + "dados agregados do Core.\n\n"
+                    + "**Estado agora:** %d tenants (%d ativos), %d políticas ABAC, %d flags ativas, "
+                    + "%d eventos de auditoria (24h).\n\n"
+                    + "Experimenta perguntas diretas: *quantos tenants*, *políticas*, *auditoria*, "
+                    + "*flags*, *segurança* ou *anomalias*.\n\n"
+                    + "Para respostas em linguagem natural sobre o que quiseres, o Core precisa de "
+                    + "**OPENAI_API_KEY** (e `AI_ENABLED=true`); aí o assistente passa a usar o LLM.",
+                totalTenants, active, totalPolicies, enabledFlags, audit24h);
+      }
     }
 
     return new AiResponse("rule-engine", answer, Map.of("question", message));
