@@ -228,19 +228,33 @@ public class AiService {
     }
 
     if (!anomalies.anomalies().isEmpty()) {
-      String severity = maxSeverityFromAnomalies(anomalies.anomalies());
+      String severity;
+      String title;
       String types =
           anomalies.anomalies().stream()
               .map(AnalyticsService.Anomaly::type)
               .distinct()
               .reduce((a, b) -> a + ", " + b)
               .orElse("N/A");
-      String description =
-          String.format(
-              "%d anomalia(s) nas últimas 24h: %s. "
-                  + "Tipos como off_hours_activity podem ser normais em equipas distribuídas.",
-              anomalies.anomalies().size(), types);
-      insights.add(new Insight(severity, "Anomalias na auditoria", description));
+      String description;
+      if (AnalyticsService.isOnlyInformationalAnomalies(anomalies.anomalies())) {
+        severity = "info";
+        title = "Padrões de auditoria (horário / contexto)";
+        description =
+            String.format(
+                "%d observação(ões) nas últimas 24h: %s. "
+                    + "Comum em equipas distribuídas; investigue só se combinar com negados ou picos.",
+                anomalies.anomalies().size(), types);
+      } else {
+        severity = maxSeverityFromAnomalies(anomalies.anomalies());
+        title = "Anomalias na auditoria";
+        description =
+            String.format(
+                "%d anomalia(s) nas últimas 24h: %s. "
+                    + "Tipos como off_hours_activity podem ser normais em equipas distribuídas.",
+                anomalies.anomalies().size(), types);
+      }
+      insights.add(new Insight(severity, title, description));
     }
 
     if (summary.flags().enabled() > 20) {
