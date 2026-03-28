@@ -554,7 +554,12 @@ public class GovernanceChatbotService {
 
     long activeTenants = summary.tenants().byStatus().getOrDefault("ACTIVE", 0L);
     long totalTenants = summary.tenants().total();
-    String systemStatus = anomalies.anomalies().isEmpty() ? "SAUDÁVEL" : "ATENÇÃO";
+    String systemStatus =
+        anomalies.anomalies().isEmpty()
+            ? "SAUDÁVEL"
+            : AnalyticsService.isOnlyInformationalAnomalies(anomalies.anomalies())
+                ? "SAUDÁVEL (observações)"
+                : "ATENÇÃO";
 
     StringBuilder sb = new StringBuilder();
     sb.append(String.format("## Status do Fluxe B2B Suite: %s\n\n", systemStatus));
@@ -577,7 +582,9 @@ public class GovernanceChatbotService {
             anomalies.anomalies().size()));
 
     if (!anomalies.anomalies().isEmpty()) {
-      sb.append("\n\n### Anomalias Detectadas\n\n");
+      boolean onlyInfo = AnalyticsService.isOnlyInformationalAnomalies(anomalies.anomalies());
+      sb.append(
+          onlyInfo ? "\n\n### Observações de auditoria\n\n" : "\n\n### Anomalias detectadas\n\n");
       for (AnalyticsService.Anomaly a : anomalies.anomalies()) {
         sb.append(
             String.format(
@@ -588,7 +595,10 @@ public class GovernanceChatbotService {
 
     List<String> suggestions = new ArrayList<>();
     if (!anomalies.anomalies().isEmpty()) {
-      suggestions.add("Investigue as anomalias detectadas");
+      suggestions.add(
+          AnalyticsService.isOnlyInformationalAnomalies(anomalies.anomalies())
+              ? "Se notar picos de acesso negado ou burst, investigue com prioridade"
+              : "Investigue as anomalias detectadas");
     }
     if (summary.policies().total() == 0) {
       suggestions.add("Configure políticas ABAC para segurança adequada");
