@@ -192,4 +192,17 @@ public class AnalyticsService {
       long count,
       String window,
       Instant detectedAt) {}
+
+  /**
+   * Tipos que, sozinhos, costumam ser ruído operacional (fusos, troca de contexto) — não críticos
+   * para o painel quando não há burst/denied.
+   */
+  public static boolean isInformationalAnomalyType(String type) {
+    return "off_hours_activity".equals(type) || "unusual_tenant_switching".equals(type);
+  }
+
+  public static boolean isOnlyInformationalAnomalies(List<Anomaly> anomalies) {
+    return !anomalies.isEmpty()
+        && anomalies.stream().allMatch(a -> isInformationalAnomalyType(a.type()));
+  }
 }
