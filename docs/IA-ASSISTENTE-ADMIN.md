@@ -2,11 +2,21 @@
 
 O **spring-saas-core** expõe `/v1/ai/*` (chat, insights, análise de auditoria, recomendações). O **Admin Console** consome estes endpoints na página do assistente.
 
-## Utilizador seed com role **admin** (Felipe Ricarte)
+## Permissões e role **admin**
 
-O Liquibase **`008-essential-seed-all-envs`** cria o utilizador **`felipericartem@gmail.com`** (nome **Felipe Ricarte Magalhães**) no tenant plataforma (`00000000-0000-0000-0000-000000000001`) com **`roles = admin`**. O changeset **`017-ensure-felipe-ricarte-admin-role`** corrige bases já existentes em que essa role tenha sido alterada (reaplica `admin`).
+Os endpoints de IA precisam de **`analytics:read`**. Quem tem role **`admin`** (e políticas ABAC alinhadas) costuma ter essas permissões no JWT.
 
-Com **admin**, o JWT inclui permissões compatíveis com **`analytics:read`**, necessária para `/v1/ai/*`.
+### Repor `admin` no utilizador (acidente na BD)
+
+Não há migração no repositório para um email concreto. Se alteraste **`roles`** na tabela **`users`** e perdeste o privilégio, repõe **manualmente** no Postgres (ajusta o email):
+
+```sql
+UPDATE users
+SET roles = 'admin', updated_at = CURRENT_TIMESTAMP
+WHERE email = 'teu-email@exemplo.com';
+```
+
+(Roles são uma lista separada por vírgulas, ex.: `admin` ou `admin,ops` — ver coluna `roles` no teu caso.)
 
 ## Quando o LLM está ativo
 
@@ -43,9 +53,7 @@ Sem `OPENAI_API_KEY`, o Core continua em **Rule Engine** mesmo com `AI_ENABLED=t
 
 2. Se o **GET falhar** (403, rede, proxy), o front pode assumir Rule Engine por defeito — verificar consola de rede e ABAC (`analytics:read`).
 
-## Permissões (ABAC)
-
-Os endpoints de IA exigem **`analytics:read`**. O seed essencial inclui política que permite esta permissão; utilizadores com role **admin** (como o seed acima) devem conseguir aceder.
+O seed essencial inclui políticas que permitem **`analytics:read`** onde aplicável.
 
 ## Checklist rápido (Railway staging)
 
