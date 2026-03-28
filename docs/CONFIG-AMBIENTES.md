@@ -36,7 +36,7 @@ Os defaults em `application.yml` já apontam para localhost:5435, 6382, 5675. Se
 
 ## Assistente IA (Admin)
 
-Para ativar o LLM no assistente de governança: ver [IA-ASSISTENTE-ADMIN.md](IA-ASSISTENTE-ADMIN.md) (`OPENAI_API_KEY` + `AI_ENABLED`).
+Ver [IA-ASSISTENTE-ADMIN.md](IA-ASSISTENTE-ADMIN.md): variáveis `OPENAI_API_KEY` + `AI_ENABLED`, diagnóstico via `GET /v1/ai/status`, utilizador seed **admin** `felipericartem@gmail.com`, e exemplo local com Docker Compose.
 
 ## Referências
 
