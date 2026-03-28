@@ -228,18 +228,19 @@ public class AiService {
     }
 
     if (!anomalies.anomalies().isEmpty()) {
-      insights.add(
-          new Insight(
-              "high",
-              "Anomalias detectadas",
-              String.format(
-                  "%d anomalias identificadas: %s",
-                  anomalies.anomalies().size(),
-                  anomalies.anomalies().stream()
-                      .map(AnalyticsService.Anomaly::type)
-                      .distinct()
-                      .reduce((a, b) -> a + ", " + b)
-                      .orElse("N/A"))));
+      String severity = maxSeverityFromAnomalies(anomalies.anomalies());
+      String types =
+          anomalies.anomalies().stream()
+              .map(AnalyticsService.Anomaly::type)
+              .distinct()
+              .reduce((a, b) -> a + ", " + b)
+              .orElse("N/A");
+      String description =
+          String.format(
+              "%d anomalia(s) nas últimas 24h: %s. "
+                  + "Tipos como off_hours_activity podem ser normais em equipas distribuídas.",
+              anomalies.anomalies().size(), types);
+      insights.add(new Insight(severity, "Anomalias na auditoria", description));
     }
 
     if (summary.flags().enabled() > 20) {
@@ -434,6 +435,10 @@ public class AiService {
                   + "Como posso ajudar? Pergunte sobre tenants, políticas, auditoria, segurança ou flags.",
               active, totalTenants, totalPolicies, enabledFlags, totalFlags, audit24h);
 
+    } else if (matchesAny(lower, "obrigad", "valeu", "thanks", "thank you")) {
+      answer =
+          "Por nada. Se precisar de números de tenants, políticas ou auditoria, é só perguntar.";
+
     } else if (matchesAny(lower, "tenant", "inquilino", "cliente", "locatário")) {
       var byPlan = summary.tenants().byPlan();
       var byRegion = summary.tenants().byRegion();
@@ -541,17 +546,15 @@ public class AiService {
     } else {
       answer =
           String.format(
-              "Entendi sua pergunta: *\"%s\"*\n\n"
-                  + "No modo Rule Engine, respondo sobre dados do sistema. "
-                  + "Aqui está o que sei agora:\n\n"
-                  + "- %d tenants (%d ativos)\n"
-                  + "- %d políticas ABAC\n"
-                  + "- %d flags ativas\n"
-                  + "- %d eventos de auditoria (24h)\n\n"
-                  + "Pergunte sobre: **tenants**, **políticas**, **auditoria**, **flags**, "
-                  + "**segurança** ou **anomalias**.\n\n"
-                  + "> Para respostas livres com linguagem natural, configure `OPENAI_API_KEY`.",
-              message, totalTenants, active, totalPolicies, enabledFlags, audit24h);
+              "No **motor de regras** não interpreto conversa aberta como um chatbot geral — só uso "
+                  + "dados agregados do Core.\n\n"
+                  + "**Estado agora:** %d tenants (%d ativos), %d políticas ABAC, %d flags ativas, "
+                  + "%d eventos de auditoria (24h).\n\n"
+                  + "Experimenta perguntas diretas: *quantos tenants*, *políticas*, *auditoria*, "
+                  + "*flags*, *segurança* ou *anomalias*.\n\n"
+                  + "Para respostas em linguagem natural sobre o que quiseres, o Core precisa de "
+                  + "**OPENAI_API_KEY** (e `AI_ENABLED=true`); aí o assistente passa a usar o LLM.",
+              totalTenants, active, totalPolicies, enabledFlags, audit24h);
     }
 
     return new AiResponse("rule-engine", answer, Map.of("question", message));
@@ -562,6 +565,38 @@ public class AiService {
       if (text.contains(kw)) return true;
     }
     return false;
+  }
+
+  /** Severidade máxima entre anomalias (evita marcar HIGH quando só há medium/low). */
+  private static String maxSeverityFromAnomalies(List<AnalyticsService.Anomaly> list) {
+    int max = 0;
+    for (AnalyticsService.Anomaly a : list) {
+      max = Math.max(max, severityRank(a.severity()));
+    }
+    return rankToSeverityLabel(max);
+  }
+
+  private static int severityRank(String s) {
+    if (s == null || s.isBlank()) {
+      return 0;
+    }
+    return switch (s.toLowerCase()) {
+      case "critical" -> 5;
+      case "high" -> 4;
+      case "medium" -> 3;
+      case "low" -> 2;
+      default -> 1;
+    };
+  }
+
+  private static String rankToSeverityLabel(int rank) {
+    return switch (rank) {
+      case 5 -> "critical";
+      case 4 -> "high";
+      case 3 -> "medium";
+      case 2 -> "low";
+      default -> "info";
+    };
   }
 
   public record AiResponse(
