@@ -19,6 +19,10 @@ app:
     token-endpoint-enabled: ${APP_DEV_TOKEN_ENABLED:true}
   auth:
     mode: ${AUTH_MODE:hs256}
+  # LLM do assistente (Admin): liga quando OPENAI_API_KEY está definida (AiProperties.isEnabled).
+  # AI_ENABLED=true por defeito em staging; desliga com AI_ENABLED=false no Railway se quiseres só motor de regras.
+  ai:
+    enabled: ${AI_ENABLED:true}
   email:
     # Staging: nunca falhar o convite por erro de entrega; usuário é criado, senha temp nos logs
     fail-on-delivery-error: ${EMAIL_FAIL_ON_DELIVERY_ERROR:false}
