@@ -44,6 +44,10 @@ docker compose up -d
 
 Sem `OPENAI_API_KEY`, o Core continua em **Rule Engine** mesmo com `AI_ENABLED=true`.
 
+### Badge **LLM** mas o chat ainda parece “só regras”
+
+Se **`GET /v1/ai/status`** indica modelo (ex.: `gpt-4o-mini`) mas a resposta do **chat** não é conversa natural, o mais provável é a **chamada à API OpenAI ter falhado** (rede, quota, 401, timeout, circuito Resilience4j). O `/status` só verifica configuração; o **chat** chama o modelo em tempo real. Ver **logs do Core** no Railway e o painel da OpenAI. A partir do código atual, o fallback deixa explícito que a chave está configurada mas o pedido ao modelo falhou — não confundir com “falta `OPENAI_API_KEY`”.
+
 ## Diagnosticar “Rule Engine” no Admin
 
 1. Chamar **`GET /v1/ai/status`** (com o mesmo `Authorization` que o Admin usa). O JSON inclui:
