@@ -38,4 +38,4 @@ Regras para quem altera este repositório (humanos ou assistentes automatizados)
 ## Referências
 
 - Ambientes: `docs/CONFIG-AMBIENTES.md`, `docs/CONVITE-EMAIL-DEPLOY.md`
-- Pipeline: repositório irmão **fluxe-b2b-suite** — `docs/PIPELINE-ESTEIRAS.md`
+- Git Flow / pipeline (canónico, multi-repo): [PIPELINE-ESTEIRAS.md](https://github.com/ricartefelipe/fluxe-b2b-suite/blob/develop/docs/PIPELINE-ESTEIRAS.md) no **fluxe-b2b-suite**

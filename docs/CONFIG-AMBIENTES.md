@@ -34,6 +34,10 @@ SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run
 
 Os defaults em `application.yml` já apontam para localhost:5435, 6382, 5675. Se você usar outro compose com portas diferentes, exporte `DB_URL`, `REDIS_HOST`, `REDIS_PORT`, `RABBITMQ_HOST`, `RABBITMQ_PORT` ou crie `.env.local` e faça `source .env.local` antes do comando acima.
 
+## Assistente IA (Admin)
+
+Ver [IA-ASSISTENTE-ADMIN.md](IA-ASSISTENTE-ADMIN.md): variáveis `OPENAI_API_KEY` + `AI_ENABLED`, diagnóstico via `GET /v1/ai/status`, e exemplo local com Docker Compose.
+
 ## Referências
 
 - **fluxe-b2b-suite** (repositório da suite): pasta `config/env/README.md` — tabela única de portas (local vs Docker)

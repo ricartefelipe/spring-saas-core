@@ -107,12 +107,14 @@ public interface AuditLogJpaRepository extends JpaRepository<AuditLogEntity, UUI
               + " AND EXTRACT(HOUR FROM created_at) >= :startHour"
               + " AND EXTRACT(HOUR FROM created_at) < :endHour"
               + " GROUP BY actor_sub, tenant_id"
+              + " HAVING COUNT(*) >= :minCount"
               + " ORDER BY cnt DESC LIMIT 50",
       nativeQuery = true)
   List<Object[]> findOffHoursActivity(
       @Param("since") Instant since,
       @Param("startHour") int startHour,
-      @Param("endHour") int endHour);
+      @Param("endHour") int endHour,
+      @Param("minCount") int minCount);
 
   @Query(
       value =
