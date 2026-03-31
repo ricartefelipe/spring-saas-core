@@ -15,7 +15,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -181,7 +184,8 @@ public class AiService {
                   message);
 
           if (!aiProperties.isEnabled()) {
-            return buildRuleBasedChatResponse(message, summary);
+            return buildRuleBasedChatResponse(
+                message, summary, RuleBasedChatMode.NO_LLM_CONFIGURED);
           }
 
           String llmResponse = callLlm(SYSTEM_PROMPT, contextPrompt);
@@ -228,18 +232,33 @@ public class AiService {
     }
 
     if (!anomalies.anomalies().isEmpty()) {
-      insights.add(
-          new Insight(
-              "high",
-              "Anomalias detectadas",
-              String.format(
-                  "%d anomalias identificadas: %s",
-                  anomalies.anomalies().size(),
-                  anomalies.anomalies().stream()
-                      .map(AnalyticsService.Anomaly::type)
-                      .distinct()
-                      .reduce((a, b) -> a + ", " + b)
-                      .orElse("N/A"))));
+      String severity;
+      String title;
+      String types =
+          anomalies.anomalies().stream()
+              .map(AnalyticsService.Anomaly::type)
+              .distinct()
+              .reduce((a, b) -> a + ", " + b)
+              .orElse("N/A");
+      String description;
+      if (AnalyticsService.isOnlyInformationalAnomalies(anomalies.anomalies())) {
+        severity = "info";
+        title = "Padrões de auditoria (horário / contexto)";
+        description =
+            String.format(
+                "%d observação(ões) nas últimas 24h: %s. "
+                    + "Comum em equipas distribuídas; investigue só se combinar com negados ou picos.",
+                anomalies.anomalies().size(), types);
+      } else {
+        severity = maxSeverityFromAnomalies(anomalies.anomalies());
+        title = "Anomalias na auditoria";
+        description =
+            String.format(
+                "%d anomalia(s) nas últimas 24h: %s. "
+                    + "Tipos como off_hours_activity podem ser normais em equipas distribuídas.",
+                anomalies.anomalies().size(), types);
+      }
+      insights.add(new Insight(severity, title, description));
     }
 
     if (summary.flags().enabled() > 20) {
@@ -308,10 +327,68 @@ public class AiService {
 
   @SuppressWarnings("unused")
   private AiResponse chatFallback(String message, String tenantId, Throwable t) {
-    log.warn("AI chat fallback triggered: {}", t.getMessage());
+    log.warn("AI chat fallback triggered: {}", t.getMessage(), t);
     aiFallbackCounter.increment();
     var summary = analyticsService.getSummary();
-    return buildRuleBasedChatResponse(message, summary);
+    AiResponse partial =
+        buildRuleBasedChatResponse(message, summary, RuleBasedChatMode.LLM_CALL_FAILED);
+    if (!aiProperties.isEnabled()) {
+      return partial;
+    }
+    String prefix =
+        "### Modelo indisponível neste pedido\n"
+            + "A configuração já tem **LLM ativo**, mas a chamada à API **falhou** (rede, quota, "
+            + "timeout ou resposta inválida). Verifica logs do Core e o painel OpenAI.\n\n"
+            + "_"
+            + sanitizeClientError(t)
+            + "_\n\n---\n\n";
+    return new AiResponse(partial.engine(), prefix + partial.content(), partial.metadata());
+  }
+
+  private static final Pattern OPENAI_JSON_MESSAGE =
+      Pattern.compile("\"message\"\\s*:\\s*\"([^\"]+)\"");
+
+  /**
+   * Texto curto para o chat quando a API OpenAI falha — evita JSON bruto e prioriza 429/quota/401.
+   */
+  private static String sanitizeClientError(Throwable t) {
+    if (t == null) {
+      return "erro desconhecido";
+    }
+    String raw = t.getMessage();
+    if (raw == null || raw.isBlank()) {
+      return t.getClass().getSimpleName();
+    }
+    String lower = raw.toLowerCase(Locale.ROOT);
+    if (lower.contains("429") || lower.contains("too many requests")) {
+      if (lower.contains("quota") || lower.contains("billing") || lower.contains("exceeded")) {
+        return "OpenAI: quota ou billing esgotado — verifica créditos em "
+            + "https://platform.openai.com/account/billing";
+      }
+      return "OpenAI: limite de pedidos (429). Tenta mais tarde.";
+    }
+    if (lower.contains("401")
+        || lower.contains("invalid_api_key")
+        || lower.contains("unauthorized")) {
+      return "OpenAI: chave inválida ou sem permissão (401).";
+    }
+    if (lower.contains("timeout") || lower.contains("timed out") || lower.contains("timedout")) {
+      return "Timeout ao contactar a API OpenAI.";
+    }
+    Matcher jsonMsg = OPENAI_JSON_MESSAGE.matcher(raw);
+    if (jsonMsg.find()) {
+      String inner = jsonMsg.group(1).replace("\\\"", "\"").replace("\\n", " ");
+      if (inner.length() > 200) {
+        return inner.substring(0, 197) + "...";
+      }
+      return inner;
+    }
+    int nl = raw.indexOf('\n');
+    String m = nl > 0 ? raw.substring(0, nl).trim() : raw.trim();
+    if (m.length() > 240) {
+      return m.substring(0, 237) + "...";
+    }
+    return m;
   }
 
   private Map<String, Object> gatherAuditContext(String tenantId, int hoursBack) {
@@ -398,8 +475,20 @@ public class AiService {
     return new AiResponse("rule-engine", text, context);
   }
 
+  private enum RuleBasedChatMode {
+    /** IA desligada ou sem chave — mensagem explica como ativar. */
+    NO_LLM_CONFIGURED,
+    /** Chave OK mas chamada ao modelo falhou — não sugerir "configure OPENAI". */
+    LLM_CALL_FAILED
+  }
+
   private AiResponse buildRuleBasedChatResponse(
       String message, AnalyticsService.SummaryResponse summary) {
+    return buildRuleBasedChatResponse(message, summary, RuleBasedChatMode.NO_LLM_CONFIGURED);
+  }
+
+  private AiResponse buildRuleBasedChatResponse(
+      String message, AnalyticsService.SummaryResponse summary, RuleBasedChatMode mode) {
     long active = summary.tenants().byStatus().getOrDefault("ACTIVE", 0L);
     long totalTenants = summary.tenants().total();
     long totalPolicies = summary.policies().total();
@@ -418,21 +507,40 @@ public class AiService {
         "oi",
         "hey",
         "como vai",
+        "como está",
+        "como esta",
         "bom dia",
         "boa tarde",
         "boa noite",
         "hello",
         "hi")) {
+      if (mode == RuleBasedChatMode.LLM_CALL_FAILED) {
+        answer =
+            String.format(
+                "Enquanto o modelo não responde, uso só **dados agregados** do Core (o aviso acima "
+                    + "explica o erro da API).\n\n"
+                    + "**Resumo:** %d tenants ativos de %d cadastrados\n"
+                    + "- %d políticas ABAC\n"
+                    + "- %d feature flags ativas de %d\n"
+                    + "- %d eventos de auditoria nas últimas 24h\n\n"
+                    + "Podes perguntar por *tenants*, *políticas*, *auditoria*, *flags* ou *segurança*.",
+                active, totalTenants, totalPolicies, enabledFlags, totalFlags, audit24h);
+      } else {
+        answer =
+            String.format(
+                "Olá! Sou o assistente de governança do Fluxe B2B Suite.\n\n"
+                    + "**Resumo rápido do sistema:**\n"
+                    + "- %d tenants ativos de %d cadastrados\n"
+                    + "- %d políticas ABAC configuradas\n"
+                    + "- %d feature flags ativas de %d\n"
+                    + "- %d eventos de auditoria nas últimas 24h\n\n"
+                    + "Como posso ajudar? Pergunte sobre tenants, políticas, auditoria, segurança ou flags.",
+                active, totalTenants, totalPolicies, enabledFlags, totalFlags, audit24h);
+      }
+
+    } else if (matchesAny(lower, "obrigad", "valeu", "thanks", "thank you")) {
       answer =
-          String.format(
-              "Olá! Sou o assistente de governança do Fluxe B2B Suite.\n\n"
-                  + "**Resumo rápido do sistema:**\n"
-                  + "- %d tenants ativos de %d cadastrados\n"
-                  + "- %d políticas ABAC configuradas\n"
-                  + "- %d feature flags ativas de %d\n"
-                  + "- %d eventos de auditoria nas últimas 24h\n\n"
-                  + "Como posso ajudar? Pergunte sobre tenants, políticas, auditoria, segurança ou flags.",
-              active, totalTenants, totalPolicies, enabledFlags, totalFlags, audit24h);
+          "Por nada. Se precisar de números de tenants, políticas ou auditoria, é só perguntar.";
 
     } else if (matchesAny(lower, "tenant", "inquilino", "cliente", "locatário")) {
       var byPlan = summary.tenants().byPlan();
@@ -539,19 +647,29 @@ public class AiService {
               + "Também pode usar os botões ao lado: **Analisar Auditoria**, **Recomendações** e **Insights**.";
 
     } else {
-      answer =
-          String.format(
-              "Entendi sua pergunta: *\"%s\"*\n\n"
-                  + "No modo Rule Engine, respondo sobre dados do sistema. "
-                  + "Aqui está o que sei agora:\n\n"
-                  + "- %d tenants (%d ativos)\n"
-                  + "- %d políticas ABAC\n"
-                  + "- %d flags ativas\n"
-                  + "- %d eventos de auditoria (24h)\n\n"
-                  + "Pergunte sobre: **tenants**, **políticas**, **auditoria**, **flags**, "
-                  + "**segurança** ou **anomalias**.\n\n"
-                  + "> Para respostas livres com linguagem natural, configure `OPENAI_API_KEY`.",
-              message, totalTenants, active, totalPolicies, enabledFlags, audit24h);
+      if (mode == RuleBasedChatMode.LLM_CALL_FAILED) {
+        answer =
+            String.format(
+                "Enquanto o modelo não responde, uso só **dados agregados** do Core (sem conversa "
+                    + "livre).\n\n"
+                    + "**Estado agora:** %d tenants (%d ativos), %d políticas ABAC, %d flags ativas, "
+                    + "%d eventos de auditoria (24h).\n\n"
+                    + "Experimenta palavras-chave: *tenants*, *políticas*, *auditoria*, *flags*, "
+                    + "*segurança* ou *anomalias* — ou tenta o mesmo pedido de novo.",
+                totalTenants, active, totalPolicies, enabledFlags, audit24h);
+      } else {
+        answer =
+            String.format(
+                "No **motor de regras** não interpreto conversa aberta como um chatbot geral — só uso "
+                    + "dados agregados do Core.\n\n"
+                    + "**Estado agora:** %d tenants (%d ativos), %d políticas ABAC, %d flags ativas, "
+                    + "%d eventos de auditoria (24h).\n\n"
+                    + "Experimenta perguntas diretas: *quantos tenants*, *políticas*, *auditoria*, "
+                    + "*flags*, *segurança* ou *anomalias*.\n\n"
+                    + "Para respostas em linguagem natural sobre o que quiseres, o Core precisa de "
+                    + "**OPENAI_API_KEY** (e `AI_ENABLED=true`); aí o assistente passa a usar o LLM.",
+                totalTenants, active, totalPolicies, enabledFlags, audit24h);
+      }
     }
 
     return new AiResponse("rule-engine", answer, Map.of("question", message));
@@ -562,6 +680,38 @@ public class AiService {
       if (text.contains(kw)) return true;
     }
     return false;
+  }
+
+  /** Severidade máxima entre anomalias (evita marcar HIGH quando só há medium/low). */
+  private static String maxSeverityFromAnomalies(List<AnalyticsService.Anomaly> list) {
+    int max = 0;
+    for (AnalyticsService.Anomaly a : list) {
+      max = Math.max(max, severityRank(a.severity()));
+    }
+    return rankToSeverityLabel(max);
+  }
+
+  private static int severityRank(String s) {
+    if (s == null || s.isBlank()) {
+      return 0;
+    }
+    return switch (s.toLowerCase()) {
+      case "critical" -> 5;
+      case "high" -> 4;
+      case "medium" -> 3;
+      case "low" -> 2;
+      default -> 1;
+    };
+  }
+
+  private static String rankToSeverityLabel(int rank) {
+    return switch (rank) {
+      case 5 -> "critical";
+      case 4 -> "high";
+      case 3 -> "medium";
+      case 2 -> "low";
+      default -> "info";
+    };
   }
 
   public record AiResponse(
