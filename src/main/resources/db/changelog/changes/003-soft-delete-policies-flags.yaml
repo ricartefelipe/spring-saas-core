@@ -2,6 +2,13 @@ databaseChangeLog:
   - changeSet:
       id: phase2-001-soft-delete-policies
       author: saascore
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        - not:
+            columnExists:
+              tableName: policies
+              columnName: deleted
       changes:
         - addColumn:
             tableName: policies
@@ -25,6 +32,13 @@ databaseChangeLog:
   - changeSet:
       id: phase2-002-soft-delete-feature-flags
       author: saascore
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        - not:
+            columnExists:
+              tableName: feature_flags
+              columnName: deleted
       changes:
         - addColumn:
             tableName: feature_flags
