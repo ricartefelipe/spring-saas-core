@@ -40,6 +40,10 @@ public class AnalyticsService {
   @Value("${analytics.anomaly.off-hours-end:5}")
   private int offHoursEnd;
 
+  /** Mínimo de eventos para sinalizar atividade fora do horário (evita ruído com 1–2 acessos). */
+  @Value("${analytics.anomaly.off-hours-min-events:5}")
+  private int offHoursMinEvents;
+
   public AnalyticsService(
       TenantJpaRepository tenantRepo,
       PolicyJpaRepository policyRepo,
@@ -126,7 +130,8 @@ public class AnalyticsService {
               toInstant(row[3])));
     }
 
-    for (Object[] row : auditRepo.findOffHoursActivity(since, offHoursStart, offHoursEnd)) {
+    for (Object[] row :
+        auditRepo.findOffHoursActivity(since, offHoursStart, offHoursEnd, offHoursMinEvents)) {
       anomalies.add(
           new Anomaly(
               "off_hours_activity",
@@ -187,4 +192,17 @@ public class AnalyticsService {
       long count,
       String window,
       Instant detectedAt) {}
+
+  /**
+   * Tipos que, sozinhos, costumam ser ruído operacional (fusos, troca de contexto) — não críticos
+   * para o painel quando não há burst/denied.
+   */
+  public static boolean isInformationalAnomalyType(String type) {
+    return "off_hours_activity".equals(type) || "unusual_tenant_switching".equals(type);
+  }
+
+  public static boolean isOnlyInformationalAnomalies(List<Anomaly> anomalies) {
+    return !anomalies.isEmpty()
+        && anomalies.stream().allMatch(a -> isInformationalAnomalyType(a.type()));
+  }
 }

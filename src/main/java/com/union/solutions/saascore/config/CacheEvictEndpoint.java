@@ -7,8 +7,8 @@ import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 
 /**
- * Actuator endpoint para limpar o cache frontTenants (GET /v1/tenants). Útil após deploy quando o
- * formato de serialização do cache mudou.
+ * Actuator para limpar caches em memória (Spring Cache). A lista GET /v1/tenants já não usa região
+ * dedicada em Redis.
  *
  * <p>POST /actuator/cacheevict
  */
@@ -24,11 +24,14 @@ public class CacheEvictEndpoint {
 
   @WriteOperation
   public String evictFrontTenants() {
-    Cache cache = cacheManager.getCache("frontTenants");
-    if (cache != null) {
-      cache.clear();
-      return "frontTenants cleared";
+    int cleared = 0;
+    for (String name : cacheManager.getCacheNames()) {
+      Cache cache = cacheManager.getCache(name);
+      if (cache != null) {
+        cache.clear();
+        cleared++;
+      }
     }
-    return "frontTenants not available (cache disabled or not Redis)";
+    return cleared > 0 ? ("cleared " + cleared + " cache region(s)") : "no cache regions";
   }
 }
