@@ -37,6 +37,11 @@ public class AiConfig {
       return enabled && apiKey != null && !apiKey.isBlank();
     }
 
+    /** Expõe no /v1/ai/status se a chave está definida (sem revelar o valor). */
+    public boolean hasApiKey() {
+      return apiKey != null && !apiKey.isBlank();
+    }
+
     public String getProvider() {
       return provider;
     }
