@@ -2,62 +2,34 @@ databaseChangeLog:
   - changeSet:
       id: phase2-001-soft-delete-policies
       author: saascore
-      preConditions:
-        onFail: MARK_RAN
-        onError: HALT
-        - not:
-            columnExists:
-              tableName: policies
-              columnName: deleted
       changes:
-        - addColumn:
-            tableName: policies
-            columns:
-              - column:
-                  name: deleted
-                  type: boolean
-                  constraints:
-                    nullable: false
-                  defaultValueBoolean: false
-              - column:
-                  name: deleted_at
-                  type: timestamp with time zone
-        - createIndex:
-            indexName: idx_policies_deleted
-            tableName: policies
-            columns:
-              - column:
-                  name: deleted
+        - sql:
+            sql: >
+              ALTER TABLE public.policies
+              ADD COLUMN IF NOT EXISTS deleted BOOLEAN DEFAULT FALSE NOT NULL;
+        - sql:
+            sql: >
+              ALTER TABLE public.policies
+              ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
+        - sql:
+            sql: >
+              CREATE INDEX IF NOT EXISTS idx_policies_deleted ON public.policies (deleted);
 
   - changeSet:
       id: phase2-002-soft-delete-feature-flags
       author: saascore
-      preConditions:
-        onFail: MARK_RAN
-        onError: HALT
-        - not:
-            columnExists:
-              tableName: feature_flags
-              columnName: deleted
       changes:
-        - addColumn:
-            tableName: feature_flags
-            columns:
-              - column:
-                  name: deleted
-                  type: boolean
-                  constraints:
-                    nullable: false
-                  defaultValueBoolean: false
-              - column:
-                  name: deleted_at
-                  type: timestamp with time zone
-        - createIndex:
-            indexName: idx_feature_flags_deleted
-            tableName: feature_flags
-            columns:
-              - column:
-                  name: deleted
+        - sql:
+            sql: >
+              ALTER TABLE public.feature_flags
+              ADD COLUMN IF NOT EXISTS deleted BOOLEAN DEFAULT FALSE NOT NULL;
+        - sql:
+            sql: >
+              ALTER TABLE public.feature_flags
+              ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
+        - sql:
+            sql: >
+              CREATE INDEX IF NOT EXISTS idx_feature_flags_deleted ON public.feature_flags (deleted);
 
   - changeSet:
       id: phase2-003-tenant-count-views
