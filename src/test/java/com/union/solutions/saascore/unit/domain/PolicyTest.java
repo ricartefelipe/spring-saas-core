@@ -92,8 +92,78 @@ class PolicyTest {
             Instant.now(),
             Instant.now());
     assertThat(p.appliesTo("pro", "eu-west-1")).isTrue();
+    assertThat(p.appliesTo("enterprise", "eu-west-1")).isTrue();
     assertThat(p.appliesTo("pro", "us-east-1")).isFalse();
     assertThat(p.appliesTo("free", "eu-west-1")).isFalse();
+  }
+
+  @Test
+  void appliesTo_policyProOnly_enterpriseMatchesByTier() {
+    Policy p =
+        new Policy(
+            UUID.randomUUID(),
+            "test:write",
+            Policy.Effect.ALLOW,
+            List.of("pro"),
+            List.of(),
+            true,
+            null,
+            Instant.now(),
+            Instant.now());
+    assertThat(p.appliesTo("enterprise", "us-east-1")).isTrue();
+    assertThat(p.appliesTo("pro", "us-east-1")).isTrue();
+    assertThat(p.appliesTo("free", "us-east-1")).isFalse();
+  }
+
+  @Test
+  void appliesTo_policyEnterpriseOnly_proDoesNotMatchByTier() {
+    Policy pol =
+        new Policy(
+            UUID.randomUUID(),
+            "test:write",
+            Policy.Effect.ALLOW,
+            List.of("enterprise"),
+            List.of(),
+            true,
+            null,
+            Instant.now(),
+            Instant.now());
+    assertThat(pol.appliesTo("enterprise", "us-east-1")).isTrue();
+    assertThat(pol.appliesTo("pro", "us-east-1")).isFalse();
+  }
+
+  @Test
+  void appliesTo_planNormalized_trimsAndCaseInsensitive() {
+    Policy p =
+        new Policy(
+            UUID.randomUUID(),
+            "test:write",
+            Policy.Effect.ALLOW,
+            List.of("PRO"),
+            List.of(),
+            true,
+            null,
+            Instant.now(),
+            Instant.now());
+    assertThat(p.appliesTo("  pro  ", "us-east-1")).isTrue();
+    assertThat(p.appliesTo("enterprise", "us-east-1")).isTrue();
+  }
+
+  @Test
+  void appliesTo_denyFreeOnly_exactPlan_noTierUpgrade() {
+    Policy p =
+        new Policy(
+            UUID.randomUUID(),
+            "test:block",
+            Policy.Effect.DENY,
+            List.of("free"),
+            List.of(),
+            true,
+            null,
+            Instant.now(),
+            Instant.now());
+    assertThat(p.appliesTo("free", "us-east-1")).isTrue();
+    assertThat(p.appliesTo("enterprise", "us-east-1")).isFalse();
   }
 
   @Test
