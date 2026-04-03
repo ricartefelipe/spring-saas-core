@@ -1,5 +1,6 @@
 package com.union.solutions.saascore.application.user;
 
+import com.union.solutions.saascore.application.auth.JwtRolePermissions;
 import com.union.solutions.saascore.application.email.EmailTemplates;
 import com.union.solutions.saascore.application.port.AuditLogger;
 import com.union.solutions.saascore.application.port.EmailSender;
@@ -36,60 +37,6 @@ public class UserUseCase {
 
   private static final Logger log = LoggerFactory.getLogger(UserUseCase.class);
   private static final long RESET_TOKEN_TTL_SECONDS = 3600;
-
-  private static final Map<String, List<String>> ROLE_PERMISSIONS;
-
-  static {
-    Map<String, List<String>> m = new java.util.HashMap<>();
-    m.put(
-        "admin",
-        java.util.Arrays.asList(
-            "tenants:read",
-            "tenants:write",
-            "policies:read",
-            "policies:write",
-            "flags:read",
-            "flags:write",
-            "audit:read",
-            "analytics:read",
-            "admin:write",
-            "users:read",
-            "users:write",
-            "orders:read",
-            "orders:write",
-            "inventory:read",
-            "inventory:write",
-            "payments:read",
-            "payments:write",
-            "ledger:read",
-            "products:read",
-            "products:write",
-            "profile:read"));
-    m.put(
-        "ops",
-        java.util.Arrays.asList(
-            "orders:read",
-            "orders:write",
-            "inventory:read",
-            "inventory:write",
-            "products:read",
-            "products:write",
-            "payments:read",
-            "payments:write",
-            "ledger:read",
-            "profile:read"));
-    m.put(
-        "viewer",
-        java.util.Arrays.asList(
-            "orders:read",
-            "inventory:read",
-            "payments:read",
-            "ledger:read",
-            "products:read",
-            "profile:read"));
-    m.put("member", java.util.Arrays.asList("products:read", "orders:read", "profile:read"));
-    ROLE_PERMISSIONS = java.util.Collections.unmodifiableMap(m);
-  }
 
   private final UserRepository userRepo;
   private final TenantRepository tenantRepo;
@@ -172,11 +119,7 @@ public class UserUseCase {
   }
 
   private String buildAccessToken(User u) {
-    List<String> perms =
-        u.getRoles().stream()
-            .flatMap(r -> ROLE_PERMISSIONS.getOrDefault(r, List.of()).stream())
-            .distinct()
-            .toList();
+    List<String> perms = JwtRolePermissions.forRoles(u.getRoles());
     Optional<Tenant> tenant = tenantRepo.findById(u.getTenantId());
     String plan = tenant.map(Tenant::getPlan).orElse("starter");
     String region = tenant.map(Tenant::getRegion).orElse("us-east-1");
