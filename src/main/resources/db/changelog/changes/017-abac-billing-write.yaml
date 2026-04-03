@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: abac-billing-write-all-plans
+      author: saascore
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO policies (id, permission_code, effect, allowed_plans, allowed_regions, enabled, notes, created_at, updated_at)
+              VALUES
+                ('10000000-0000-0000-0000-000000000032', 'billing:write', 'ALLOW', '[]', '[]', true, 'Tenant admins manage billing/subscription on any plan', NOW(), NOW())
+              ON CONFLICT (id) DO NOTHING;
