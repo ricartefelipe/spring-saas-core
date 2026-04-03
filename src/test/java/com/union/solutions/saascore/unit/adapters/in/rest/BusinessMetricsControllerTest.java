@@ -1,11 +1,14 @@
 package com.union.solutions.saascore.unit.adapters.in.rest;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.union.solutions.saascore.adapters.in.rest.BusinessMetricsController;
+import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.application.service.PolicyService;
@@ -25,14 +28,17 @@ class BusinessMetricsControllerTest {
   @Mock TenantRepository tenantRepo;
   @Mock PolicyService policyService;
   @Mock FeatureFlagService flagService;
+  @Mock AbacEvaluator abacEvaluator;
 
   private MockMvc mvc;
 
   @BeforeEach
   void setUp() {
+    doNothing().when(abacEvaluator).enforceOrThrow(anyString());
     mvc =
         MockMvcBuilders.standaloneSetup(
-                new BusinessMetricsController(tenantRepo, policyService, flagService))
+                new BusinessMetricsController(
+                    tenantRepo, policyService, flagService, abacEvaluator))
             .build();
   }
 
