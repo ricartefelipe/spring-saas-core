@@ -67,7 +67,10 @@ class Phase1IntegrationTest {
                 "policies:write",
                 "flags:read",
                 "flags:write",
-                "audit:read"),
+                "audit:read",
+                "admin:write",
+                "billing:write",
+                "profile:read"),
             "enterprise",
             "us-east-1");
     adminToken002 =
