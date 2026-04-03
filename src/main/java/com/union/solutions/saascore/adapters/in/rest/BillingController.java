@@ -1,5 +1,6 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
+import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.billing.BillingUseCase;
 import com.union.solutions.saascore.application.port.StripeBillingPort;
 import com.union.solutions.saascore.application.port.TenantRepository;
@@ -28,12 +29,17 @@ public class BillingController {
   private final BillingUseCase billingUseCase;
   private final StripeBillingPort billingPort;
   private final TenantRepository tenantRepo;
+  private final AbacEvaluator abacEvaluator;
 
   public BillingController(
-      BillingUseCase billingUseCase, StripeBillingPort billingPort, TenantRepository tenantRepo) {
+      BillingUseCase billingUseCase,
+      StripeBillingPort billingPort,
+      TenantRepository tenantRepo,
+      AbacEvaluator abacEvaluator) {
     this.billingUseCase = billingUseCase;
     this.billingPort = billingPort;
     this.tenantRepo = tenantRepo;
+    this.abacEvaluator = abacEvaluator;
   }
 
   @GetMapping("/plans")
@@ -53,6 +59,7 @@ public class BillingController {
   @PostMapping("/subscriptions")
   public ResponseEntity<?> createSubscription(
       @Valid @RequestBody CreateSubscriptionRequest request) {
+    abacEvaluator.enforceOrThrow("billing:write");
     UUID tenantId =
         TenantContext.getTenantId()
             .orElseThrow(() -> new IllegalStateException("Tenant context not available"));
@@ -69,6 +76,7 @@ public class BillingController {
 
   @GetMapping("/subscriptions/current")
   public ResponseEntity<?> getCurrentSubscription() {
+    abacEvaluator.enforceOrThrow("profile:read");
     UUID tenantId =
         TenantContext.getTenantId()
             .orElseThrow(() -> new IllegalStateException("Tenant context not available"));
@@ -80,6 +88,7 @@ public class BillingController {
 
   @PostMapping("/subscriptions/cancel")
   public ResponseEntity<?> cancelSubscription() {
+    abacEvaluator.enforceOrThrow("billing:write");
     UUID tenantId =
         TenantContext.getTenantId()
             .orElseThrow(() -> new IllegalStateException("Tenant context not available"));
@@ -91,6 +100,7 @@ public class BillingController {
 
   @PostMapping("/portal-session")
   public ResponseEntity<?> createPortalSession(@RequestBody Map<String, String> req) {
+    abacEvaluator.enforceOrThrow("billing:write");
     UUID tenantId =
         TenantContext.getTenantId()
             .orElseThrow(() -> new IllegalStateException("Tenant context not available"));

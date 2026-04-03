@@ -1,5 +1,6 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
+import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.application.service.PolicyService;
@@ -19,16 +20,22 @@ public class BusinessMetricsController {
   private final TenantRepository tenantRepo;
   private final PolicyService policyService;
   private final FeatureFlagService flagService;
+  private final AbacEvaluator abacEvaluator;
 
   public BusinessMetricsController(
-      TenantRepository tenantRepo, PolicyService policyService, FeatureFlagService flagService) {
+      TenantRepository tenantRepo,
+      PolicyService policyService,
+      FeatureFlagService flagService,
+      AbacEvaluator abacEvaluator) {
     this.tenantRepo = tenantRepo;
     this.policyService = policyService;
     this.flagService = flagService;
+    this.abacEvaluator = abacEvaluator;
   }
 
   @GetMapping
   public ResponseEntity<Map<String, Object>> metrics() {
+    abacEvaluator.enforceOrThrow("admin:write");
     Map<String, Object> result = new LinkedHashMap<>();
 
     long activeCount = tenantRepo.countByStatus(Tenant.TenantStatus.ACTIVE);

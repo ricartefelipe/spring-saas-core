@@ -1,5 +1,6 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
+import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.billing.SubscriptionUseCase;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.Subscription;
@@ -19,13 +20,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class SubscriptionController {
 
   private final SubscriptionUseCase subscriptionUseCase;
+  private final AbacEvaluator abacEvaluator;
 
-  public SubscriptionController(SubscriptionUseCase subscriptionUseCase) {
+  public SubscriptionController(
+      SubscriptionUseCase subscriptionUseCase, AbacEvaluator abacEvaluator) {
     this.subscriptionUseCase = subscriptionUseCase;
+    this.abacEvaluator = abacEvaluator;
   }
 
   @PostMapping("/trial")
   public ResponseEntity<?> startTrial(@Valid @RequestBody PlanRequest request) {
+    abacEvaluator.enforceOrThrow("billing:write");
     UUID tenantId = requireTenantId();
     try {
       Subscription sub = subscriptionUseCase.startTrial(tenantId, request.planSlug());
@@ -40,6 +45,7 @@ public class SubscriptionController {
 
   @PostMapping("/activate")
   public ResponseEntity<?> activate() {
+    abacEvaluator.enforceOrThrow("billing:write");
     UUID tenantId = requireTenantId();
     try {
       Subscription sub = subscriptionUseCase.activate(tenantId);
@@ -54,6 +60,7 @@ public class SubscriptionController {
 
   @PostMapping("/upgrade")
   public ResponseEntity<?> upgrade(@Valid @RequestBody PlanRequest request) {
+    abacEvaluator.enforceOrThrow("billing:write");
     UUID tenantId = requireTenantId();
     try {
       Subscription sub = subscriptionUseCase.upgrade(tenantId, request.planSlug());
@@ -68,6 +75,7 @@ public class SubscriptionController {
 
   @PostMapping("/downgrade")
   public ResponseEntity<?> downgrade(@Valid @RequestBody PlanRequest request) {
+    abacEvaluator.enforceOrThrow("billing:write");
     UUID tenantId = requireTenantId();
     try {
       Subscription sub = subscriptionUseCase.downgrade(tenantId, request.planSlug());
@@ -82,6 +90,7 @@ public class SubscriptionController {
 
   @PostMapping("/cancel")
   public ResponseEntity<?> cancel() {
+    abacEvaluator.enforceOrThrow("billing:write");
     UUID tenantId = requireTenantId();
     try {
       Subscription sub = subscriptionUseCase.cancel(tenantId);
@@ -96,6 +105,7 @@ public class SubscriptionController {
 
   @PostMapping("/schedule-cancel")
   public ResponseEntity<?> scheduleCancelAtPeriodEnd() {
+    abacEvaluator.enforceOrThrow("billing:write");
     UUID tenantId = requireTenantId();
     try {
       Subscription sub = subscriptionUseCase.scheduleCancelAtPeriodEnd(tenantId);
@@ -110,6 +120,7 @@ public class SubscriptionController {
 
   @PostMapping("/undo-schedule-cancel")
   public ResponseEntity<?> undoScheduleCancelAtPeriodEnd() {
+    abacEvaluator.enforceOrThrow("billing:write");
     UUID tenantId = requireTenantId();
     try {
       Subscription sub = subscriptionUseCase.undoScheduleCancelAtPeriodEnd(tenantId);
@@ -128,6 +139,7 @@ public class SubscriptionController {
 
   @PostMapping("/reactivate")
   public ResponseEntity<?> reactivate() {
+    abacEvaluator.enforceOrThrow("billing:write");
     UUID tenantId = requireTenantId();
     try {
       Subscription sub = subscriptionUseCase.reactivate(tenantId);
@@ -142,6 +154,7 @@ public class SubscriptionController {
 
   @GetMapping("/current")
   public ResponseEntity<?> getCurrentSubscription() {
+    abacEvaluator.enforceOrThrow("profile:read");
     UUID tenantId = requireTenantId();
     try {
       Subscription sub = subscriptionUseCase.getCurrentSubscription(tenantId);
