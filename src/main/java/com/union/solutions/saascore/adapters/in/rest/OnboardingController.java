@@ -1,5 +1,6 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
+import com.union.solutions.saascore.application.auth.JwtRolePermissions;
 import com.union.solutions.saascore.application.onboarding.OnboardingUseCase;
 import com.union.solutions.saascore.application.port.TokenIssuer;
 import com.union.solutions.saascore.domain.Tenant;
@@ -10,7 +11,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import java.util.List;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,7 +53,7 @@ public class OnboardingController {
             user.getId().toString(),
             tenant.getId().toString(),
             user.getRoles(),
-            List.of(),
+            JwtRolePermissions.forRoles(user.getRoles()),
             tenant.getPlan(),
             tenant.getRegion());
 
