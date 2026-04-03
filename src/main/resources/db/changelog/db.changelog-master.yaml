@@ -31,3 +31,5 @@ databaseChangeLog:
       file: db/changelog/changes/015-users-last-login-at.yaml
   - include:
       file: db/changelog/changes/016-reactivation-email-sent.yaml
+  - include:
+      file: db/changelog/changes/017-abac-billing-write.yaml
