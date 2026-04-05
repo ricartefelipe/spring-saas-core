@@ -1,5 +1,6 @@
 package com.union.solutions.saascore.application.onboarding;
 
+import com.union.solutions.saascore.application.auth.JwtTenantClaimsNormalizer;
 import com.union.solutions.saascore.application.email.EmailTemplates;
 import com.union.solutions.saascore.application.port.AuditLogger;
 import com.union.solutions.saascore.application.port.EmailSender;
@@ -56,8 +57,17 @@ public class OnboardingUseCase {
 
     UUID tenantId = UUID.randomUUID();
     Instant now = Instant.now();
+    String normalizedPlan = JwtTenantClaimsNormalizer.plan(plan);
+    String normalizedRegion = JwtTenantClaimsNormalizer.region(region);
     Tenant tenant =
-        new Tenant(tenantId, companyName, plan, region, Tenant.TenantStatus.ACTIVE, now, now);
+        new Tenant(
+            tenantId,
+            companyName,
+            normalizedPlan,
+            normalizedRegion,
+            Tenant.TenantStatus.ACTIVE,
+            now,
+            now);
     tenantRepo.save(tenant);
 
     UUID userId = UUID.randomUUID();
@@ -83,7 +93,7 @@ public class OnboardingUseCase {
         Map.of(
             "tenantId", tenantId.toString(),
             "tenantName", companyName,
-            "plan", plan,
+            "plan", normalizedPlan,
             "adminEmail", adminEmail));
 
     auditLogger.log(
