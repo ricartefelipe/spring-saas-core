@@ -1,5 +1,6 @@
 package com.union.solutions.saascore.adapters.in.auth;
 
+import com.union.solutions.saascore.application.auth.JwtTenantClaimsNormalizer;
 import com.union.solutions.saascore.application.port.TokenIssuer;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
@@ -60,8 +61,8 @@ public class DevTokenController {
             request.tid(),
             request.roles(),
             request.perms(),
-            request.plan(),
-            request.region());
+            JwtTenantClaimsNormalizer.plan(request.plan()),
+            JwtTenantClaimsNormalizer.region(request.region()));
     return ResponseEntity.ok(
         Map.of("access_token", token, "token_type", "Bearer", "expires_in", 3600));
   }
