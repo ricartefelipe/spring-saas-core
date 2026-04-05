@@ -1,6 +1,7 @@
 package com.union.solutions.saascore.application.user;
 
 import com.union.solutions.saascore.application.auth.JwtRolePermissions;
+import com.union.solutions.saascore.application.auth.JwtTenantClaimsNormalizer;
 import com.union.solutions.saascore.application.email.EmailTemplates;
 import com.union.solutions.saascore.application.port.AuditLogger;
 import com.union.solutions.saascore.application.port.EmailSender;
@@ -121,8 +122,8 @@ public class UserUseCase {
   private String buildAccessToken(User u) {
     List<String> perms = JwtRolePermissions.forRoles(u.getRoles());
     Optional<Tenant> tenant = tenantRepo.findById(u.getTenantId());
-    String plan = tenant.map(Tenant::getPlan).orElse("starter");
-    String region = tenant.map(Tenant::getRegion).orElse("us-east-1");
+    String plan = JwtTenantClaimsNormalizer.plan(tenant.map(Tenant::getPlan).orElse(null));
+    String region = JwtTenantClaimsNormalizer.region(tenant.map(Tenant::getRegion).orElse(null));
     return tokenIssuer.issue(
         u.getEmail(),
         u.getTenantId().toString(),
