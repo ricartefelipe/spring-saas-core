@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +23,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+  private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
   private static final String ACTION_JWT_VERIFIED_PREVIOUS_KEY = "JWT_VERIFIED_WITH_PREVIOUS_KEY";
 
@@ -97,6 +101,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     try {
                       tenantUuid = UUID.fromString(tid);
                     } catch (IllegalArgumentException ignored) {
+                      log.trace("UUID parse skipped: {}", ignored.getMessage());
                     }
                   }
                   if (tenantUuid != null) {
@@ -108,6 +113,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                           return;
                         }
                       } catch (IllegalArgumentException ignored) {
+                        log.trace("UUID parse skipped: {}", ignored.getMessage());
                       }
                     }
                     TenantContext.setTenantId(tenantUuid);
@@ -122,6 +128,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     try {
                       TenantContext.setTenantId(UUID.fromString(tenantHeader));
                     } catch (IllegalArgumentException ignored) {
+                      log.trace("UUID parse skipped: {}", ignored.getMessage());
                     }
                   }
                 }
