@@ -4,6 +4,7 @@ import com.union.solutions.saascore.domain.Policy;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
+import org.hibernate.annotations.ColumnTransformer;
 
 @Entity
 @Table(name = "policies")
@@ -16,7 +17,8 @@ public class PolicyEntity {
   @Column(name = "permission_code", nullable = false, length = 128)
   private String permissionCode;
 
-  @Convert(converter = PolicyEffectConverter.class)
+  @Enumerated(EnumType.STRING)
+  @ColumnTransformer(read = "UPPER(effect)")
   @Column(name = "effect", nullable = false, length = 16)
   private Policy.Effect effect;
 
