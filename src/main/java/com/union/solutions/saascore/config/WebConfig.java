@@ -1,6 +1,8 @@
 package com.union.solutions.saascore.config;
 
 import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
@@ -9,6 +11,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
+
+  private static final Logger log = LoggerFactory.getLogger(WebConfig.class);
 
   private final String[] allowedOrigins;
 
@@ -22,7 +26,13 @@ public class WebConfig implements WebMvcConfigurer {
 
   @Override
   public void addCorsMappings(@NonNull CorsRegistry registry) {
-    String[] origins = allowedOrigins.length > 0 ? allowedOrigins : new String[] {"*"};
+    if (allowedOrigins.length == 0) {
+      log.warn(
+          "app.cors.allowed-origins is empty — CORS defaults to localhost only. "
+              + "Set CORS_ALLOWED_ORIGINS in production.");
+    }
+    String[] origins =
+        allowedOrigins.length > 0 ? allowedOrigins : new String[] {"http://localhost:4200"};
     registry
         .addMapping("/**")
         .allowedOrigins(origins)
