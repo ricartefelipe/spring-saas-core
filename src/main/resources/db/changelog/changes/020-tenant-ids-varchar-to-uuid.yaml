@@ -15,18 +15,18 @@ databaseChangeLog:
                 demo_uuid TEXT := '00000000-0000-0000-0000-000000000002';
                 t RECORD;
               BEGIN
-                -- 1) Replace 'tenant_demo' with UUID (only in varchar columns; skip uuid columns)
-                -- tenants.id (PK)
-                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tenants' AND column_name='id' AND data_type='character varying') THEN
-                  UPDATE tenants SET id = demo_uuid WHERE id = 'tenant_demo';
-                END IF;
-                -- All tenant_id columns that are still varchar
+                -- 1) Merge 'tenant_demo' → Demo Corp UUID (child rows first, then delete parent)
+                -- Move all child rows from tenant_demo → demo_uuid (varchar columns only)
                 FOR t IN
                   SELECT table_name FROM information_schema.columns
                   WHERE table_schema='public' AND column_name='tenant_id' AND data_type='character varying'
                 LOOP
                   EXECUTE format('UPDATE %I SET tenant_id = %L WHERE tenant_id = %L', t.table_name, demo_uuid, 'tenant_demo');
                 END LOOP;
+                -- Delete the old tenant_demo row (all children already moved)
+                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tenants' AND column_name='id' AND data_type='character varying') THEN
+                  DELETE FROM tenants WHERE id = 'tenant_demo';
+                END IF;
 
                 -- 2) Drop FK constraints (only if they exist)
                 ALTER TABLE account_configs DROP CONSTRAINT IF EXISTS account_configs_tenant_id_fkey;
