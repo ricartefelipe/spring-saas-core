@@ -355,9 +355,7 @@ class Phase1IntegrationTest {
               .header("Authorization", "Bearer " + adminToken)
               .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
               .content(
-                  "{\"name\":\"Cursor Corp "
-                      + i
-                      + "\",\"plan\":\"pro\",\"region\":\"us-east-1\"}"));
+                  "{\"name\":\"Acme Corp " + i + "\",\"plan\":\"pro\",\"region\":\"us-east-1\"}"));
     }
 
     MvcResult result =
