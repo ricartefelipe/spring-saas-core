@@ -8,6 +8,7 @@ databaseChangeLog:
         Idempotent: skips columns already typed as uuid.
       changes:
         - sql:
+            splitStatements: false
             sql: |
               DO $$
               DECLARE
