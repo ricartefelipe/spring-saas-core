@@ -3,9 +3,7 @@ builder = "DOCKERFILE"
 dockerfilePath = "docker/app.Dockerfile"
 
 [deploy]
-# Usa ENTRYPOINT do Dockerfile (evita problemas com expansão de ${PORT})
 healthcheckPath = "/actuator/health/liveness"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 5
-numReplicas = 1
+restartPolicyMaxRetries = 3
