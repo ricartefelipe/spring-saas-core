@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: audit-log-tenant-id-to-uuid
+      author: saascore
+      comment: "Align audit_log.tenant_id with JPA entity (UUID). Data already contains valid UUIDs."
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE audit_log ALTER COLUMN tenant_id TYPE uuid USING tenant_id::uuid;

@@ -6,6 +6,9 @@
 # =============================================================================
 
 spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
   liquibase:
     # staging + seed: schema, 008 (essencial), 009 (dados realistas)
     contexts: staging,seed
