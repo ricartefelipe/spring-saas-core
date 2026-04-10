@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: normalize-policy-effect-uppercase
+      author: saascore
+      comment: "Fix legacy rows where effect was stored as lowercase (allow/deny) instead of ALLOW/DENY"
+      changes:
+        - sql:
+            sql: |
+              UPDATE policies SET effect = UPPER(effect) WHERE effect != UPPER(effect);
