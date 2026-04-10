@@ -8,7 +8,7 @@
 spring:
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
   liquibase:
     # staging + seed: schema, 008 (essencial), 009 (dados realistas)
     contexts: staging,seed
