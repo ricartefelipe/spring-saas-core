@@ -309,7 +309,6 @@ public class AiService {
         "Empty LLM response");
   }
 
-  @SuppressWarnings("unused")
   private AiResponse analyzeAuditFallback(String tenantId, int hoursBack, Throwable t) {
     log.warn("AI audit analysis fallback triggered: {}", t.getMessage());
     aiFallbackCounter.increment();
@@ -317,7 +316,6 @@ public class AiService {
     return buildRuleBasedAuditAnalysis(auditData, tenantId);
   }
 
-  @SuppressWarnings("unused")
   private AiResponse getRecommendationsFallback(String tenantId, Throwable t) {
     log.warn("AI recommendations fallback triggered: {}", t.getMessage());
     aiFallbackCounter.increment();
@@ -325,7 +323,6 @@ public class AiService {
     return buildRuleBasedRecommendations(context, tenantId);
   }
 
-  @SuppressWarnings("unused")
   private AiResponse chatFallback(String message, String tenantId, Throwable t) {
     log.warn("AI chat fallback triggered: {}", t.getMessage(), t);
     aiFallbackCounter.increment();
