@@ -131,12 +131,26 @@ public class UserUseCase {
         u.getEmail(), tidClaim, u.getRoles(), perms, plan, region, u.isMustChangePassword());
   }
 
+  /**
+   * Alinha a node-b2b-orders ({@code isGlobalAdmin}) e py-payments-ledger ({@code
+   * is_global_admin}): sem {@code tenant_id}, o login só conclui com admin de plataforma (role
+   * {@code admin} no Core). Com tenant, roles de tenant (incl. admin do tenant) mantêm o fluxo
+   * habitual.
+   */
+  private boolean hasTenantOrIsPlatformGlobal(User u) {
+    if (u.getTenantId() != null) {
+      return true;
+    }
+    return u.getRoles() != null && u.getRoles().contains("admin");
+  }
+
   @Transactional
   public Optional<AuthResult> authenticate(String email, String rawPassword) {
     return userRepo
         .findByEmail(email)
         .filter(User::isActive)
         .filter(u -> passwordEncoder.matches(rawPassword, u.getPasswordHash()))
+        .filter(this::hasTenantOrIsPlatformGlobal)
         .map(
             u -> {
               Instant now = Instant.now();
