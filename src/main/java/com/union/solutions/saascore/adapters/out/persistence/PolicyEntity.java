@@ -16,7 +16,7 @@ public class PolicyEntity {
   @Column(name = "permission_code", nullable = false, length = 128)
   private String permissionCode;
 
-  @Enumerated(EnumType.STRING)
+  @Convert(converter = PolicyEffectConverter.class)
   @Column(name = "effect", nullable = false, length = 16)
   private Policy.Effect effect;
 

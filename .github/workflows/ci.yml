@@ -12,8 +12,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Repositório e forks de teste (Surefire) herdam JAVA_TOOL_OPTIONS — reduz aviso de agente dinâmico (Mockito/Byte Buddy no Java 21).
+    env:
+      JAVA_TOOL_OPTIONS: -XX:+EnableDynamicAgentLoading
     steps:
       - uses: actions/checkout@v4
+      - name: Verificar Docker (Testcontainers nos testes de integração)
+        run: docker version
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
