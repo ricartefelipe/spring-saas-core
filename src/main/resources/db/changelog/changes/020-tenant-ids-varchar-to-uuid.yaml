@@ -1,0 +1,149 @@
+databaseChangeLog:
+  - changeSet:
+      id: tenant-ids-varchar-to-uuid
+      author: saascore
+      comment: >
+        Convert tenants.id and all tenant_id columns from varchar to uuid.
+        Replaces 'tenant_demo' with a well-known UUID.
+        Idempotent: skips columns already typed as uuid.
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              DO $$
+              DECLARE
+                demo_uuid TEXT := '00000000-0000-0000-0000-000000000002';
+                t RECORD;
+                c RECORD;
+              BEGIN
+                -- 1) Merge 'tenant_demo' → Demo Corp UUID (child rows first, then delete parent)
+                -- Move all child rows from tenant_demo → demo_uuid (varchar columns only)
+                FOR t IN
+                  SELECT table_name FROM information_schema.columns
+                  WHERE table_schema='public' AND column_name='tenant_id' AND data_type='character varying'
+                LOOP
+                  EXECUTE format('UPDATE %I SET tenant_id = %L WHERE tenant_id = %L', t.table_name, demo_uuid, 'tenant_demo');
+                END LOOP;
+                -- Delete the old tenant_demo row (all children already moved)
+                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tenants' AND column_name='id' AND data_type='character varying') THEN
+                  DELETE FROM tenants WHERE id = 'tenant_demo';
+                END IF;
+
+                -- 2) Drop FK constraints (só tabelas que existem — evita falha em BD mínima / Testcontainers)
+                FOR c IN
+                  SELECT * FROM (VALUES
+                    ('account_configs', 'account_configs_tenant_id_fkey'),
+                    ('disputes', 'disputes_tenant_id_fkey'),
+                    ('feature_flags', 'fk_feature_flags_tenant'),
+                    ('gateway_configs', 'gateway_configs_tenant_id_fkey'),
+                    ('invoices', 'invoices_tenant_id_fkey'),
+                    ('ledger_entries', 'ledger_entries_tenant_id_fkey'),
+                    ('ledger_lines', 'ledger_lines_tenant_id_fkey'),
+                    ('payment_intents', 'payment_intents_tenant_id_fkey'),
+                    ('payment_links', 'payment_links_tenant_id_fkey'),
+                    ('payment_splits', 'payment_splits_tenant_id_fkey'),
+                    ('payouts', 'payouts_tenant_id_fkey'),
+                    ('reconciliation_discrepancies', 'reconciliation_discrepancies_tenant_id_fkey'),
+                    ('recurring_charges', 'recurring_charges_tenant_id_fkey'),
+                    ('refunds', 'refunds_tenant_id_fkey'),
+                    ('saved_payment_methods', 'saved_payment_methods_tenant_id_fkey'),
+                    ('subscriptions', 'fk_subscriptions_tenant'),
+                    ('users', 'fk_users_tenant'),
+                    ('webhook_endpoints', 'fk_webhook_endpoints_tenant')
+                  ) AS v(tbl, cname)
+                LOOP
+                  IF to_regclass('public.' || (c.tbl)::text) IS NOT NULL THEN
+                    EXECUTE format('ALTER TABLE %I DROP CONSTRAINT IF EXISTS %I', c.tbl, c.cname);
+                  END IF;
+                END LOOP;
+
+                -- 3) Convert tenants.id (PK) — skip if already uuid
+                IF EXISTS (
+                  SELECT 1 FROM information_schema.columns
+                  WHERE table_name = 'tenants' AND column_name = 'id'
+                    AND data_type = 'character varying'
+                ) THEN
+                  ALTER TABLE tenants ALTER COLUMN id TYPE uuid USING id::uuid;
+                END IF;
+
+                -- 4) Convert all tenant_id columns — skip if already uuid
+                PERFORM 1; -- helper tables list
+              END $$;
+
+              -- Separate DO block for column conversions (cleaner for long lists)
+              DO $$
+              DECLARE
+                t RECORD;
+              BEGIN
+                FOR t IN
+                  SELECT table_name, column_name
+                  FROM information_schema.columns
+                  WHERE table_schema = 'public'
+                    AND column_name = 'tenant_id'
+                    AND data_type = 'character varying'
+                LOOP
+                  EXECUTE format(
+                    'ALTER TABLE %I ALTER COLUMN %I TYPE uuid USING %I::uuid',
+                    t.table_name, t.column_name, t.column_name
+                  );
+                END LOOP;
+              END $$;
+
+              -- 5) Re-add FK constraints (só se a tabela existir — alinha com o passo 2)
+              DO $$
+              BEGIN
+                IF to_regclass('public.account_configs') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'account_configs' AND constraint_name = 'account_configs_tenant_id_fkey') THEN
+                  ALTER TABLE account_configs ADD CONSTRAINT account_configs_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.disputes') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'disputes' AND constraint_name = 'disputes_tenant_id_fkey') THEN
+                  ALTER TABLE disputes ADD CONSTRAINT disputes_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.feature_flags') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'feature_flags' AND constraint_name = 'fk_feature_flags_tenant') THEN
+                  ALTER TABLE feature_flags ADD CONSTRAINT fk_feature_flags_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.gateway_configs') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'gateway_configs' AND constraint_name = 'gateway_configs_tenant_id_fkey') THEN
+                  ALTER TABLE gateway_configs ADD CONSTRAINT gateway_configs_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.invoices') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'invoices' AND constraint_name = 'invoices_tenant_id_fkey') THEN
+                  ALTER TABLE invoices ADD CONSTRAINT invoices_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.ledger_entries') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'ledger_entries' AND constraint_name = 'ledger_entries_tenant_id_fkey') THEN
+                  ALTER TABLE ledger_entries ADD CONSTRAINT ledger_entries_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.ledger_lines') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'ledger_lines' AND constraint_name = 'ledger_lines_tenant_id_fkey') THEN
+                  ALTER TABLE ledger_lines ADD CONSTRAINT ledger_lines_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.payment_intents') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'payment_intents' AND constraint_name = 'payment_intents_tenant_id_fkey') THEN
+                  ALTER TABLE payment_intents ADD CONSTRAINT payment_intents_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.payment_links') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'payment_links' AND constraint_name = 'payment_links_tenant_id_fkey') THEN
+                  ALTER TABLE payment_links ADD CONSTRAINT payment_links_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.payment_splits') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'payment_splits' AND constraint_name = 'payment_splits_tenant_id_fkey') THEN
+                  ALTER TABLE payment_splits ADD CONSTRAINT payment_splits_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.payouts') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'payouts' AND constraint_name = 'payouts_tenant_id_fkey') THEN
+                  ALTER TABLE payouts ADD CONSTRAINT payouts_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.reconciliation_discrepancies') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'reconciliation_discrepancies' AND constraint_name = 'reconciliation_discrepancies_tenant_id_fkey') THEN
+                  ALTER TABLE reconciliation_discrepancies ADD CONSTRAINT reconciliation_discrepancies_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.recurring_charges') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'recurring_charges' AND constraint_name = 'recurring_charges_tenant_id_fkey') THEN
+                  ALTER TABLE recurring_charges ADD CONSTRAINT recurring_charges_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.refunds') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'refunds' AND constraint_name = 'refunds_tenant_id_fkey') THEN
+                  ALTER TABLE refunds ADD CONSTRAINT refunds_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.saved_payment_methods') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'saved_payment_methods' AND constraint_name = 'saved_payment_methods_tenant_id_fkey') THEN
+                  ALTER TABLE saved_payment_methods ADD CONSTRAINT saved_payment_methods_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.subscriptions') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'subscriptions' AND constraint_name = 'fk_subscriptions_tenant') THEN
+                  ALTER TABLE subscriptions ADD CONSTRAINT fk_subscriptions_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.users') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'users' AND constraint_name = 'fk_users_tenant') THEN
+                  ALTER TABLE users ADD CONSTRAINT fk_users_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+                IF to_regclass('public.webhook_endpoints') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_schema = 'public' AND table_name = 'webhook_endpoints' AND constraint_name = 'fk_webhook_endpoints_tenant') THEN
+                  ALTER TABLE webhook_endpoints ADD CONSTRAINT fk_webhook_endpoints_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+                END IF;
+              END $$;

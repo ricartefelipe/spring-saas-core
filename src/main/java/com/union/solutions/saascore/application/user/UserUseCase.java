@@ -121,17 +121,14 @@ public class UserUseCase {
 
   private String buildAccessToken(User u) {
     List<String> perms = JwtRolePermissions.forRoles(u.getRoles());
-    Optional<Tenant> tenant = tenantRepo.findById(u.getTenantId());
+    UUID tenantId = u.getTenantId();
+    // Sem tenant: não chamar findById(null). Claim tid "*" alinha a orders/payments (admin global).
+    Optional<Tenant> tenant = tenantId == null ? Optional.empty() : tenantRepo.findById(tenantId);
     String plan = JwtTenantClaimsNormalizer.plan(tenant.map(Tenant::getPlan).orElse(null));
     String region = JwtTenantClaimsNormalizer.region(tenant.map(Tenant::getRegion).orElse(null));
+    String tidClaim = tenantId == null ? "*" : tenantId.toString();
     return tokenIssuer.issue(
-        u.getEmail(),
-        u.getTenantId().toString(),
-        u.getRoles(),
-        perms,
-        plan,
-        region,
-        u.isMustChangePassword());
+        u.getEmail(), tidClaim, u.getRoles(), perms, plan, region, u.isMustChangePassword());
   }
 
   @Transactional

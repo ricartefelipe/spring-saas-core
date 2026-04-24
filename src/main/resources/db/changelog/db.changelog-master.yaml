@@ -33,3 +33,9 @@ databaseChangeLog:
       file: db/changelog/changes/016-reactivation-email-sent.yaml
   - include:
       file: db/changelog/changes/017-abac-billing-write.yaml
+  - include:
+      file: db/changelog/changes/018-normalize-policy-effect-case.yaml
+  - include:
+      file: db/changelog/changes/019-audit-log-tenant-id-uuid.yaml
+  - include:
+      file: db/changelog/changes/020-tenant-ids-varchar-to-uuid.yaml
