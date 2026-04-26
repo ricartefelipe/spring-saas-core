@@ -27,6 +27,9 @@ public class TenantRepositoryAdapter implements TenantRepository {
 
   @Override
   public Optional<Tenant> findById(UUID id) {
+    if (id == null) {
+      return Optional.empty();
+    }
     return jpa.findById(id).map(TenantEntity::toDomain);
   }
 
