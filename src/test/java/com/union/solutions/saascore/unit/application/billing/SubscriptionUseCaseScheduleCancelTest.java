@@ -14,11 +14,15 @@ import com.union.solutions.saascore.application.port.PlanDefinitionRepository;
 import com.union.solutions.saascore.application.port.StripeBillingPort;
 import com.union.solutions.saascore.application.port.SubscriptionRepository;
 import com.union.solutions.saascore.application.port.TenantRepository;
+import com.union.solutions.saascore.config.TenantContext;
+import com.union.solutions.saascore.domain.PlanDefinition;
 import com.union.solutions.saascore.domain.Subscription;
 import com.union.solutions.saascore.domain.Subscription.SubscriptionStatus;
+import com.union.solutions.saascore.domain.Tenant;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,6 +61,36 @@ class SubscriptionUseCaseScheduleCancelTest {
     activeSub.setStripeSubscriptionId("sub_stripe_123");
     activeSub.setCreatedAt(now);
     activeSub.setUpdatedAt(now);
+  }
+
+  @AfterEach
+  void tearDown() {
+    TenantContext.clear();
+  }
+
+  @Test
+  void activate_createsStripeCustomerWithAuthenticatedSubjectEmail() {
+    TenantContext.setSubject("billing-admin@test.com");
+    activeSub.setStatus(SubscriptionStatus.TRIAL);
+    activeSub.setStripeSubscriptionId(null);
+    Tenant tenant =
+        new Tenant(tenantId, "Acme", "pro", "us", Tenant.TenantStatus.ACTIVE, null, null);
+    PlanDefinition plan =
+        new PlanDefinition(UUID.randomUUID(), "pro", "Pro", "", 0, 0, 10, 10, 10, true, null, null);
+    plan.setStripePriceIdMonthly("price_123");
+
+    when(subscriptionRepo.findCurrentByTenantId(tenantId)).thenReturn(Optional.of(activeSub));
+    when(tenantRepo.findById(tenantId)).thenReturn(Optional.of(tenant));
+    when(planRepo.findBySlug("pro")).thenReturn(Optional.of(plan));
+    when(billingPort.createCustomer("billing-admin@test.com", "Acme", tenantId.toString()))
+        .thenReturn("cus_123");
+    when(billingPort.createSubscription("cus_123", "price_123")).thenReturn("sub_123");
+    when(subscriptionRepo.save(any(Subscription.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    Subscription saved = useCase.activate(tenantId);
+
+    assertThat(saved.getStripeSubscriptionId()).isEqualTo("sub_123");
+    verify(billingPort).createCustomer("billing-admin@test.com", "Acme", tenantId.toString());
   }
 
   @Test

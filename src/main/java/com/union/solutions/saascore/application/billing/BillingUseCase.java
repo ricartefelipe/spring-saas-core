@@ -52,7 +52,7 @@ public class BillingUseCase {
     }
 
     subscriptionRepo
-        .findActiveByTenantId(tenantId)
+        .findCurrentByTenantId(tenantId)
         .ifPresent(
             existing -> {
               existing.setStatus(SubscriptionStatus.CANCELLED);
@@ -94,7 +94,7 @@ public class BillingUseCase {
   @Transactional
   public Optional<Subscription> cancelSubscription(UUID tenantId) {
     return subscriptionRepo
-        .findActiveByTenantId(tenantId)
+        .findCurrentByTenantId(tenantId)
         .map(
             sub -> {
               sub.setStatus(SubscriptionStatus.CANCELLED);
@@ -106,6 +106,6 @@ public class BillingUseCase {
 
   @Transactional(readOnly = true)
   public Optional<Subscription> getSubscription(UUID tenantId) {
-    return subscriptionRepo.findActiveByTenantId(tenantId);
+    return subscriptionRepo.findCurrentByTenantId(tenantId);
   }
 }
