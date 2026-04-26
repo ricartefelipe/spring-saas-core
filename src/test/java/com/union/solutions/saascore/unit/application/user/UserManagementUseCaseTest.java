@@ -11,12 +11,15 @@ import com.union.solutions.saascore.application.port.AuditLogger;
 import com.union.solutions.saascore.application.port.EmailDispatchResult;
 import com.union.solutions.saascore.application.port.EmailSender;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
+import com.union.solutions.saascore.application.port.PlanDefinitionRepository;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.port.UserRepository;
 import com.union.solutions.saascore.application.user.InviteOutcome;
 import com.union.solutions.saascore.application.user.UserAlreadyExistsException;
+import com.union.solutions.saascore.application.user.UserLimitExceededException;
 import com.union.solutions.saascore.application.user.UserManagementUseCase;
 import com.union.solutions.saascore.config.TenantContext;
+import com.union.solutions.saascore.domain.PlanDefinition;
 import com.union.solutions.saascore.domain.Tenant;
 import com.union.solutions.saascore.domain.User;
 import java.util.List;
@@ -39,6 +42,7 @@ class UserManagementUseCaseTest {
 
   @Mock UserRepository userRepo;
   @Mock TenantRepository tenantRepo;
+  @Mock PlanDefinitionRepository planRepo;
   @Mock OutboxPublisherPort outboxPublisher;
   @Mock AuditLogger auditLogger;
   @Mock EmailSender emailSender;
@@ -56,6 +60,7 @@ class UserManagementUseCaseTest {
         new UserManagementUseCase(
             userRepo,
             tenantRepo,
+            planRepo,
             outboxPublisher,
             auditLogger,
             emailSender,
@@ -65,6 +70,7 @@ class UserManagementUseCaseTest {
     lenient()
         .when(emailSender.send(anyString(), anyString(), anyString()))
         .thenReturn(EmailDispatchResult.notAttempted());
+    lenient().when(planRepo.findBySlug(anyString())).thenReturn(Optional.empty());
   }
 
   @AfterEach
@@ -153,6 +159,27 @@ class UserManagementUseCaseTest {
   }
 
   @Test
+  void invite_whenActiveUserLimitReached_throwsAndDoesNotCreateUser() {
+    UUID tenantId = UUID.randomUUID();
+    Tenant tenant = new Tenant(tenantId, "T", "starter", "us", null, null, null);
+    when(tenantRepo.findById(tenantId)).thenReturn(Optional.of(tenant));
+    when(planRepo.findBySlug("starter")).thenReturn(Optional.of(plan("starter", 2)));
+    when(userRepo.countActiveByTenantId(tenantId)).thenReturn(2L);
+    when(userRepo.findByEmailAndTenantId(eq("limit@test.com"), eq(tenantId)))
+        .thenReturn(Optional.empty());
+
+    assertThatThrownBy(
+            () -> useCase.invite(tenantId, "Limit User", "limit@test.com", List.of("member")))
+        .isInstanceOf(UserLimitExceededException.class)
+        .hasMessageContaining("starter")
+        .hasMessageContaining("2");
+
+    verify(userRepo, never()).save(any(User.class));
+    verify(outboxPublisher, never()).publish(anyString(), anyString(), anyString(), anyMap());
+    verify(emailSender, never()).send(anyString(), anyString(), anyString());
+  }
+
+  @Test
   void invite_createsUserWithMustChangePasswordTrue() {
     UUID tenantId = UUID.randomUUID();
     when(tenantRepo.findById(tenantId))
@@ -174,6 +201,7 @@ class UserManagementUseCaseTest {
         new UserManagementUseCase(
             userRepo,
             tenantRepo,
+            planRepo,
             outboxPublisher,
             auditLogger,
             emailSender,
@@ -199,6 +227,7 @@ class UserManagementUseCaseTest {
         new UserManagementUseCase(
             userRepo,
             tenantRepo,
+            planRepo,
             outboxPublisher,
             auditLogger,
             emailSender,
@@ -225,6 +254,7 @@ class UserManagementUseCaseTest {
         new UserManagementUseCase(
             userRepo,
             tenantRepo,
+            planRepo,
             outboxPublisher,
             auditLogger,
             emailSender,
@@ -243,5 +273,10 @@ class UserManagementUseCaseTest {
     InviteOutcome out = resendUseCase.invite(tenantId, "X", "x@test.com", List.of("member"));
 
     assertThat(out.temporaryPasswordForResponse()).isPresent();
+  }
+
+  private PlanDefinition plan(String slug, int maxUsers) {
+    return new PlanDefinition(
+        UUID.randomUUID(), slug, slug, "", 0, 0, maxUsers, 0, 0, true, null, null);
   }
 }
