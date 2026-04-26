@@ -3,15 +3,20 @@ package com.union.solutions.saascore.adapters.out.billing;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
+import com.stripe.model.Invoice;
 import com.stripe.model.Subscription;
 import com.stripe.model.billingportal.Session;
 import com.stripe.param.CustomerCreateParams;
+import com.stripe.param.InvoiceListParams;
 import com.stripe.param.SubscriptionCancelParams;
 import com.stripe.param.SubscriptionCreateParams;
 import com.stripe.param.SubscriptionUpdateParams;
 import com.stripe.param.billingportal.SessionCreateParams;
+import com.union.solutions.saascore.application.port.BillingInvoice;
 import com.union.solutions.saascore.application.port.StripeBillingPort;
 import jakarta.annotation.PostConstruct;
+import java.time.Instant;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -102,5 +107,33 @@ public class StripeBillingAdapter implements StripeBillingPort {
     } catch (StripeException e) {
       throw new BillingException("Failed to create billing portal session", e);
     }
+  }
+
+  @Override
+  public List<BillingInvoice> listSubscriptionInvoices(String subscriptionId) {
+    try {
+      InvoiceListParams params =
+          InvoiceListParams.builder().setSubscription(subscriptionId).setLimit(24L).build();
+      return Invoice.list(params).getData().stream().map(this::toBillingInvoice).toList();
+    } catch (StripeException e) {
+      throw new BillingException("Failed to list Stripe invoices", e);
+    }
+  }
+
+  private BillingInvoice toBillingInvoice(Invoice invoice) {
+    return new BillingInvoice(
+        invoice.getId(),
+        invoice.getStatus(),
+        invoice.getCurrency(),
+        invoice.getAmountDue() != null ? invoice.getAmountDue() : 0L,
+        epochSecond(invoice.getCreated()),
+        epochSecond(invoice.getPeriodStart()),
+        epochSecond(invoice.getPeriodEnd()),
+        invoice.getHostedInvoiceUrl(),
+        invoice.getInvoicePdf());
+  }
+
+  private Instant epochSecond(Long value) {
+    return value == null ? null : Instant.ofEpochSecond(value);
   }
 }
