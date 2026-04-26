@@ -5,10 +5,13 @@ import com.union.solutions.saascore.application.port.AuditLogger;
 import com.union.solutions.saascore.application.port.EmailDispatchResult;
 import com.union.solutions.saascore.application.port.EmailSender;
 import com.union.solutions.saascore.application.port.OutboxPublisherPort;
+import com.union.solutions.saascore.application.port.PlanDefinitionRepository;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.port.UserRepository;
 import com.union.solutions.saascore.config.EmailProviderConstants;
 import com.union.solutions.saascore.config.TenantContext;
+import com.union.solutions.saascore.domain.PlanDefinition;
+import com.union.solutions.saascore.domain.Tenant;
 import com.union.solutions.saascore.domain.User;
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -41,6 +44,7 @@ public class UserManagementUseCase {
 
   private final UserRepository userRepo;
   private final TenantRepository tenantRepo;
+  private final PlanDefinitionRepository planRepo;
   private final OutboxPublisherPort outboxPublisher;
   private final AuditLogger auditLogger;
   private final EmailSender emailSender;
@@ -51,6 +55,7 @@ public class UserManagementUseCase {
   public UserManagementUseCase(
       UserRepository userRepo,
       TenantRepository tenantRepo,
+      PlanDefinitionRepository planRepo,
       OutboxPublisherPort outboxPublisher,
       AuditLogger auditLogger,
       EmailSender emailSender,
@@ -59,6 +64,7 @@ public class UserManagementUseCase {
       @Value("${app.email.frontend-url:http://localhost:4200}") String frontendUrl) {
     this.userRepo = userRepo;
     this.tenantRepo = tenantRepo;
+    this.planRepo = planRepo;
     this.outboxPublisher = outboxPublisher;
     this.auditLogger = auditLogger;
     this.emailSender = emailSender;
@@ -157,6 +163,7 @@ public class UserManagementUseCase {
     if (existing.isPresent()) {
       throw new UserAlreadyExistsException(email, tenantId);
     }
+    enforceActiveUserLimit(tenantId);
 
     String temporaryPassword = generateTemporaryPassword();
     String passwordHash = passwordEncoder.encode(temporaryPassword);
@@ -228,6 +235,25 @@ public class UserManagementUseCase {
     }
 
     return InviteOutcome.withoutPassword(user);
+  }
+
+  private void enforceActiveUserLimit(UUID tenantId) {
+    Optional<Tenant> tenant = tenantRepo.findById(tenantId);
+    String planSlug = tenant.map(Tenant::getPlan).orElse(null);
+    if (planSlug == null || planSlug.isBlank()) {
+      return;
+    }
+
+    Optional<PlanDefinition> plan = planRepo.findBySlug(planSlug);
+    int maxUsers = plan.map(PlanDefinition::getMaxUsers).orElse(0);
+    if (maxUsers <= 0) {
+      return;
+    }
+
+    long activeUsers = userRepo.countActiveByTenantId(tenantId);
+    if (activeUsers >= maxUsers) {
+      throw new UserLimitExceededException(tenantId, planSlug, maxUsers);
+    }
   }
 
   /**

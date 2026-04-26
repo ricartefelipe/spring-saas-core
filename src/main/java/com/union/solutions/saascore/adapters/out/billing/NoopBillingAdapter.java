@@ -1,6 +1,8 @@
 package com.union.solutions.saascore.adapters.out.billing;
 
+import com.union.solutions.saascore.application.port.BillingInvoice;
 import com.union.solutions.saascore.application.port.StripeBillingPort;
+import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,5 +54,11 @@ public class NoopBillingAdapter implements StripeBillingPort {
         returnUrl,
         fakeUrl);
     return fakeUrl;
+  }
+
+  @Override
+  public List<BillingInvoice> listSubscriptionInvoices(String subscriptionId) {
+    log.info("NOOP listSubscriptionInvoices subscriptionId={}", subscriptionId);
+    return List.of();
   }
 }
