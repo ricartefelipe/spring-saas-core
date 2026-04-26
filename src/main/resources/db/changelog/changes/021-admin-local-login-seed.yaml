@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: 021-admin-local-login-seed
+      author: saascore
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO users (
+                id,
+                email,
+                name,
+                password_hash,
+                tenant_id,
+                roles,
+                status,
+                must_change_password,
+                created_at,
+                updated_at
+              )
+              VALUES (
+                '30000000-0000-0000-0000-000000000001',
+                'admin@local',
+                'Admin Local',
+                '$2b$10$w4tXaNqzgPqXU6BCMY7dReSUM.m3RkhfRm4D8R8NUYxYla709J9cq',
+                '00000000-0000-0000-0000-000000000001',
+                'admin',
+                'ACTIVE',
+                false,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+              )
+              ON CONFLICT (email) DO UPDATE
+              SET
+                password_hash = EXCLUDED.password_hash,
+                tenant_id = EXCLUDED.tenant_id,
+                roles = EXCLUDED.roles,
+                status = EXCLUDED.status,
+                must_change_password = false,
+                updated_at = CURRENT_TIMESTAMP;
