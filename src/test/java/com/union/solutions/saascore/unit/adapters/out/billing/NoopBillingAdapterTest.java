@@ -37,4 +37,9 @@ class NoopBillingAdapterTest {
     String result = adapter.createBillingPortalSession("cus_123", "https://app.com/billing");
     assertThat(result).isEqualTo("https://billing.stripe.com/noop-session");
   }
+
+  @Test
+  void listSubscriptionInvoices_returnsEmptyList() {
+    assertThat(adapter.listSubscriptionInvoices("sub_123")).isEmpty();
+  }
 }
