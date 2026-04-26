@@ -2,7 +2,9 @@ package com.union.solutions.saascore.adapters.in.rest;
 
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.billing.BillingUseCase;
+import com.union.solutions.saascore.application.port.BillingInvoice;
 import com.union.solutions.saascore.application.port.StripeBillingPort;
+import com.union.solutions.saascore.application.port.SubscriptionRepository;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.PlanDefinition;
@@ -29,16 +31,19 @@ public class BillingController {
   private final BillingUseCase billingUseCase;
   private final StripeBillingPort billingPort;
   private final TenantRepository tenantRepo;
+  private final SubscriptionRepository subscriptionRepo;
   private final AbacEvaluator abacEvaluator;
 
   public BillingController(
       BillingUseCase billingUseCase,
       StripeBillingPort billingPort,
       TenantRepository tenantRepo,
+      SubscriptionRepository subscriptionRepo,
       AbacEvaluator abacEvaluator) {
     this.billingUseCase = billingUseCase;
     this.billingPort = billingPort;
     this.tenantRepo = tenantRepo;
+    this.subscriptionRepo = subscriptionRepo;
     this.abacEvaluator = abacEvaluator;
   }
 
@@ -126,6 +131,25 @@ public class BillingController {
     return ResponseEntity.ok(Map.of("url", url));
   }
 
+  @GetMapping("/invoices")
+  public ResponseEntity<List<InvoiceDto>> listInvoices() {
+    abacEvaluator.enforceOrThrow("profile:read");
+    UUID tenantId =
+        TenantContext.getTenantId()
+            .orElseThrow(() -> new IllegalStateException("Tenant context not available"));
+
+    return ResponseEntity.ok(
+        subscriptionRepo
+            .findCurrentByTenantId(tenantId)
+            .map(Subscription::getStripeSubscriptionId)
+            .filter(id -> id != null && !id.isBlank())
+            .map(billingPort::listSubscriptionInvoices)
+            .orElseGet(List::of)
+            .stream()
+            .map(InvoiceDto::from)
+            .toList());
+  }
+
   public record CreateSubscriptionRequest(@NotBlank String planSlug) {}
 
   public record PlanDto(
@@ -187,6 +211,31 @@ public class BillingController {
           s.getCancelledAt(),
           s.getCreatedAt(),
           s.getUpdatedAt());
+    }
+  }
+
+  public record InvoiceDto(
+      String id,
+      String status,
+      String currency,
+      long amountDueCents,
+      Instant createdAt,
+      Instant periodStart,
+      Instant periodEnd,
+      String hostedInvoiceUrl,
+      String invoicePdfUrl) {
+
+    public static InvoiceDto from(BillingInvoice invoice) {
+      return new InvoiceDto(
+          invoice.id(),
+          invoice.status(),
+          invoice.currency(),
+          invoice.amountDueCents(),
+          invoice.createdAt(),
+          invoice.periodStart(),
+          invoice.periodEnd(),
+          invoice.hostedInvoiceUrl(),
+          invoice.invoicePdfUrl());
     }
   }
 }

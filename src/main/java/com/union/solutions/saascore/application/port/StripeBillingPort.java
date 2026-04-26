@@ -1,5 +1,7 @@
 package com.union.solutions.saascore.application.port;
 
+import java.util.List;
+
 public interface StripeBillingPort {
 
   String createCustomer(String email, String name, String tenantId);
@@ -15,4 +17,6 @@ public interface StripeBillingPort {
   void undoScheduleCancelAtPeriodEnd(String subscriptionId);
 
   String createBillingPortalSession(String customerId, String returnUrl);
+
+  List<BillingInvoice> listSubscriptionInvoices(String subscriptionId);
 }
