@@ -5,6 +5,7 @@ import com.union.solutions.saascore.application.port.PlanDefinitionRepository;
 import com.union.solutions.saascore.application.port.StripeBillingPort;
 import com.union.solutions.saascore.application.port.SubscriptionRepository;
 import com.union.solutions.saascore.application.port.TenantRepository;
+import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.PlanDefinition;
 import com.union.solutions.saascore.domain.Subscription;
 import com.union.solutions.saascore.domain.Subscription.SubscriptionStatus;
@@ -117,7 +118,8 @@ public class SubscriptionUseCase {
 
     if (tenant.getStripeCustomerId() == null) {
       String customerId =
-          billingPort.createCustomer(tenant.getName(), tenant.getName(), tenantId.toString());
+          billingPort.createCustomer(
+              resolveBillingEmail(tenantId), tenant.getName(), tenantId.toString());
       tenant.setStripeCustomerId(customerId);
       tenant.setUpdatedAt(now);
       tenantRepo.save(tenant);
@@ -145,6 +147,14 @@ public class SubscriptionUseCase {
 
     log.info("Subscription activated for tenant={} plan={}", tenantId, saved.getPlanSlug());
     return saved;
+  }
+
+  private String resolveBillingEmail(UUID tenantId) {
+    String subject = TenantContext.getSubject();
+    if (subject != null && subject.contains("@")) {
+      return subject;
+    }
+    return "billing+" + tenantId + "@fluxe.local";
   }
 
   @Transactional

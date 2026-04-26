@@ -119,20 +119,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     TenantContext.setTenantId(tenantUuid);
                   }
                 }
-                if (TenantContext.getTenantId().isEmpty()
-                    && tenantHeader != null
-                    && !tenantHeader.isBlank()) {
-                  if ("*".equals(tenantHeader.trim())) {
-                    TenantContext.setTenantId(PLATFORM_TENANT_ID);
-                  } else {
-                    try {
-                      TenantContext.setTenantId(UUID.fromString(tenantHeader));
-                    } catch (IllegalArgumentException ignored) {
-                      log.trace("UUID parse skipped: {}", ignored.getMessage());
-                    }
-                  }
-                }
-
                 TenantContext.getTenantId().ifPresent(t -> MDC.put("tenantId", t.toString()));
               });
     }
