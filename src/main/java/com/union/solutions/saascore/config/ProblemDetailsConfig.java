@@ -3,6 +3,7 @@ package com.union.solutions.saascore.config;
 import com.union.solutions.saascore.adapters.in.rest.ProblemDetails;
 import com.union.solutions.saascore.application.user.EmailAlreadyExistsException;
 import com.union.solutions.saascore.application.user.UserAlreadyExistsException;
+import com.union.solutions.saascore.application.user.UserLimitExceededException;
 import com.union.solutions.saascore.domain.exception.AiServiceException;
 import com.union.solutions.saascore.domain.exception.CryptoException;
 import jakarta.persistence.EntityNotFoundException;
@@ -122,7 +123,11 @@ public class ProblemDetailsConfig {
                 TenantContext.getCorrelationId()));
   }
 
-  @ExceptionHandler({EmailAlreadyExistsException.class, UserAlreadyExistsException.class})
+  @ExceptionHandler({
+    EmailAlreadyExistsException.class,
+    UserAlreadyExistsException.class,
+    UserLimitExceededException.class
+  })
   public ResponseEntity<ProblemDetails> handleConflict(
       RuntimeException ex, HttpServletRequest req) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
