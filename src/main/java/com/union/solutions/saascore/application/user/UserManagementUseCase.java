@@ -131,9 +131,9 @@ public class UserManagementUseCase {
         .findByIdAndTenantId(id, tenantId)
         .map(
             user -> {
-              user.setStatus(User.UserStatus.DELETED);
-              user.setUpdatedAt(Instant.now());
-              userRepo.save(user);
+              if (!userRepo.softDeleteByIdAndTenantId(id, tenantId, Instant.now())) {
+                return false;
+              }
               outboxPublisher.publish(
                   "USER",
                   id.toString(),
