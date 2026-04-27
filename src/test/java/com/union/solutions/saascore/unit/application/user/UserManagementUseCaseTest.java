@@ -22,7 +22,9 @@ import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.PlanDefinition;
 import com.union.solutions.saascore.domain.Tenant;
 import com.union.solutions.saascore.domain.User;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -273,6 +275,39 @@ class UserManagementUseCaseTest {
     InviteOutcome out = resendUseCase.invite(tenantId, "X", "x@test.com", List.of("member"));
 
     assertThat(out.temporaryPasswordForResponse()).isPresent();
+  }
+
+  @Test
+  void softDelete_updatesOnlyDeletionFieldsWithoutReSavingFullUser() {
+    UUID tenantId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    User user =
+        new User(
+            userId,
+            "legacy@test.com",
+            null,
+            null,
+            tenantId,
+            List.of("member"),
+            User.UserStatus.ACTIVE,
+            false,
+            Instant.now(),
+            Instant.now());
+    when(userRepo.findByIdAndTenantId(userId, tenantId)).thenReturn(Optional.of(user));
+    when(userRepo.softDeleteByIdAndTenantId(eq(userId), eq(tenantId), any(Instant.class)))
+        .thenReturn(true);
+
+    boolean deleted = useCase.softDelete(userId, tenantId);
+
+    assertThat(deleted).isTrue();
+    verify(userRepo).softDeleteByIdAndTenantId(eq(userId), eq(tenantId), any(Instant.class));
+    verify(userRepo, never()).save(any(User.class));
+    verify(outboxPublisher)
+        .publish(
+            "USER",
+            userId.toString(),
+            "user.deleted",
+            Map.of("tenantId", tenantId.toString(), "email", "legacy@test.com"));
   }
 
   private PlanDefinition plan(String slug, int maxUsers) {
