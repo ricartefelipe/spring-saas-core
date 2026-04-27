@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,6 +18,20 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, UUID> {
   Optional<UserEntity> findByEmailAndTenantId(String email, UUID tenantId);
 
   List<UserEntity> findByTenantId(UUID tenantId);
+
+  @Modifying(flushAutomatically = true, clearAutomatically = true)
+  @Query(
+      """
+      UPDATE UserEntity u
+         SET u.status = 'DELETED',
+             u.updatedAt = :updatedAt
+       WHERE u.id = :id
+         AND u.tenantId = :tenantId
+      """)
+  int softDeleteByIdAndTenantId(
+      @Param("id") UUID id,
+      @Param("tenantId") UUID tenantId,
+      @Param("updatedAt") Instant updatedAt);
 
   boolean existsByEmail(String email);
 
