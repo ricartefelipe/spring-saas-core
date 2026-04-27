@@ -20,6 +20,8 @@ public interface UserRepository {
 
   List<User> findByTenantId(UUID tenantId);
 
+  boolean softDeleteByIdAndTenantId(UUID id, UUID tenantId, Instant updatedAt);
+
   boolean existsByEmail(String email);
 
   long countByTenantId(UUID tenantId);
