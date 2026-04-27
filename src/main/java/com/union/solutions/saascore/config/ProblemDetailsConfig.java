@@ -87,6 +87,15 @@ public class ProblemDetailsConfig {
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ProblemDetails> handleDataIntegrity(
       DataIntegrityViolationException ex, HttpServletRequest req) {
+    Throwable root = ex.getMostSpecificCause();
+    org.slf4j.LoggerFactory.getLogger(ProblemDetailsConfig.class)
+        .warn(
+            "DataIntegrityViolation on {} {}: {} — root: {}",
+            req.getMethod(),
+            req.getRequestURI(),
+            ex.getMessage(),
+            root.getMessage(),
+            ex);
     return ResponseEntity.status(HttpStatus.CONFLICT)
         .body(
             ProblemDetails.of(
