@@ -48,6 +48,11 @@ public class UserRepositoryAdapter implements UserRepository {
   }
 
   @Override
+  public boolean softDeleteByIdAndTenantId(UUID id, UUID tenantId, Instant updatedAt) {
+    return jpa.softDeleteByIdAndTenantId(id, tenantId, updatedAt) > 0;
+  }
+
+  @Override
   public boolean existsByEmail(String email) {
     return jpa.existsByEmail(email);
   }
