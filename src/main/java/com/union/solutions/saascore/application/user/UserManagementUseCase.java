@@ -125,36 +125,59 @@ public class UserManagementUseCase {
             });
   }
 
-  @Transactional
+  /**
+   * Soft-deletes a user. The status UPDATE runs in its own transaction so that failures in
+   * downstream side-effects (outbox, webhooks, audit) can never roll it back — those are
+   * best-effort.
+   */
   public boolean softDelete(UUID id, UUID tenantId) {
-    return userRepo
-        .findByIdAndTenantId(id, tenantId)
-        .map(
-            user -> {
-              if (!userRepo.softDeleteByIdAndTenantId(id, tenantId, Instant.now())) {
-                return false;
-              }
-              outboxPublisher.publish(
-                  "USER",
-                  id.toString(),
-                  "user.deleted",
-                  Map.of("tenantId", tenantId.toString(), "email", user.getEmail()));
-              auditLogger.log(
-                  tenantId,
-                  TenantContext.getSubject(),
-                  TenantContext.getRoles().toString(),
-                  TenantContext.getPerms().toString(),
-                  "USER_DELETED",
-                  "user",
-                  id.toString(),
-                  null,
-                  null,
-                  204,
-                  TenantContext.getCorrelationId(),
-                  null);
-              return true;
-            })
-        .orElse(false);
+    Optional<User> userOpt = userRepo.findByIdAndTenantId(id, tenantId);
+    if (userOpt.isEmpty()) {
+      return false;
+    }
+    User user = userOpt.get();
+
+    if (!userRepo.softDeleteByIdAndTenantId(id, tenantId, Instant.now())) {
+      return false;
+    }
+
+    try {
+      outboxPublisher.publish(
+          "USER",
+          id.toString(),
+          "user.deleted",
+          Map.of("tenantId", tenantId.toString(), "email", user.getEmail()));
+    } catch (Exception ex) {
+      log.warn("Outbox publish failed for user.deleted user_id={}: {}", id, rootMessage(ex), ex);
+    }
+
+    try {
+      auditLogger.log(
+          tenantId,
+          TenantContext.getSubject(),
+          TenantContext.getRoles().toString(),
+          TenantContext.getPerms().toString(),
+          "USER_DELETED",
+          "user",
+          id.toString(),
+          null,
+          null,
+          204,
+          TenantContext.getCorrelationId(),
+          null);
+    } catch (Exception ex) {
+      log.warn("Audit log failed for USER_DELETED user_id={}: {}", id, rootMessage(ex), ex);
+    }
+
+    return true;
+  }
+
+  private static String rootMessage(Throwable t) {
+    Throwable root = t;
+    while (root.getCause() != null && root.getCause() != root) {
+      root = root.getCause();
+    }
+    return root.getClass().getSimpleName() + ": " + root.getMessage();
   }
 
   @Transactional
