@@ -310,6 +310,64 @@ class UserManagementUseCaseTest {
             Map.of("tenantId", tenantId.toString(), "email", "legacy@test.com"));
   }
 
+  @Test
+  void softDelete_succeedsEvenWhenOutboxPublishFails() {
+    UUID tenantId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    User user =
+        new User(
+            userId,
+            "outbox-fail@test.com",
+            "Name",
+            "hash",
+            tenantId,
+            List.of("member"),
+            User.UserStatus.ACTIVE,
+            false,
+            Instant.now(),
+            Instant.now());
+    when(userRepo.findByIdAndTenantId(userId, tenantId)).thenReturn(Optional.of(user));
+    when(userRepo.softDeleteByIdAndTenantId(eq(userId), eq(tenantId), any(Instant.class)))
+        .thenReturn(true);
+    doThrow(new org.springframework.dao.DataIntegrityViolationException("outbox constraint"))
+        .when(outboxPublisher)
+        .publish(anyString(), anyString(), anyString(), anyMap());
+
+    boolean deleted = useCase.softDelete(userId, tenantId);
+
+    assertThat(deleted).isTrue();
+    verify(userRepo).softDeleteByIdAndTenantId(eq(userId), eq(tenantId), any(Instant.class));
+  }
+
+  @Test
+  void softDelete_succeedsEvenWhenAuditLogFails() {
+    UUID tenantId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    User user =
+        new User(
+            userId,
+            "audit-fail@test.com",
+            "Name",
+            "hash",
+            tenantId,
+            List.of("member"),
+            User.UserStatus.ACTIVE,
+            false,
+            Instant.now(),
+            Instant.now());
+    when(userRepo.findByIdAndTenantId(userId, tenantId)).thenReturn(Optional.of(user));
+    when(userRepo.softDeleteByIdAndTenantId(eq(userId), eq(tenantId), any(Instant.class)))
+        .thenReturn(true);
+    doThrow(new RuntimeException("audit DB error"))
+        .when(auditLogger)
+        .log(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+
+    boolean deleted = useCase.softDelete(userId, tenantId);
+
+    assertThat(deleted).isTrue();
+    verify(userRepo).softDeleteByIdAndTenantId(eq(userId), eq(tenantId), any(Instant.class));
+  }
+
   private PlanDefinition plan(String slug, int maxUsers) {
     return new PlanDefinition(
         UUID.randomUUID(), slug, slug, "", 0, 0, maxUsers, 0, 0, true, null, null);
