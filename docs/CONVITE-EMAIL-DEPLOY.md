@@ -109,7 +109,7 @@ EMAIL_PROVIDER=resend
 RESEND_API_KEY=re_xxx
 EMAIL_FROM=noreply@mail.fluxe.com.br   # domínio EXATO verificado em resend.com/domains
 EMAIL_FROM_NAME=Fluxe B2B Suite        # opcional; melhora deliverability
-FRONTEND_URL=https://admin-console-staging-b1ab.up.railway.app
+FRONTEND_URL=https://SEU-ADMIN-CONSOLE.up.railway.app
 ```
 
 **Testar Resend antes do deploy:**
