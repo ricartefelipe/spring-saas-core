@@ -13,6 +13,9 @@ build/
 .cursor/
 *.swp
 *.swo
+
+# AI assistant config
+AGENTS.md
 *~
 
 # Environment (NEVER commit real env files)
