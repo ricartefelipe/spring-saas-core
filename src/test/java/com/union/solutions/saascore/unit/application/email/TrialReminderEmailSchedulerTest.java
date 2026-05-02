@@ -97,8 +97,7 @@ class TrialReminderEmailSchedulerTest {
     Instant d1End = LocalDate.of(2026, 5, 4).atStartOfDay(ZoneOffset.UTC).toInstant();
     when(subscriptionRepo.findTrialsWithTrialEndingBetween(d1Start, d1End)).thenReturn(List.of());
 
-    when(subscriptionRepo.findTrialsWithTrialEndingBetween(wStart, wEnd))
-        .thenReturn(List.of(sub));
+    when(subscriptionRepo.findTrialsWithTrialEndingBetween(wStart, wEnd)).thenReturn(List.of(sub));
     when(reminderSentRepo.existsBySubscriptionIdAndReminderType(
             subscriptionId, TrialReminderEmailScheduler.REMINDER_3D))
         .thenReturn(false);
@@ -108,8 +107,7 @@ class TrialReminderEmailSchedulerTest {
     scheduler.sendTrialEndingReminders();
 
     ArgumentCaptor<String> subjectCaptor = ArgumentCaptor.forClass(String.class);
-    verify(emailSender)
-        .send(eq("admin@acme.com"), subjectCaptor.capture(), anyString());
+    verify(emailSender).send(eq("admin@acme.com"), subjectCaptor.capture(), anyString());
     assertThat(subjectCaptor.getValue()).contains("3 dias");
     verify(reminderSentRepo).recordSent(subscriptionId, TrialReminderEmailScheduler.REMINDER_3D);
   }
@@ -123,8 +121,7 @@ class TrialReminderEmailSchedulerTest {
     Instant d1End = LocalDate.of(2026, 5, 4).atStartOfDay(ZoneOffset.UTC).toInstant();
     when(subscriptionRepo.findTrialsWithTrialEndingBetween(d1Start, d1End)).thenReturn(List.of());
 
-    when(subscriptionRepo.findTrialsWithTrialEndingBetween(wStart, wEnd))
-        .thenReturn(List.of(sub));
+    when(subscriptionRepo.findTrialsWithTrialEndingBetween(wStart, wEnd)).thenReturn(List.of(sub));
     when(reminderSentRepo.existsBySubscriptionIdAndReminderType(
             subscriptionId, TrialReminderEmailScheduler.REMINDER_3D))
         .thenReturn(true);

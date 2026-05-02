@@ -155,11 +155,7 @@ public final class EmailTemplates {
    * @param daysLeft 3 ou 1 (cópia e assunto adaptados)
    */
   public static String trialEndingReminderEmail(
-      String userName,
-      String tenantName,
-      String trialEndsAtDate,
-      String billingUrl,
-      int daysLeft) {
+      String userName, String tenantName, String trialEndsAtDate, String billingUrl, int daysLeft) {
     String heading =
         daysLeft <= 1
             ? "Seu período de avaliação termina amanhã"
