@@ -18,6 +18,9 @@ public interface SubscriptionJpaRepository extends JpaRepository<SubscriptionEnt
   List<SubscriptionEntity> findByStatusAndTrialEndsAtBefore(
       SubscriptionStatus status, Instant cutoff);
 
+  List<SubscriptionEntity> findByStatusAndTrialEndsAtGreaterThanEqualAndTrialEndsAtLessThan(
+      SubscriptionStatus status, Instant startInclusive, Instant endExclusive);
+
   List<SubscriptionEntity> findByStatusAndGracePeriodEndsAtBefore(
       SubscriptionStatus status, Instant cutoff);
 }
