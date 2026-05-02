@@ -117,6 +117,31 @@ class EmailTemplatesTest {
   }
 
   @Nested
+  class TrialEndingReminderEmail {
+
+    @Test
+    void containsBillingLinkAndEscaping() {
+      String html =
+          EmailTemplates.trialEndingReminderEmail(
+              "Maria", "Acme Corp", "2026-05-05", "https://admin.example.com/billing", 3);
+      assertThat(html).contains("Maria");
+      assertThat(html).contains("Acme Corp");
+      assertThat(html).contains("2026-05-05");
+      assertThat(html).contains("https://admin.example.com/billing");
+      assertThat(html).contains("3 dias");
+      assertThat(html).contains(EmailTemplates.PRODUCT_DISPLAY_NAME);
+    }
+
+    @Test
+    void whenOneDayLeft_headingSaysTomorrow() {
+      String html =
+          EmailTemplates.trialEndingReminderEmail(
+              "João", "Tech", "2026-05-06", "https://x/billing", 1);
+      assertThat(html).contains("amanhã");
+    }
+  }
+
+  @Nested
   class PostSignupDay7Email {
 
     @Test

@@ -52,6 +52,17 @@ public class SubscriptionRepositoryAdapter implements SubscriptionRepository {
   }
 
   @Override
+  public List<Subscription> findTrialsWithTrialEndingBetween(
+      Instant startInclusive, Instant endExclusive) {
+    return jpa
+        .findByStatusAndTrialEndsAtGreaterThanEqualAndTrialEndsAtLessThan(
+            SubscriptionStatus.TRIAL, startInclusive, endExclusive)
+        .stream()
+        .map(SubscriptionEntity::toDomain)
+        .toList();
+  }
+
+  @Override
   public List<Subscription> findOverdueSubscriptions(Instant cutoff) {
     return jpa.findByStatusAndGracePeriodEndsAtBefore(SubscriptionStatus.PAST_DUE, cutoff).stream()
         .map(SubscriptionEntity::toDomain)

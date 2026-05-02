@@ -122,6 +122,10 @@ app:
     cron: ${REACTIVATION_CRON:0 0 10 * * *}
     inactive-days: ${REACTIVATION_INACTIVE_DAYS:14}
     cooldown-days: ${REACTIVATION_COOLDOWN_DAYS:30}
+  # Lembretes antes do fim do trial (3 e 1 dia úteis em UTC, e-mail aos admins ativos)
+  trial-reminder:
+    enabled: ${TRIAL_REMINDER_ENABLED:true}
+    cron: ${TRIAL_REMINDER_CRON:0 0 8 * * *}
 resilience4j:
   circuitbreaker:
     instances:
@@ -171,6 +175,14 @@ management:
     metrics:
       export:
         enabled: true
+
+# Sentry — só envia eventos com SENTRY_DSN definido (compose: SENTRY_DSN_CORE → SENTRY_DSN)
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:${SPRING_PROFILES_ACTIVE:local}}
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0}
+  send-default-pii: false
+  exception-resolver-order: -2147483647
 
 springdoc:
   api-docs:

@@ -149,6 +149,52 @@ public final class EmailTemplates {
         .formatted(escapeHtml(userName), escapeHtml(tenantName), PRODUCT_DISPLAY_NAME);
   }
 
+  /**
+   * Lembrete antes do fim do período de trial — CTA para Faturamento (assinatura / cartão).
+   *
+   * @param daysLeft 3 ou 1 (cópia e assunto adaptados)
+   */
+  public static String trialEndingReminderEmail(
+      String userName,
+      String tenantName,
+      String trialEndsAtDate,
+      String billingUrl,
+      int daysLeft) {
+    String heading =
+        daysLeft <= 1
+            ? "Seu período de avaliação termina amanhã"
+            : "Seu período de avaliação termina em %d dias".formatted(daysLeft);
+    return """
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head><meta charset="UTF-8"></head>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333;">Olá, %s!</h2>
+          <p>%s</p>
+          <p>Organização: <strong>%s</strong>.</p>
+          <p>Término do trial: <strong>%s</strong> (UTC).</p>
+          <p>Para não perder o acesso, adicione um método de pagamento ou escolha um plano na área de faturamento.</p>
+          <p style="text-align: center; margin: 32px 0;">
+            <a href="%s"
+               style="background: #2563eb; color: #fff; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+              Abrir Faturamento
+            </a>
+          </p>
+          <p style="color: #666; font-size: 13px;">Se você já ativou a assinatura, pode ignorar este lembrete.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
+          <p style="color: #999; font-size: 12px;">%s</p>
+        </body>
+        </html>
+        """
+        .formatted(
+            escapeHtml(userName),
+            escapeHtml(heading),
+            escapeHtml(tenantName),
+            escapeHtml(trialEndsAtDate),
+            escapeHtml(billingUrl),
+            PRODUCT_DISPLAY_NAME);
+  }
+
   /** E-mail de reativação para tenant inativo (sem login há N dias). */
   public static String reactivationEmail(String userName, String tenantName, String loginUrl) {
     return """

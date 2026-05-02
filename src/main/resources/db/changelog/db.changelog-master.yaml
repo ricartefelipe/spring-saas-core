@@ -41,3 +41,5 @@ databaseChangeLog:
       file: db/changelog/changes/020-tenant-ids-varchar-to-uuid.yaml
   - include:
       file: db/changelog/changes/021-admin-local-login-seed.yaml
+  - include:
+      file: db/changelog/changes/022-subscription-trial-reminder-sent.yaml
