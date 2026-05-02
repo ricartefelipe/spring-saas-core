@@ -22,8 +22,7 @@ public interface SubscriptionRepository {
    * Trials whose {@code trialEndsAt} falls in {@code [startInclusive, endExclusive)} (typically one
    * UTC calendar day window).
    */
-  List<Subscription> findTrialsWithTrialEndingBetween(
-      Instant startInclusive, Instant endExclusive);
+  List<Subscription> findTrialsWithTrialEndingBetween(Instant startInclusive, Instant endExclusive);
 
   List<Subscription> findOverdueSubscriptions(Instant cutoff);
 }
