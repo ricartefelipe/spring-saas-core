@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: subscription-trial-reminder-001-table
+      author: saascore
+      changes:
+        - createTable:
+            tableName: subscription_trial_reminder_sent
+            columns:
+              - column:
+                  name: subscription_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: reminder_type
+                  type: varchar(24)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: sent_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_trial_reminder_sent_type
+            tableName: subscription_trial_reminder_sent
+            columns:
+              - column:
+                  name: reminder_type
