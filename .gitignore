@@ -10,12 +10,8 @@ build/
 .idea/
 *.iml
 .vscode/
-.cursor/
 *.swp
 *.swo
-
-# Optional local agent policy files (not committed)
-AGENTS.md
 *~
 
 # Environment (NEVER commit real env files)

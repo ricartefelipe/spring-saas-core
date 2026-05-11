@@ -69,10 +69,3 @@ Estado atual por critério de "pronto para venda".
 - [x] Exportação de audit log (CSV/JSON)
 - [x] Política de privacidade de dados
 
----
-
-## IA/LLM
-
-- [x] API de dados agregados para análise
-- [x] Endpoint de anomalias em audit log
-- [x] Documentação viva gerada por IA

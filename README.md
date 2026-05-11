@@ -130,14 +130,14 @@ Testes de integração (Testcontainers) exigem Docker em execução.
 | Liveness | http://localhost:8080/actuator/health/liveness | Kubernetes |
 | Readiness | http://localhost:8080/actuator/health/readiness | DB e dependências |
 | Prometheus | http://localhost:8080/actuator/prometheus | Métricas |
-| Grafana | http://localhost:3030 | admin/admin (compose) |
-| RabbitMQ UI | http://localhost:15672 | guest/guest |
+| Grafana | http://localhost:3030 | *(ver docker-compose.yml)* |
+| RabbitMQ UI | http://localhost:15672 | *(ver docker-compose.yml)* |
 
 ---
 
 ## API REST (prefixo /v1)
 
-A API está versionada como **v1** e é estável para integração com node-b2b-orders, py-payments-ledger e agentes (IA/LLM). Endpoints recomendados a agentes: `/v1/tenants`, `/v1/audit`, `/v1/tenants/{id}/snapshot` (ver [BACKLOG-EVOLUCAO.md](docs/BACKLOG-EVOLUCAO.md) — IA/LLM).
+A API está versionada como **v1** e é estável para integração com node-b2b-orders e py-payments-ledger.
 
 ### Tenants
 
@@ -175,7 +175,7 @@ A API está versionada como **v1** e é estável para integração com node-b2b-
 | GET | `/v1/audit` | Consultar (paginado; filtros: tenantId, action, from/to) |
 | GET | `/v1/audit/export` | Exportar para compliance: `from`, `to` (obrig.), format=json ou csv, até 10k registros |
 
-### Consumer endpoints (Node/Python e agentes)
+### Consumer endpoints (Node/Python)
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
@@ -242,11 +242,11 @@ A API está versionada como **v1** e é estável para integração com node-b2b-
 |----------|---------|-----------|
 | SPRING_PROFILES_ACTIVE | local | Profile ativo |
 | DB_URL / spring.datasource.url | jdbc:postgresql://... | URL PostgreSQL |
-| DB_USER / spring.datasource.username | saascore | Usuário do banco |
-| DB_PASS / spring.datasource.password | saascore | Senha do banco |
+| DB_USER / spring.datasource.username | — | Usuário do banco |
+| DB_PASS / spring.datasource.password | — | Senha do banco |
 | AUTH_MODE | hs256 | `hs256` (local) ou `oidc` (produção) |
 | JWT_ISSUER | spring-saas-core | Issuer do JWT |
-| JWT_SECRET / JWT_HS256_SECRET | (dev) | Chave HS256 atual (**apenas profile local**) |
+| JWT_SECRET / JWT_HS256_SECRET | — | Chave HS256 (gerar com `openssl rand -hex 32`) |
 | JWT_SECRET_PREVIOUS / JWT_HS256_SECRET_PREVIOUS | — | Chave anterior para rotação sem downtime |
 | OIDC_ISSUER_URI | — | Obrigatório em prod (ex.: Keycloak) |
 | REDIS_HOST | localhost | Host Redis |
@@ -340,7 +340,7 @@ Diagramas C4 e ERD em `docs/architecture/`.
 3. **Token e CRUD** (1 min): `./scripts/seed.sh` e mostrar tenants/flags no terminal
 4. **Smoke** (1 min): `./scripts/smoke.sh`
 5. **Convite de utilizador (E2E)** (30 s): `./scripts/e2e-invite-user.sh` — cria utilizador via `POST /v1/users/invite` (email único por execução)
-6. **Observabilidade** (1 min): Grafana http://localhost:3030 (admin/admin)
+6. **Observabilidade** (1 min): Grafana http://localhost:3030
 
 ---
 
@@ -350,10 +350,7 @@ Diagramas C4 e ERD em `docs/architecture/`.
 - [Headers HTTP](docs/contracts/headers.md)
 - [Eventos Outbox](docs/contracts/events.md)
 - [Compliance e auditoria](docs/compliance.md) — retenção, exportação de audit log
-- [Prompt de evolução](docs/PROMPT-EVOLUCAO.md) — objetivo entregável/vendável e IA/LLM para evolução contínua
 - [Backlog de evolução](docs/BACKLOG-EVOLUCAO.md) — checklist entregável/vendável
-
-Documentos planejados (a criar quando necessário): `docs/api/agents.md` (APIs para agentes IA/LLM), `docs/PROMPT-CONCLUSAO-VISTORIA.md`, `docs/RELATORIO-CONCLUSAO-EVOLUCAO.md`, `docs/O-QUE-FOI-FEITO-E-O-QUE-FALTA.md`, `docs/O-QUE-FALTA-PARA-CONCLUIR.md`.
 
 ---
 
@@ -361,4 +358,4 @@ Documentos planejados (a criar quando necessário): `docs/api/agents.md` (APIs p
 
 MIT — ver [LICENSE](LICENSE).
 
-**Autor:** Felipe Ricarte — felipericartem@gmail.com
+**Autor:** Felipe Ricarte
