@@ -22,7 +22,7 @@ databaseChangeLog:
                 'admin@local',
                 'Admin Local',
                 '$2b$10$w4tXaNqzgPqXU6BCMY7dReSUM.m3RkhfRm4D8R8NUYxYla709J9cq',
-                '00000000-0000-0000-0000-000000000001',
+                NULL,
                 'admin',
                 'ACTIVE',
                 false,
