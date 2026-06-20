@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 026-admin-local-platform-global
+      author: saascore
+      comment: "admin@local como admin global (tid * no JWT) — Ops/Orders cross-tenant"
+      changes:
+        - sql:
+            sql: |
+              UPDATE users
+              SET tenant_id = NULL, updated_at = NOW()
+              WHERE email = 'admin@local';

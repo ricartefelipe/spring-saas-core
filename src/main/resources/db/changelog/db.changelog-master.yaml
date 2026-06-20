@@ -49,3 +49,5 @@ databaseChangeLog:
       file: db/changelog/changes/024-pilot-demo-passwords.yaml
   - include:
       file: db/changelog/changes/025-essential-abac-admin-console-policies.yaml
+  - include:
+      file: db/changelog/changes/026-admin-local-platform-global.yaml
