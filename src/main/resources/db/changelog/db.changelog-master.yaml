@@ -43,3 +43,5 @@ databaseChangeLog:
       file: db/changelog/changes/021-admin-local-login-seed.yaml
   - include:
       file: db/changelog/changes/022-subscription-trial-reminder-sent.yaml
+  - include:
+      file: db/changelog/changes/023-demo-corp-pilot-login-seed.yaml
