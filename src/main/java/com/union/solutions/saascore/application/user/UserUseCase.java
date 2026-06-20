@@ -38,6 +38,9 @@ public class UserUseCase {
 
   private static final Logger log = LoggerFactory.getLogger(UserUseCase.class);
   private static final long RESET_TOKEN_TTL_SECONDS = 3600;
+  /** Tenant plataforma — admin com role admin emite tid * no JWT (cross-tenant Ops/Orders). */
+  private static final UUID PLATFORM_TENANT_ID =
+      UUID.fromString("00000000-0000-0000-0000-000000000001");
 
   private final UserRepository userRepo;
   private final TenantRepository tenantRepo;
@@ -122,11 +125,15 @@ public class UserUseCase {
   private String buildAccessToken(User u) {
     List<String> perms = JwtRolePermissions.forRoles(u.getRoles());
     UUID tenantId = u.getTenantId();
-    // Sem tenant: não chamar findById(null). Claim tid "*" alinha a orders/payments (admin global).
+    boolean platformGlobal =
+        tenantId == null
+            || (PLATFORM_TENANT_ID.equals(tenantId)
+                && u.getRoles() != null
+                && u.getRoles().contains("admin"));
     Optional<Tenant> tenant = tenantId == null ? Optional.empty() : tenantRepo.findById(tenantId);
     String plan = JwtTenantClaimsNormalizer.plan(tenant.map(Tenant::getPlan).orElse(null));
     String region = JwtTenantClaimsNormalizer.region(tenant.map(Tenant::getRegion).orElse(null));
-    String tidClaim = tenantId == null ? "*" : tenantId.toString();
+    String tidClaim = platformGlobal ? "*" : tenantId.toString();
     return tokenIssuer.issue(
         u.getEmail(), tidClaim, u.getRoles(), perms, plan, region, u.isMustChangePassword());
   }
