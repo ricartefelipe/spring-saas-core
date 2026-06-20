@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 025-essential-abac-admin-console-policies
+      author: saascore
+      comment: "ABAC faltante em prod/piloto — policies, flags, audit, admin:read (Admin Console)"
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO policies (id, permission_code, effect, allowed_plans, allowed_regions, enabled, notes, created_at, updated_at)
+              VALUES
+                ('10000000-0000-0000-0000-000000000004', 'policies:read', 'ALLOW', '[]', '[]', true, 'All plans can read policies', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000005', 'flags:read', 'ALLOW', '[]', '[]', true, 'All plans can read flags', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000006', 'policies:write', 'ALLOW', '["pro","enterprise"]', '[]', true, 'Pro and enterprise can manage policies', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000007', 'flags:write', 'ALLOW', '["pro","enterprise"]', '[]', true, 'Pro and enterprise can manage flags', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000008', 'admin:read', 'ALLOW', '["pro","enterprise"]', '[]', true, 'Admin read for pro/enterprise', NOW(), NOW()),
+                ('10000000-0000-0000-0000-000000000009', 'audit:read', 'ALLOW', '[]', '[]', true, 'All plans can read audit log', NOW(), NOW())
+              ON CONFLICT (id) DO NOTHING;
