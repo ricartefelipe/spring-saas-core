@@ -2,10 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 026-admin-local-platform-global
       author: saascore
-      comment: "admin@local como admin global (tid * no JWT) — Ops/Orders cross-tenant"
+      comment: "Reservado — global admin via JWT (UserUseCase), sem NULL em tenant_id"
       changes:
         - sql:
-            sql: |
-              UPDATE users
-              SET tenant_id = NULL, updated_at = NOW()
-              WHERE email = 'admin@local';
+            sql: SELECT 1;
