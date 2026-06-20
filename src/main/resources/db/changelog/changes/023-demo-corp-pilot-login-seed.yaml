@@ -1,0 +1,65 @@
+databaseChangeLog:
+  - changeSet:
+      id: 023-demo-corp-tenant
+      author: saascore
+      comment: "Tenant Demo Corp para piloto/demo (prod) — alinhado ao seed de orders/payments"
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO tenants (id, name, plan, region, status, created_at, updated_at)
+              VALUES (
+                '00000000-0000-0000-0000-000000000002',
+                'Demo Corp',
+                'pro',
+                'sa-east-1',
+                'ACTIVE',
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+              )
+              ON CONFLICT (id) DO UPDATE
+              SET
+                name = EXCLUDED.name,
+                plan = EXCLUDED.plan,
+                region = EXCLUDED.region,
+                status = EXCLUDED.status,
+                updated_at = CURRENT_TIMESTAMP;
+
+  - changeSet:
+      id: 023-demo-corp-ops-login
+      author: saascore
+      comment: "Login demo multi-tenant no Core (shop/ops/admin) — senha ops123"
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO users (
+                id,
+                email,
+                name,
+                password_hash,
+                tenant_id,
+                roles,
+                status,
+                must_change_password,
+                created_at,
+                updated_at
+              )
+              VALUES (
+                '30000000-0000-0000-0000-000000000098',
+                'ops@demo.example.com',
+                'Ops Demo Corp',
+                '$2b$10$x9Jvs9DOnwp7kdpDCuTBAeLQ/xFK.a44OTYNU7dlSscaMkLaLi83W',
+                '00000000-0000-0000-0000-000000000002',
+                'ops',
+                'ACTIVE',
+                false,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+              )
+              ON CONFLICT (email) DO UPDATE
+              SET
+                password_hash = EXCLUDED.password_hash,
+                tenant_id = EXCLUDED.tenant_id,
+                roles = EXCLUDED.roles,
+                status = EXCLUDED.status,
+                must_change_password = false,
+                updated_at = CURRENT_TIMESTAMP;
