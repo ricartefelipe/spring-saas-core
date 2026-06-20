@@ -47,3 +47,5 @@ databaseChangeLog:
       file: db/changelog/changes/023-demo-corp-pilot-login-seed.yaml
   - include:
       file: db/changelog/changes/024-pilot-demo-passwords.yaml
+  - include:
+      file: db/changelog/changes/025-essential-abac-admin-console-policies.yaml
