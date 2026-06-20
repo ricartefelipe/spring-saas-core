@@ -47,6 +47,8 @@ Thumbs.db
 # Maven
 .mvn/wrapper/maven-wrapper.jar
 !*.sha256
+# Artefacto acidental quando MAVEN_REPO_LOCAL usa placeholder literal
+${user.home}/
 
 # Test
 *.log
