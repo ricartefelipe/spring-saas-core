@@ -1,0 +1,8 @@
+# Piloto AWS: produção + seed Liquibase (009) para massa de dados de demo.
+spring:
+  liquibase:
+    contexts: prod,seed
+
+app:
+  email:
+    fail-on-delivery-error: false
