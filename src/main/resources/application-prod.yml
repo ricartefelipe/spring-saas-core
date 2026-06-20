@@ -31,7 +31,7 @@ app:
   dev:
     token-endpoint-enabled: false
   auth:
-    mode: oidc
+    mode: ${AUTH_MODE:oidc}
   rate-limit:
     free: 30
     pro: 200
