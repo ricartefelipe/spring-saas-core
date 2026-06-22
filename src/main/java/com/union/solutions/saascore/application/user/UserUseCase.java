@@ -38,6 +38,7 @@ public class UserUseCase {
 
   private static final Logger log = LoggerFactory.getLogger(UserUseCase.class);
   private static final long RESET_TOKEN_TTL_SECONDS = 3600;
+
   /** Tenant plataforma — admin com role admin emite tid * no JWT (cross-tenant Ops/Orders). */
   private static final UUID PLATFORM_TENANT_ID =
       UUID.fromString("00000000-0000-0000-0000-000000000001");
