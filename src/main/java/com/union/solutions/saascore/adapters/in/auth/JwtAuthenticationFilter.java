@@ -96,7 +96,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (tid != null && !tid.isBlank()) {
                   UUID tenantUuid = null;
                   if ("*".equals(tid.trim())) {
-                    tenantUuid = PLATFORM_TENANT_ID;
+                    // Platform admin: operate on tenant selected via X-Tenant-Id (Admin Console).
+                    tenantUuid = resolveHeaderTenantOrPlatform(tenantHeader);
                   } else {
                     try {
                       tenantUuid = UUID.fromString(tid);
@@ -127,6 +128,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     } finally {
       TenantContext.clear();
     }
+  }
+
+  private static UUID resolveHeaderTenantOrPlatform(String tenantHeader) {
+    if (tenantHeader != null && !tenantHeader.isBlank()) {
+      try {
+        return UUID.fromString(tenantHeader);
+      } catch (IllegalArgumentException ignored) {
+        // fall through to platform tenant
+      }
+    }
+    return PLATFORM_TENANT_ID;
   }
 
   private static UUID parseUuidOrNull(String tid) {
