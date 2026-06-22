@@ -55,6 +55,35 @@ class JwtAuthenticationFilterTest {
   }
 
   @Test
+  void usesTenantHeaderWhenJwtHasPlatformWildcardClaim() throws Exception {
+    UUID headerTenant = UUID.randomUUID();
+    JwtAuthenticationFilter filter =
+        new JwtAuthenticationFilter(
+            token ->
+                Optional.of(
+                    TokenParseResult.current(
+                        new TokenClaims(
+                            "admin@local",
+                            "*",
+                            List.of("admin"),
+                            List.of("flags:read"),
+                            "pro",
+                            "us"))),
+            mock(AuditLogger.class));
+    MockHttpServletRequest request = requestWithToken();
+    request.addHeader("X-Tenant-Id", headerTenant.toString());
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    UUID[] capturedTenant = new UUID[1];
+
+    FilterChain chain = (req, res) -> capturedTenant[0] = TenantContext.getTenantId().orElse(null);
+
+    filter.doFilter(request, response, chain);
+
+    assertThat(response.getStatus()).isEqualTo(200);
+    assertThat(capturedTenant[0]).isEqualTo(headerTenant);
+  }
+
+  @Test
   void rejectsTenantHeaderThatDiffersFromJwtTenantClaim() throws Exception {
     UUID jwtTenant = UUID.randomUUID();
     UUID headerTenant = UUID.randomUUID();
