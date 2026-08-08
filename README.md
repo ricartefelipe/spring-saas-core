@@ -13,6 +13,8 @@
 
 Núcleo de governança multi-tenant para SaaS: tenants, RBAC/ABAC, feature flags, auditoria e publicação de eventos (outbox). Serve como **control plane** para uma plataforma B2B, integrando com APIs de pedidos (Node) e pagamentos (Python) através de um contrato de identidade JWT unificado.
 
+**Autor:** [Felipe Ricarte Magalhães](https://github.com/ricartefelipe) · [Site](https://codigodeproducao.com.br/) · [LinkedIn](https://www.linkedin.com/in/felipe-ricarte-magalhaes/)
+
 ---
 
 ## Índice
