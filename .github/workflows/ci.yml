@@ -27,7 +27,10 @@ jobs:
       - name: Build and test
         run: |
           chmod +x mvnw
-          ./mvnw -B -e package 2>&1 | tee build-output.txt; BUILD_RC=$?
+          # ${PIPESTATUS[0]} e o status do Maven; $? traria o do `tee`, que e sempre 0 — um build
+          # reprovado passava pelo gate.
+          ./mvnw -B -e package 2>&1 | tee build-output.txt
+          BUILD_RC=${PIPESTATUS[0]}
           if [ $BUILD_RC -ne 0 ]; then
             echo '## Build Failed' >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY

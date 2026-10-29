@@ -1,9 +1,52 @@
 #!/usr/bin/env bash
 set -e
 cd "$(dirname "$0")/.."
-BASE="http://localhost:8080"
+
+# A base pode ser apontada para outra porta quando a 8080 do host ja estiver tomada.
+BASE="${SMOKE_BASE_URL:-http://localhost:8080}"
+BASE="${BASE%/}"
 PASS=0
 FAIL=0
+
+# Espera a aplicacao responder, com prazo e diagnostico — e confere que quem respondeu e ela.
+#
+# Antes, o roteiro comecava a medir no instante zero contra a porta 8080 fixa. Se a aplicacao ainda
+# estivesse subindo, ou se a porta pertencesse a outro servico da maquina, os erros apareciam como
+# codigos HTTP inexplicados (500, 502) atribuidos a esta aplicacao.
+wait_for_app() {
+  local deadline=$((SECONDS + ${SMOKE_WAIT_SECONDS:-120}))
+  local code body
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "$BASE/actuator/health/liveness" || echo 000)
+    if [ "$code" = "200" ]; then
+      body=$(curl -s --max-time 10 "$BASE/v3/api-docs" || true)
+      # O titulo do contrato identifica a aplicacao: sem esta conferencia, outro servico publicado
+      # na mesma porta era medido como se fosse esta e os erros apareciam atribuidos a ela.
+      if printf '%s' "$body" | grep -q "Spring SaaS Core"; then
+        echo "Aplicacao pronta em $BASE"
+        return 0
+      fi
+      echo "ERRO: $BASE respondeu, mas /v3/api-docs nao declara a Spring SaaS Core API." >&2
+      echo "      Outro servico esta publicado nessa porta. Use SMOKE_BASE_URL para apontar a certa." >&2
+      return 1
+    fi
+    sleep 3
+  done
+  echo "ERRO: $BASE nao respondeu 200 em /actuator/health/liveness dentro do prazo." >&2
+  echo "      Ultimo codigo observado: ${code}." >&2
+  if command -v docker >/dev/null 2>&1; then
+    echo "      Estado dos conteineres e ultimas linhas do app:" >&2
+    docker compose ps >&2 2>/dev/null || true
+    docker compose logs --tail 30 app >&2 2>/dev/null || true
+  fi
+  return 1
+}
+
+if ! wait_for_app; then
+  echo ""
+  echo "=== Smoke abortado: a aplicacao nao esta atendendo em $BASE ==="
+  exit 1
+fi
 
 check() {
   local desc="$1" expected="$2" actual="$3"

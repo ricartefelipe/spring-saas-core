@@ -36,7 +36,8 @@ services:
           cpus: "0.5"
 
   rabbitmq:
-    container_name: fluxe-rabbitmq
+    # Sem container_name fixo: o nome `fluxe-rabbitmq` colidia com um container de outra pilha da
+    # mesma maquina e o `docker compose up` parava em "container name is already in use".
     image: rabbitmq:3-management-alpine
     ports:
       - "5675:5672"
