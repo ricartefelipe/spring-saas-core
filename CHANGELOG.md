@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-10-29
+
+### Fixed
+- `scripts/up.sh` constrói o jar antes do `docker compose` (a imagem local copia `target/*.jar`) e falha claramente se ele não existir.
+- `scripts/smoke.sh` aceita `SMOKE_BASE_URL`, espera a aplicação com prazo, confere pelo título do contrato em `/v3/api-docs` que está medindo a Spring SaaS Core API e imprime diagnóstico ao falhar.
+- `container_name` fixo do RabbitMQ removido do compose (colidia com outra pilha).
+- CI: o gate de build propaga o status real do Maven (`PIPESTATUS`) em vez do `tee`.
+
 ## [1.0.0] - 2026-03-07
 
 ### Added
