@@ -4,6 +4,18 @@ cd "$(dirname "$0")/.."
 
 docker network inspect fluxe_shared >/dev/null 2>&1 || docker network create fluxe_shared
 
+# O compose constroi a imagem a partir de docker/app.local.Dockerfile, que copia o JAR do host.
+# Sem este passo, um checkout limpo falhava em "lstat /target: no such file or directory": a imagem
+# nao era criada, nada passava a escutar na porta da aplicacao e o smoke batia no que estivesse ali.
+echo "Building application jar..."
+./mvnw -q -B -DskipTests package
+jar=$(ls target/spring-saas-core-*.jar 2>/dev/null | head -1)
+if [ -z "$jar" ]; then
+  echo "ERRO: mvnw package nao produziu target/spring-saas-core-*.jar" >&2
+  exit 1
+fi
+echo "Jar: $jar"
+
 echo "Starting infrastructure..."
 docker compose up -d --build
 echo "Waiting for app to be ready..."
