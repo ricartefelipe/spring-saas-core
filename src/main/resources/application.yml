@@ -50,6 +50,10 @@ analytics:
     off-hours-min-events: ${ANALYTICS_OFF_HOURS_MIN_EVENTS:5}
 
 app:
+  bootstrap:
+    admin:
+      email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
+      password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
   version: ${APP_VERSION:1.0.0-SNAPSHOT}
   cors:
     allowed-origins: "*"

@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 027-desativa-senhas-publicas-em-producao
+      author: saascore
+      context: "prod and !seed"
+      comment: "As cargas 021, 023 e 024 rodavam em produção com senhas publicadas no repositório; conta com senha já trocada não muda"
+      changes:
+        - sql:
+            sql: |
+              UPDATE users
+              SET password_hash = 'desativada', updated_at = CURRENT_TIMESTAMP
+              WHERE password_hash IN (
+                '$2b$10$w4tXaNqzgPqXU6BCMY7dReSUM.m3RkhfRm4D8R8NUYxYla709J9cq',
+                '$2b$10$x9Jvs9DOnwp7kdpDCuTBAeLQ/xFK.a44OTYNU7dlSscaMkLaLi83W'
+              );

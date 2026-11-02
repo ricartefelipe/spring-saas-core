@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+- Produção sem carga de demonstração deixa de criar `admin@local`, `ops@demo.example.com` e as contas da carga 009 com senha publicada; a migração 027 desativa essas senhas em bancos existentes, salvo contas cuja senha já foi trocada.
+- A carga inicial não cria mais a conta com e-mail pessoal. Em instalação nova, o primeiro administrador vem de `APP_BOOTSTRAP_ADMIN_EMAIL` e `APP_BOOTSTRAP_ADMIN_PASSWORD`, com troca de senha obrigatória.
+
+### Fixed
+- Os contextos `prod,seed` do perfil de piloto voltam a funcionar em banco novo.
+
 ## [1.3.2] - 2026-10-29
 
 ### Fixed
