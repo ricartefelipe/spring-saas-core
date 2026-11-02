@@ -24,8 +24,8 @@ public class OpenApiConfig {
                     "Multi-tenant SaaS governance core: tenants, ABAC policies, feature flags, audit")
                 .contact(
                     new Contact()
-                        .name("Felipe Ricarte")
-                        .email("felipericartem@gmail.com")
+                        .name("Union Solutions")
+                        .email("contato@unionsolutions.tech")
                         .url("https://github.com/union-solutions"))
                 .license(new License().name("MIT").url("https://opensource.org/licenses/MIT")))
         .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
