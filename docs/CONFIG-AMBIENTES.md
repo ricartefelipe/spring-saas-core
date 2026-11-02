@@ -2,7 +2,7 @@
 
 Este projeto segue a mesma convenção de ambientes do **Fluxe B2B Suite**. Referência central: **fluxe-b2b-suite/config/env/README.md** (tabela de portas e hosts).
 
-**Branches Git e nuvem:** a branch **`develop`** alimenta **staging** (teste/validação); **`master`** alimenta **produção** (uso real). Documento canónico: [AMBIENTES-CONFIGURACAO.md](https://github.com/ricartefelipe/fluxe-b2b-suite/blob/develop/docs/AMBIENTES-CONFIGURACAO.md).
+**Branches Git:** `develop` recebe a integração; `master` recebe as versões publicadas.
 
 ## Contextos
 
