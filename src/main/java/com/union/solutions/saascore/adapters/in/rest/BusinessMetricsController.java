@@ -4,6 +4,7 @@ import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.application.service.PolicyService;
+import com.union.solutions.saascore.application.tenant.TenantAccess;
 import com.union.solutions.saascore.domain.Tenant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ public class BusinessMetricsController {
   @GetMapping
   public ResponseEntity<Map<String, Object>> metrics() {
     abacEvaluator.enforceOrThrow("admin:write");
+    TenantAccess.requirePlatform();
     Map<String, Object> result = new LinkedHashMap<>();
 
     long activeCount = tenantRepo.countByStatus(Tenant.TenantStatus.ACTIVE);

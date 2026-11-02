@@ -9,6 +9,7 @@ import com.union.solutions.saascore.adapters.in.rest.TenantController;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.tenant.TenantUseCase;
 import com.union.solutions.saascore.config.ProblemDetailsConfig;
+import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.Tenant;
 import java.time.Instant;
 import java.util.Optional;
@@ -24,6 +25,16 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @ExtendWith(MockitoExtension.class)
 class TenantControllerTest {
+
+  @org.junit.jupiter.api.AfterEach
+  void clearContext() {
+    TenantContext.clear();
+  }
+
+  @org.junit.jupiter.api.BeforeEach
+  void asPlatform() {
+    TenantContext.setPlatformAdmin(true);
+  }
 
   @Mock TenantUseCase tenantUseCase;
   @Mock AbacEvaluator abacEvaluator;

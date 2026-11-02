@@ -119,6 +119,21 @@ public class ProblemDetailsConfig {
                 400, "Bad Request", detail, req.getRequestURI(), TenantContext.getCorrelationId()));
   }
 
+  @ExceptionHandler({
+    org.springframework.web.bind.MissingServletRequestParameterException.class,
+    org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class
+  })
+  public ResponseEntity<ProblemDetails> handleBadParameter(Exception ex, HttpServletRequest req) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            ProblemDetails.of(
+                400,
+                "Bad Request",
+                ex.getMessage(),
+                req.getRequestURI(),
+                TenantContext.getCorrelationId()));
+  }
+
   @ExceptionHandler(HttpMessageNotReadableException.class)
   public ResponseEntity<ProblemDetails> handleNotReadable(
       HttpMessageNotReadableException ex, HttpServletRequest req) {

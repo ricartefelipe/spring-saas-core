@@ -20,6 +20,7 @@ import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.config.ProblemDetailsConfig;
+import com.union.solutions.saascore.config.TenantContext;
 import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.List;
@@ -43,6 +44,11 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @MockitoSettings(strictness = Strictness.LENIENT)
 class AuditLogControllerTest {
 
+  @org.junit.jupiter.api.AfterEach
+  void clearContext() {
+    TenantContext.clear();
+  }
+
   @Mock AuditLogJpaRepository auditRepo;
   @Mock AbacEvaluator abacEvaluator;
 
@@ -51,6 +57,7 @@ class AuditLogControllerTest {
 
   @BeforeEach
   void setUp() {
+    TenantContext.setPlatformAdmin(true);
     ObjectMapper om = new ObjectMapper();
     om.registerModule(new JavaTimeModule());
     controller = new AuditLogController(auditRepo, abacEvaluator, om);

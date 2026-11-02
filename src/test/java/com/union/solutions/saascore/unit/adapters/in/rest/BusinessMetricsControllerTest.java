@@ -12,6 +12,7 @@ import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.port.TenantRepository;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.application.service.PolicyService;
+import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.Tenant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 @ExtendWith(MockitoExtension.class)
 class BusinessMetricsControllerTest {
 
+  @org.junit.jupiter.api.AfterEach
+  void clearContext() {
+    TenantContext.clear();
+  }
+
   @Mock TenantRepository tenantRepo;
   @Mock PolicyService policyService;
   @Mock FeatureFlagService flagService;
@@ -34,6 +40,7 @@ class BusinessMetricsControllerTest {
 
   @BeforeEach
   void setUp() {
+    TenantContext.setPlatformAdmin(true);
     doNothing().when(abacEvaluator).enforceOrThrow(anyString());
     mvc =
         MockMvcBuilders.standaloneSetup(

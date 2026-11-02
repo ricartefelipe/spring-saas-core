@@ -17,6 +17,7 @@ import com.union.solutions.saascore.adapters.in.rest.PolicyController;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.service.PolicyService;
 import com.union.solutions.saascore.config.ProblemDetailsConfig;
+import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.Policy;
 import java.time.Instant;
 import java.util.List;
@@ -38,6 +39,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 @ExtendWith(MockitoExtension.class)
 class PolicyControllerTest {
 
+  @org.junit.jupiter.api.AfterEach
+  void clearContext() {
+    TenantContext.clear();
+  }
+
   @Mock PolicyService policyService;
   @Mock AbacEvaluator abacEvaluator;
 
@@ -46,6 +52,7 @@ class PolicyControllerTest {
 
   @BeforeEach
   void setUp() {
+    TenantContext.setPlatformAdmin(true);
     mvc =
         MockMvcBuilders.standaloneSetup(new PolicyController(policyService, abacEvaluator))
             .setControllerAdvice(new ProblemDetailsConfig())
