@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 021-admin-local-login-seed
       author: saascore
+      context: "!prod or seed"
       changes:
         - sql:
             sql: |

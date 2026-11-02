@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 023-demo-corp-tenant
       author: saascore
+      context: "!prod or seed"
       comment: "Tenant Demo Corp para piloto/demo (prod) — alinhado ao seed de orders/payments"
       changes:
         - sql:
@@ -27,6 +28,7 @@ databaseChangeLog:
   - changeSet:
       id: 023-demo-corp-ops-login
       author: saascore
+      context: "!prod or seed"
       comment: "Login demo multi-tenant no Core (shop/ops/admin) — senha ops123"
       changes:
         - sql:
