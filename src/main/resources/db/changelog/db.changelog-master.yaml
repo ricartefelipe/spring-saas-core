@@ -51,3 +51,5 @@ databaseChangeLog:
       file: db/changelog/changes/025-essential-abac-admin-console-policies.yaml
   - include:
       file: db/changelog/changes/026-admin-local-platform-global.yaml
+  - include:
+      file: db/changelog/changes/027-desativa-senhas-publicas-em-producao.yaml
