@@ -4,7 +4,7 @@ set -euo pipefail
 # Smoke HTTP pos-deploy (staging/producao). Nao executa testes unitarios — use CI principal.
 #
 # Variaveis:
-#   CORE_SMOKE_URL ou SMOKE_BASE_URL — URL base publica (ex.: https://core.example.railway.app)
+#   CORE_SMOKE_URL ou SMOKE_BASE_URL — URL base publica (ex.: https://core.seu-dominio.com)
 #   SMOKE_REQUIRE_URL=1 — falha se URL nao estiver definida (pipeline que exige staging)
 
 BASE_URL="${CORE_SMOKE_URL:-${SMOKE_BASE_URL:-}}"

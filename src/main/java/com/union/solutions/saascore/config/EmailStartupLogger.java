@@ -9,7 +9,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
- * Uma linha nos logs ao subir o Core — essencial para ver no Railway se o provider e credenciais
+ * Uma linha nos logs ao subir o Core — essencial para ver no ambiente se o provider e credenciais
  * batem com o esperado (sem expor segredos).
  */
 @Component
@@ -49,13 +49,13 @@ public class EmailStartupLogger implements ApplicationRunner {
     if (EmailProviderConstants.fallsBackToLogDueToUnknownValue(rawProvider)) {
       log.error(
           "EMAIL_PROVIDER='{}' não é reconhecido — só são aceites: resend, smtp, log. "
-              + "Valores desconhecidos são tratados como log (sem envio real). Corrija o typo no Railway.",
+              + "Valores desconhecidos são tratados como log (sem envio real). Corrija o typo na configuração.",
           trimmedRaw);
     }
 
     if ("log".equals(p)) {
       log.warn(
-          "E-mail em modo LOG: nenhum envio real. Para entregar na caixa: EMAIL_PROVIDER=resend (HTTPS, recomendado no Railway) "
+          "E-mail em modo LOG: nenhum envio real. Para entregar na caixa: EMAIL_PROVIDER=resend (HTTPS, recomendado em hospedagem de aplicações) "
               + "ou EMAIL_PROVIDER=smtp (muitos hosts bloqueiam saída SMTP — ver docs/CONVITE-EMAIL-DEPLOY.md).");
     } else if ("resend".equals(p) && !resendKeyOk) {
       log.error(

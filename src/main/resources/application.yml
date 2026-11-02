@@ -34,7 +34,7 @@ spring:
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASS:guest}
 
-# Railway / Render / Fly: expõem PORT; Spring usa SERVER_PORT se definido.
+# Plataformas como Render e Fly expõem PORT; Spring usa SERVER_PORT se definido.
 server:
   port: ${PORT:${SERVER_PORT:8080}}
   shutdown: graceful
