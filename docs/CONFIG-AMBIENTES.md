@@ -10,7 +10,7 @@ Este projeto segue a mesma convenção de ambientes do **Fluxe B2B Suite**. Refe
 |----------|------------|--------|
 | **local** | Infra no Docker (`docker compose up -d postgres redis rabbitmq`) + app no host | `SPRING_PROFILES_ACTIVE=local`. Valores em `application.yml` (localhost:5435, 6382, 5675) ou em `.env` / `.env.local` se você exportar antes de rodar |
 | **docker** | Tudo no Docker Compose | O `docker-compose.yml` injeta `DB_URL`, `REDIS_HOST`, etc. com hostnames `postgres`, `redis`, `rabbitmq` |
-| **staging** (`develop`) / **prod** (`master`) | Railway ou outro host | `SPRING_PROFILES_ACTIVE=staging` ou `prod`; variáveis no painel do provedor |
+| **staging** (`develop`) / **prod** (`master`) | Host do ambiente | `SPRING_PROFILES_ACTIVE=staging` ou `prod`; variáveis no painel do provedor |
 
 ## Arquivos de configuração
 

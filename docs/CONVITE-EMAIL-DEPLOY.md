@@ -4,7 +4,7 @@
 
 O **padrão** no Core é `EMAIL_PROVIDER=log` (`application.yml`). **Variável vazia** (`EMAIL_PROVIDER=` sem valor) é tratada como **`log`** — do contrário a API não devolvia `temporaryPassword` e parecia “travado”. Nesse modo **nenhum e-mail sai do servidor**; o convite aparece no **Admin** (senha no diálogo) e nos **logs**. Para envio real:
 
-1. No serviço **spring-saas-core** (Railway ou outro): `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM` (domínio **já verificado** no Resend — ver secção abaixo).
+1. No serviço **spring-saas-core** : `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM` (domínio **já verificado** no Resend — ver secção abaixo).
 2. Com `log`, o **Admin Console** mostra um diálogo com a **senha temporária** após convidar (a API devolve `temporaryPassword` no JSON). Também pode ver nos **logs** do Core a linha `Convite criado; EMAIL_PROVIDER=log`.
 
 3. **Resend/SMTP com envio aceite (HTTP 2xx / SMTP OK):** a API **omite** `temporaryPassword` no JSON (a senha não transita pela resposta).
@@ -13,9 +13,9 @@ O **padrão** no Core é `EMAIL_PROVIDER=log` (`application.yml`). **Variável v
 
 Se já usa `resend` e mesmo assim não chega: caixa de **spam**, domínio/DNS não verificado (403 no Resend), ou `EMAIL_FROM` diferente do subdomínio verificado.
 
-### Railway / PaaS: SMTP vs Resend
+### SMTP vs Resend em hospedagem de aplicações
 
-- **Resend** usa **HTTPS** (porta 443) — costuma **funcionar** em Railway e similares.
+- **Resend** usa **HTTPS** (porta 443) — costuma **funcionar** em hospedagens de aplicações.
 - **SMTP** (portas 25, 465, 587) é **ligação TCP direta** ao servidor de correio. **Muitos** fornecedores de app hosting **bloqueiam ou restringem** saída SMTP para combater spam. Se configuraste `EMAIL_PROVIDER=smtp` e os logs mostram timeout ou “connection refused”, **muda para `EMAIL_PROVIDER=resend`** com domínio verificado.
 
 ### Como saber o que o Core está a usar
@@ -24,7 +24,7 @@ Ao **arrancar**, o Core regista uma linha como:
 
 `=== E-mail (arranque) === EMAIL_PROVIDER_raw=resend | providerEfetivo=resend | RESEND_API_KEY preenchida=true | ...`
 
-Consulta os **Deploy Logs** do serviço no Railway. Se `providerEfetivo=log`, **não há envio real**. Se `resend` e `RESEND_API_KEY preenchida=false`, o envio vai falhar.
+Consulta os logs do serviço. Se `providerEfetivo=log`, **não há envio real**. Se `resend` e `RESEND_API_KEY preenchida=false`, o envio vai falhar.
 
 **Typo no nome da variável ou no valor:** só existem `resend`, `smtp` e `log`. Qualquer outro valor (ex.: `resnd`) é tratado como **`log`**; no arranque aparece **ERROR** a explicar. O nome da variável tem de ser exactamente **`EMAIL_PROVIDER`** (não `APP_EMAIL_PROVIDER`, etc.).
 
@@ -36,7 +36,7 @@ O Core também aceita **`EMAIL_PROVIDER=smtp`**: envio por **SMTP clássico** (G
 
 **Maiúsculas/minúsculas:** `EMAIL_PROVIDER=SMTP`, `smtp` ou `Smtp` são aceites (normalização interna). Antes, só `smtp` minúsculo ativava o bean — um valor `SMTP` no painel podia **não carregar** o enviador.
 
-1. No Railway (ou `.env`):  
+1. Nas variáveis do ambiente (ou `.env`):  
    - `EMAIL_PROVIDER=smtp`  
    - `SMTP_HOST` — ex.: `smtp.gmail.com`, `smtp.sendgrid.net`  
    - `SMTP_PORT` — **587** (STARTTLS, padrão) ou **465** (SSL implícito: o Core aplica SSL automaticamente na porta 465, ou use `SMTP_SSL_ENABLED=true` na 587 se o provedor exigir)  
@@ -55,13 +55,13 @@ O Core também aceita **`EMAIL_PROVIDER=smtp`**: envio por **SMTP clássico** (G
 2. Configure **SPF** e **DKIM** no DNS do domínio
 3. Clique em **Verify DNS Records** até status `verified`
 4. [resend.com/api-keys](https://resend.com/api-keys) → crie uma API key
-5. No **Railway** (spring-saas-core) → Settings → Variables:
+5. Nas variáveis do ambiente do **spring-saas-core**:
    - `EMAIL_PROVIDER` = `resend`
    - `RESEND_API_KEY` = `re_xxx` (sua key)
    - `EMAIL_FROM` = `noreply@mail.fluxe.com.br` (domínio **exato** verificado)
    - `EMAIL_FROM_NAME` = `Fluxe B2B Suite`
 6. Teste localmente: `RESEND_API_KEY=re_xxx EMAIL_FROM=noreply@mail.fluxe.com.br ./scripts/test-resend.sh seu@email.com`
-7. Redeploy do spring-saas-core no Railway
+7. Reinicie o spring-saas-core
 
 ---
 
@@ -102,14 +102,14 @@ Se divergir, dá **403 domain mismatch**. Documentação: [403 Error Domain Mism
 - Crie em [resend.com/api-keys](https://resend.com/api-keys)
 - `full_access` ou `sending_access` — se restrita, confirme se o domínio está autorizado para essa key
 
-### 5) Variáveis no Railway (spring-saas-core)
+### 5) Variáveis do spring-saas-core
 
 ```bash
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=re_xxx
 EMAIL_FROM=noreply@mail.fluxe.com.br   # domínio EXATO verificado em resend.com/domains
 EMAIL_FROM_NAME=Fluxe B2B Suite        # opcional; melhora deliverability
-FRONTEND_URL=https://SEU-ADMIN-CONSOLE.up.railway.app
+FRONTEND_URL=https://admin.seu-dominio.com
 ```
 
 **Testar Resend antes do deploy:**
@@ -134,7 +134,7 @@ Se o 403 do Resend **impede o cadastro** de usuários (convite falha), use um de
 
 ### Opção A — Desativar Resend (usuário criado, senha nos logs)
 
-No Railway, no serviço **spring-saas-core**, defina:
+No serviço **spring-saas-core**, defina:
 
 ```
 EMAIL_PROVIDER=log
@@ -142,18 +142,18 @@ EMAIL_PROVIDER=log
 
 - Remove `RESEND_API_KEY` ou deixe vazio para evitar confusão
 - Com `log`, nenhuma chamada ao Resend é feita; o usuário **é criado**
-- A senha temporária aparece nos **Deploy Logs** do Railway (busque por "EMAIL NOT SENT" ou pelo e-mail do usuário)
+- A senha temporária aparece nos logs do serviço (busque por "EMAIL NOT SENT" ou pelo e-mail do usuário)
 - Compartilhe a senha manualmente com o novo usuário
 
 ### Opção B — Manter Resend, garantir que não propague erro
 
-Confirme que no Railway está definido:
+Confirme que está definido:
 
 ```
 EMAIL_FAIL_ON_DELIVERY_ERROR=false
 ```
 
-Com isso, quando o Resend retornar 403, o usuário **é criado** e o erro é apenas logado. A **senha temporária** pode aparecer na **resposta JSON** do convite (`temporaryPassword`) e nos **logs** do Railway — repasse manualmente ao utilizador.
+Com isso, quando o Resend retornar 403, o usuário **é criado** e o erro é apenas logado. A **senha temporária** pode aparecer na **resposta JSON** do convite (`temporaryPassword`) e nos **logs** do serviço — repasse manualmente ao utilizador.
 
 ---
 
@@ -190,9 +190,7 @@ Isso indica que o **servidor que envia os e-mails está a correr uma versão ant
 ### O que fazer
 
 1. **Staging (branch `develop`)**  
-   - No Railway, o deploy do spring-saas-core deve ser feito a partir da branch **`develop`**.  
-   - Confirma em **Settings → Source** que a **Production Branch** do serviço spring-saas-core é `develop`.  
-   - Se já estiver correto, dispara um **redeploy** (ex.: "Redeploy" no dashboard ou novo push em `develop`).  
+   - Confirma que o ambiente roda a versão atual da branch **`develop`** e reinicia o serviço depois de atualizar.  
    - Garante que o **Admin Console** (e qualquer front que use convites) está a usar a **URL do Core** desse ambiente (staging), não de outro.
 
 2. **Produção (branch `master`)**  
