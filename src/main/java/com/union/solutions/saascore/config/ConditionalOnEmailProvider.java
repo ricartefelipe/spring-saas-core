@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 import org.springframework.context.annotation.Conditional;
 
 /**
- * Condição insensível a maiúsculas para {@code app.email.provider} (ex.: {@code SMTP} no Railway =
+ * Condição insensível a maiúsculas para {@code app.email.provider} (ex.: {@code SMTP} no ambiente =
  * {@code smtp}).
  */
 @Target({ElementType.TYPE, ElementType.METHOD})

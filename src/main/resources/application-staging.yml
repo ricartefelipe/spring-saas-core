@@ -1,8 +1,8 @@
 # =============================================================================
-# spring-saas-core — Staging Profile (Railway, branch develop)
+# spring-saas-core — Staging Profile (branch develop)
 # =============================================================================
 # Mesmos requisitos de connection que prod, mas com seed completo para testes.
-# SPRING_PROFILES_ACTIVE=staging no Railway staging.
+# SPRING_PROFILES_ACTIVE=staging no ambiente de staging.
 # =============================================================================
 
 spring:
@@ -25,7 +25,7 @@ app:
   auth:
     mode: ${AUTH_MODE:hs256}
   # LLM do assistente (Admin): liga quando OPENAI_API_KEY está definida (AiProperties.isEnabled).
-  # AI_ENABLED=true por defeito em staging; desliga com AI_ENABLED=false no Railway se quiseres só motor de regras.
+  # AI_ENABLED=true por defeito em staging; desliga com AI_ENABLED=false se quiseres só motor de regras.
   ai:
     enabled: ${AI_ENABLED:true}
   email:

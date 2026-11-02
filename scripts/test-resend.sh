@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Testa a API do Resend antes de configurar no Railway.
+# Testa a API do Resend antes de configurar o ambiente.
 # Uso: RESEND_API_KEY=re_xxx EMAIL_FROM=noreply@mail.seudominio.com ./scripts/test-resend.sh seu@email.com
 # Ou com nome: EMAIL_FROM_NAME="Fluxe B2B Suite" EMAIL_FROM=... ./scripts/test-resend.sh seu@email.com
 

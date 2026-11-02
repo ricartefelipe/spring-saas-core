@@ -1,6 +1,6 @@
 # Checklist Resend — 7 passos para resolver 403
 
-Execute na ordem. Ao terminar o passo 4 no Resend, use o passo 5 para configurar o Railway.
+Execute na ordem. Ao terminar o passo 4 no Resend, use o passo 5 para configurar o ambiente.
 
 ---
 
@@ -29,7 +29,7 @@ Aguarde status **Verified** (verde).
 2. **Create API Key** → nome `fluxe-staging`
 3. Copie a key (começa com `re_`)
 
-## 5. Script único: configurar Railway + testar
+## 5. Configurar o ambiente e testar
 
 No terminal, a partir de `spring-saas-core`:
 
@@ -39,23 +39,15 @@ export RESEND_API_KEY=re_sua_key_aqui
 export EMAIL_FROM=noreply@mail.fluxe.com.br   # domínio EXATO verificado no passo 1
 export EMAIL_FROM_NAME="Fluxe B2B Suite"
 
-# Configure Railway
-railway variable set EMAIL_PROVIDER=resend
-railway variable set RESEND_API_KEY=$RESEND_API_KEY
-railway variable set EMAIL_FROM=$EMAIL_FROM
-railway variable set EMAIL_FROM_NAME="$EMAIL_FROM_NAME"
-
 # Teste
 ./scripts/test-resend.sh seu@email.com
 ```
 
-Se o teste retornar **HTTP 200/201**, o Resend está OK.
+Se o teste retornar **HTTP 200/201**, o Resend está OK. Defina `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM` e `EMAIL_FROM_NAME` nas variáveis do serviço.
 
-## 6. Redeploy
+## 6. Reiniciar
 
-```bash
-railway up --detach
-```
+Reinicie o spring-saas-core para carregar as variáveis.
 
 ## 7. Validar em produção
 

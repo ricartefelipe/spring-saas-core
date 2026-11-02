@@ -296,7 +296,6 @@ Detalhes em [docs/DEPLOY-GITHUB.md](docs/DEPLOY-GITHUB.md).
 - [Headers HTTP](docs/contracts/headers.md)
 - [Eventos Outbox](docs/contracts/events.md)
 - [Compliance e auditoria](docs/compliance.md)
-- [Backlog de evolução](docs/BACKLOG-EVOLUCAO.md)
 
 ## Licença
 
