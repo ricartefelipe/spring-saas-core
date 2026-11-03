@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-11-03
+
+### Security
+- atualiza para o Spring Boot 4, corrige falhas críticas e altas nas dependências e na imagem, e ajusta três comportamentos que a atualização alterava: inicialização com rastreamento vazio, leitura de JSON com campo numérico ausente e exigência de configuração.
+
 ## [1.3.5] - 2026-11-03
 
 ### Security
