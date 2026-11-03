@@ -4,6 +4,7 @@ import com.union.solutions.saascore.application.abac.AbacContext;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.application.service.AnalyticsService;
+import com.union.solutions.saascore.application.tenant.TenantAccess;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +29,7 @@ public class AnalyticsController {
       return ResponseEntity.status(403)
           .body(ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/analytics/summary", null));
 
+    TenantAccess.requirePlatform();
     return ResponseEntity.ok(analyticsService.getSummary());
   }
 
@@ -39,6 +41,7 @@ public class AnalyticsController {
           .body(
               ProblemDetails.of(403, "Forbidden", abac.reason(), "/v1/analytics/anomalies", null));
 
+    TenantAccess.requirePlatform();
     return ResponseEntity.ok(analyticsService.detectAnomalies());
   }
 }

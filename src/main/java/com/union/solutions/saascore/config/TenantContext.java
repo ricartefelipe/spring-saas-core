@@ -70,6 +70,14 @@ public final class TenantContext {
     return Optional.ofNullable(HOLDER.get().perms);
   }
 
+  public static void setPlatformAdmin(boolean platformAdmin) {
+    HOLDER.get().platformAdmin = platformAdmin;
+  }
+
+  public static boolean isPlatformAdmin() {
+    return HOLDER.get().platformAdmin;
+  }
+
   public static void clear() {
     HOLDER.remove();
   }
@@ -82,5 +90,6 @@ public final class TenantContext {
     String region;
     List<String> roles;
     List<String> perms;
+    boolean platformAdmin;
   }
 }

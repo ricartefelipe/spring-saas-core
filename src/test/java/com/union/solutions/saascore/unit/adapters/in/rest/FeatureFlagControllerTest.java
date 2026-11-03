@@ -18,6 +18,7 @@ import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.config.ProblemDetailsConfig;
+import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.FeatureFlag;
 import java.time.Instant;
 import java.util.List;
@@ -39,6 +40,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class FeatureFlagControllerTest {
 
+  @org.junit.jupiter.api.AfterEach
+  void clearContext() {
+    TenantContext.clear();
+  }
+
   @Mock FeatureFlagService flagService;
   @Mock AbacEvaluator abacEvaluator;
 
@@ -47,6 +53,7 @@ class FeatureFlagControllerTest {
 
   @BeforeEach
   void setUp() {
+    TenantContext.setPlatformAdmin(true);
     mvc =
         MockMvcBuilders.standaloneSetup(new FeatureFlagController(flagService, abacEvaluator))
             .setControllerAdvice(new ProblemDetailsConfig())

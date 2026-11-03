@@ -53,7 +53,7 @@ public class OnboardingController {
             user.getId().toString(),
             tenant.getId().toString(),
             user.getRoles(),
-            JwtRolePermissions.forRoles(user.getRoles()),
+            JwtRolePermissions.forRoles(user.getRoles(), false),
             tenant.getPlan(),
             tenant.getRegion());
 

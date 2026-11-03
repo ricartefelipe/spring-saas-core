@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogEntity;
 import com.union.solutions.saascore.adapters.out.persistence.AuditLogJpaRepository;
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
+import com.union.solutions.saascore.application.tenant.TenantAccess;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class AuditLogController {
   @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping
   public ResponseEntity<?> list(
-      @RequestParam(required = false) UUID tenantId,
+      @RequestParam(name = "tenantId", required = false) UUID requestedTenantId,
       @RequestParam(required = false) String action,
       @RequestParam(required = false) String actorSub,
       @RequestParam(required = false) String correlationId,
@@ -54,6 +55,7 @@ public class AuditLogController {
       @RequestParam(required = false) String cursor,
       @RequestParam(required = false, defaultValue = "50") int limit) {
     abacEvaluator.enforceOrThrow("audit:read");
+    UUID tenantId = TenantAccess.scope(requestedTenantId);
 
     String safeAction = (action == null || action.isBlank()) ? "" : action;
     String safeActorSub = (actorSub == null || actorSub.isBlank()) ? "" : actorSub;
@@ -112,13 +114,14 @@ public class AuditLogController {
   @ApiResponse(responseCode = "403", description = "Access denied")
   @GetMapping("/export")
   public ResponseEntity<?> export(
-      @RequestParam(required = false) UUID tenantId,
+      @RequestParam(name = "tenantId", required = false) UUID requestedTenantId,
       @RequestParam(required = false) String action,
       @RequestParam Instant from,
       @RequestParam Instant to,
       @RequestParam(required = false, defaultValue = "json") String format,
       @RequestParam(required = false, defaultValue = "10000") int limit) {
     abacEvaluator.enforceOrThrow("audit:read");
+    UUID tenantId = TenantAccess.scope(requestedTenantId);
 
     int maxLimit = Math.min(10_000, Math.max(1, limit));
     String safeAction = (action == null || action.isBlank()) ? "" : action;

@@ -1,7 +1,9 @@
 package com.union.solutions.saascore.adapters.in.rest;
 
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
+import com.union.solutions.saascore.application.tenant.TenantAccess;
 import com.union.solutions.saascore.application.tenant.TenantUseCase;
+import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.Tenant;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -35,6 +37,7 @@ public class TenantController {
   @PostMapping
   public ResponseEntity<?> create(@Valid @RequestBody CreateTenantRequest request) {
     abacEvaluator.enforceOrThrow("tenants:write");
+    TenantAccess.requirePlatform();
     Tenant t = tenantUseCase.create(request.name(), request.plan(), request.region());
     return ResponseEntity.status(201).body(TenantDto.from(t));
   }
@@ -65,6 +68,10 @@ public class TenantController {
       }
     }
 
+    if (!TenantContext.isPlatformAdmin()) {
+      return ResponseEntity.ok(ownTenantPage(statusEnum, plan, region, name, cursor));
+    }
+
     int safeLimit = Math.max(1, Math.min(100, limit));
     String effectiveCursor = (cursor != null && !cursor.isBlank()) ? cursor : null;
     if (effectiveCursor == null) {
@@ -93,6 +100,28 @@ public class TenantController {
     return ResponseEntity.ok(new CursorPage<>(items, nextCursor, hasMore));
   }
 
+  private CursorPage<TenantDto> ownTenantPage(
+      Tenant.TenantStatus status, String plan, String region, String name, String cursor) {
+    UUID own = TenantAccess.scope(null);
+    List<TenantDto> items =
+        (cursor != null && !cursor.isBlank())
+            ? List.of()
+            : tenantUseCase
+                .getById(own)
+                .filter(t -> status == null || status == t.getStatus())
+                .filter(t -> plan == null || plan.isBlank() || plan.equals(t.getPlan()))
+                .filter(t -> region == null || region.isBlank() || region.equals(t.getRegion()))
+                .filter(
+                    t ->
+                        name == null
+                            || name.isBlank()
+                            || t.getName().toLowerCase().contains(name.toLowerCase()))
+                .map(TenantDto::from)
+                .stream()
+                .toList();
+    return new CursorPage<>(items, null, false);
+  }
+
   private static String buildNextCursor(List<TenantDto> items, boolean hasMore) {
     if (!hasMore || items.isEmpty()) return null;
     Instant lastCreatedAt = items.get(items.size() - 1).createdAt();
@@ -106,6 +135,7 @@ public class TenantController {
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable @NonNull UUID id) {
     abacEvaluator.enforceOrThrow("tenants:read");
+    TenantAccess.requireTenant(id);
     return tenantUseCase
         .getById(id)
         .map(t -> ResponseEntity.ok(TenantDto.from(t)))
@@ -120,6 +150,7 @@ public class TenantController {
   public ResponseEntity<?> update(
       @PathVariable @NonNull UUID id, @RequestBody UpdateTenantRequest request) {
     abacEvaluator.enforceOrThrow("tenants:write");
+    TenantAccess.requirePlatform();
     Tenant.TenantStatus statusEnum =
         request.status() != null ? Tenant.TenantStatus.valueOf(request.status()) : null;
     return tenantUseCase
@@ -135,6 +166,7 @@ public class TenantController {
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> delete(@PathVariable @NonNull UUID id) {
     abacEvaluator.enforceOrThrow("tenants:write");
+    TenantAccess.requirePlatform();
     return tenantUseCase.softDelete(id)
         ? ResponseEntity.noContent().build()
         : ResponseEntity.notFound().build();

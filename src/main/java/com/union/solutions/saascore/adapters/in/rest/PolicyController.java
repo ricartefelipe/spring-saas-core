@@ -2,6 +2,7 @@ package com.union.solutions.saascore.adapters.in.rest;
 
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.service.PolicyService;
+import com.union.solutions.saascore.application.tenant.TenantAccess;
 import com.union.solutions.saascore.domain.Policy;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,6 +34,7 @@ public class PolicyController {
   @PostMapping
   public ResponseEntity<?> create(@Valid @RequestBody CreatePolicyRequest request) {
     abacEvaluator.enforceOrThrow("policies:write");
+    TenantAccess.requirePlatform();
     Policy policy =
         policyService.create(
             request.permissionCode(),
@@ -80,6 +82,7 @@ public class PolicyController {
   @PatchMapping("/{id}")
   public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody UpdatePolicyRequest request) {
     abacEvaluator.enforceOrThrow("policies:write");
+    TenantAccess.requirePlatform();
     return policyService
         .update(
             id,
@@ -100,6 +103,7 @@ public class PolicyController {
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> delete(@PathVariable UUID id) {
     abacEvaluator.enforceOrThrow("policies:write");
+    TenantAccess.requirePlatform();
     return policyService.softDelete(id)
         ? ResponseEntity.noContent().build()
         : ResponseEntity.notFound().build();
