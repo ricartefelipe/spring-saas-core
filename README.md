@@ -33,7 +33,7 @@ Na suíte de referência, ele se integra a `node-b2b-orders` e `py-payments-ledg
 
 | Camada | Tecnologia |
 |--------|------------|
-| Runtime | Java 21, Spring Boot 3.x, Maven |
+| Runtime | Java 21, Spring Boot 4.0, Maven |
 | Segurança | Spring Security, JWT Resource Server, HS256 local e OIDC em produção |
 | Dados | PostgreSQL, Liquibase |
 | Cache | Redis |
