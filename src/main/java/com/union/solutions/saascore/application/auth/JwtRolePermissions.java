@@ -3,6 +3,7 @@ package com.union.solutions.saascore.application.auth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Permissões embutidas no JWT por role, alinhadas ao {@code UserUseCase} e às políticas ABAC em BD.
@@ -65,6 +66,14 @@ public final class JwtRolePermissions {
   }
 
   private JwtRolePermissions() {}
+
+  /** Alterar locatários e políticas globais é só da plataforma, mesmo para o admin do locatário. */
+  private static final Set<String> PLATFORM_ONLY = Set.of("tenants:write", "policies:write");
+
+  public static List<String> forRoles(List<String> roles, boolean platformGlobal) {
+    List<String> perms = forRoles(roles);
+    return platformGlobal ? perms : perms.stream().filter(p -> !PLATFORM_ONLY.contains(p)).toList();
+  }
 
   public static List<String> forRoles(List<String> roles) {
     if (roles == null || roles.isEmpty()) {

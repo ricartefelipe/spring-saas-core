@@ -124,13 +124,13 @@ public class UserUseCase {
   }
 
   private String buildAccessToken(User u) {
-    List<String> perms = JwtRolePermissions.forRoles(u.getRoles());
     UUID tenantId = u.getTenantId();
     boolean platformGlobal =
         tenantId == null
             || (PLATFORM_TENANT_ID.equals(tenantId)
                 && u.getRoles() != null
                 && u.getRoles().contains("admin"));
+    List<String> perms = JwtRolePermissions.forRoles(u.getRoles(), platformGlobal);
     Optional<Tenant> tenant = tenantId == null ? Optional.empty() : tenantRepo.findById(tenantId);
     String plan = JwtTenantClaimsNormalizer.plan(tenant.map(Tenant::getPlan).orElse(null));
     String region = JwtTenantClaimsNormalizer.region(tenant.map(Tenant::getRegion).orElse(null));

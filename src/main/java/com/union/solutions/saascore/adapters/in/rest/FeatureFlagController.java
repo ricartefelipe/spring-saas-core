@@ -2,7 +2,7 @@ package com.union.solutions.saascore.adapters.in.rest;
 
 import com.union.solutions.saascore.application.abac.AbacEvaluator;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
-import com.union.solutions.saascore.config.TenantContext;
+import com.union.solutions.saascore.application.tenant.TenantAccess;
 import com.union.solutions.saascore.domain.FeatureFlag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -93,10 +93,7 @@ public class FeatureFlagController {
   }
 
   private void enforceTenantAccess(UUID tenantId) {
-    UUID ctxTenant = TenantContext.getTenantId().orElse(null);
-    if (ctxTenant != null && !ctxTenant.equals(tenantId)) {
-      throw new org.springframework.security.access.AccessDeniedException("Tenant mismatch");
-    }
+    TenantAccess.requireTenant(tenantId);
   }
 
   public record CreateFlagRequest(

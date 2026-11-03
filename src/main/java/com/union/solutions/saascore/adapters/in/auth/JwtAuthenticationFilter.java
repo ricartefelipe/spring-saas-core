@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       @NonNull HttpServletResponse response,
       @NonNull FilterChain filterChain)
       throws ServletException, IOException {
+    AtomicBoolean tenantMismatch = new AtomicBoolean(false);
     String auth = request.getHeader("Authorization");
     if (auth != null && auth.startsWith("Bearer ")) {
       String token = auth.substring(7);
@@ -91,6 +93,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 TenantContext.setRegion(region != null ? region : "");
                 TenantContext.setRoles(roles);
                 TenantContext.setPerms(perms);
+                TenantContext.setPlatformAdmin(isPlatformAdmin(tid, roles));
 
                 String tenantHeader = request.getHeader("X-Tenant-Id");
                 if (tid != null && !tid.isBlank()) {
@@ -110,7 +113,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                       try {
                         UUID headerUuid = UUID.fromString(tenantHeader);
                         if (!tenantUuid.equals(headerUuid) && !"*".equals(tid.trim())) {
-                          response.setStatus(403);
+                          tenantMismatch.set(true);
                           return;
                         }
                       } catch (IllegalArgumentException ignored) {
@@ -124,10 +127,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
               });
     }
     try {
+      if (tenantMismatch.get()) {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        return;
+      }
       filterChain.doFilter(request, response);
     } finally {
       TenantContext.clear();
     }
+  }
+
+  private static boolean isPlatformAdmin(String tid, List<String> roles) {
+    if (tid == null) {
+      return false;
+    }
+    return "*".equals(tid.trim())
+        || (PLATFORM_TENANT_ID.toString().equalsIgnoreCase(tid.trim()) && roles.contains("admin"));
   }
 
   private static UUID resolveHeaderTenantOrPlatform(String tenantHeader) {

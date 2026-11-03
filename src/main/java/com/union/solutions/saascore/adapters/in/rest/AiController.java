@@ -7,6 +7,7 @@ import com.union.solutions.saascore.application.ai.GovernanceChatbotService;
 import com.union.solutions.saascore.application.ai.GovernanceRecommendationService;
 import com.union.solutions.saascore.application.service.AiDocsService;
 import com.union.solutions.saascore.application.service.AiService;
+import com.union.solutions.saascore.application.tenant.TenantAccess;
 import com.union.solutions.saascore.config.AiConfig.AiProperties;
 import com.union.solutions.saascore.config.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +28,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+// Exceto /status, as respostas agregam dados de toda a plataforma: só para quem administra a
+// plataforma.
 @RequestMapping("/v1/ai")
 @Tag(
     name = "AI/LLM",
@@ -84,6 +87,7 @@ public class AiController {
     if (!abac.allowed()) {
       return forbidden(abac, "/v1/ai/analyze-audit");
     }
+    TenantAccess.requirePlatform();
     return ResponseEntity.ok(aiService.analyzeAudit(tenantId, hoursBack));
   }
 
@@ -94,6 +98,7 @@ public class AiController {
     if (!abac.allowed()) {
       return forbidden(abac, "/v1/ai/recommendations");
     }
+    TenantAccess.requirePlatform();
     return ResponseEntity.ok(aiService.getRecommendations(tenantId));
   }
 
@@ -104,6 +109,7 @@ public class AiController {
     if (!abac.allowed()) {
       return forbidden(abac, "/v1/ai/chat");
     }
+    TenantAccess.requirePlatform();
     UUID tenantId = resolveTenantId(request.tenantId());
     String question = request.question() != null ? request.question() : request.message();
     if (aiProperties.isEnabled()) {
@@ -124,6 +130,7 @@ public class AiController {
     if (!abac.allowed()) {
       return forbidden(abac, "/v1/ai/insights");
     }
+    TenantAccess.requirePlatform();
     return ResponseEntity.ok(aiService.getInsights());
   }
 
@@ -137,6 +144,7 @@ public class AiController {
     if (!abac.allowed()) {
       return forbidden(abac, "/v1/ai/docs");
     }
+    TenantAccess.requirePlatform();
     return ResponseEntity.ok(aiDocsService.buildLiveDocs());
   }
 
@@ -150,6 +158,7 @@ public class AiController {
     if (!abac.allowed()) {
       return forbidden(abac, "/v1/ai/docs/tenant/" + id);
     }
+    TenantAccess.requirePlatform();
     return aiDocsService
         .buildTenantDocs(id)
         .map(ResponseEntity::ok)
@@ -163,6 +172,7 @@ public class AiController {
     if (!abac.allowed()) {
       return forbidden(abac, "/v1/ai/recommendations");
     }
+    TenantAccess.requirePlatform();
     UUID tenantId = resolveTenantId(null);
     if (tenantId == null) {
       return ResponseEntity.badRequest()

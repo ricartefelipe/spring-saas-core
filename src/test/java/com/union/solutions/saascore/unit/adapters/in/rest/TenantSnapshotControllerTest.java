@@ -47,6 +47,7 @@ class TenantSnapshotControllerTest {
 
   @BeforeEach
   void setUp() {
+    TenantContext.setPlatformAdmin(true);
     when(abacEvaluator.evaluate(any(AbacContext.class))).thenReturn(AbacResult.allow());
     mvc =
         MockMvcBuilders.standaloneSetup(

@@ -6,6 +6,7 @@ import com.union.solutions.saascore.application.abac.AbacResult;
 import com.union.solutions.saascore.application.port.UserRepository;
 import com.union.solutions.saascore.application.service.FeatureFlagService;
 import com.union.solutions.saascore.application.service.PolicyService;
+import com.union.solutions.saascore.application.tenant.TenantAccess;
 import com.union.solutions.saascore.application.tenant.TenantUseCase;
 import com.union.solutions.saascore.config.TenantContext;
 import com.union.solutions.saascore.domain.Policy;
@@ -50,6 +51,7 @@ public class TenantSnapshotController {
           .body(
               ProblemDetails.of(
                   403, "Forbidden", abac.reason(), "/v1/tenants/" + id + "/snapshot", null));
+    TenantAccess.requireTenant(id);
     return tenantUseCase
         .getById(id)
         .map(
@@ -102,17 +104,18 @@ public class TenantSnapshotController {
           .body(
               ProblemDetails.of(
                   403, "Forbidden", abac.reason(), "/v1/tenants/" + id + "/health", null));
+    TenantAccess.requireTenant(id);
     return tenantUseCase
         .getById(id)
         .map(
             t -> {
               Instant lastActivityAt = userRepo.findMaxLastLoginAtByTenantId(id).orElse(null);
               long activeUsersCount = userRepo.countActiveByTenantId(id);
-              return ResponseEntity.ok(
-                  Map.of(
-                      "tenantId", id,
-                      "lastActivityAt", lastActivityAt != null ? lastActivityAt.toString() : null,
-                      "activeUsersCount", activeUsersCount));
+              Map<String, Object> body = new java.util.LinkedHashMap<>();
+              body.put("tenantId", id);
+              body.put("lastActivityAt", lastActivityAt != null ? lastActivityAt.toString() : null);
+              body.put("activeUsersCount", activeUsersCount);
+              return ResponseEntity.ok(body);
             })
         .orElse(ResponseEntity.notFound().build());
   }
@@ -204,6 +207,7 @@ public class TenantSnapshotController {
           .body(
               ProblemDetails.of(
                   403, "Forbidden", abac.reason(), "/v1/tenants/" + id + "/policies", null));
+    TenantAccess.requireTenant(id);
     return tenantUseCase
         .getById(id)
         .map(
