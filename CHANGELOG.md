@@ -8,9 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- Spring Boot 3.2.5 → 4.0.9 (Spring Framework 7, Spring Security 7, Tomcat 11) e amqp-client 5.34.0: a imagem sai de 55 falhas críticas e altas, 11 críticas, para nenhuma.
 - Isolamento entre locatários: o administrador de um locatário só vê e lê o próprio. Criar, alterar e apagar locatários, editar políticas globais, métricas, analytics e o assistente passam a ser exclusivos da plataforma; auditoria, snapshot, saúde e flags ficam presas ao locatário do token.
 
 ### Changed
+- Rastreamento pelo `spring-boot-starter-opentelemetry`; propriedades em `management.opentelemetry.tracing.export.otlp.*` e `management.tracing.export.enabled`. Endpoint OTLP vazio desliga só a exportação.
+- JSON da API no Jackson 3 com `spring.jackson.use-jackson2-defaults`, mantendo o contrato anterior.
 - Tokens de administrador de locatário deixam de trazer `tenants:write` e `policies:write`.
 
 ### Fixed
