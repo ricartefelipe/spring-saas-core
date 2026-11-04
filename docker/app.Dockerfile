@@ -8,7 +8,8 @@ COPY src src
 RUN mvn -q -DskipTests package -B
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
-RUN apk add --no-cache curl jq
+# Correções de segurança do Alpine publicadas depois da imagem base entram em cada build.
+RUN apk upgrade --no-cache && apk add --no-cache curl jq
 WORKDIR /app
 RUN adduser -D -s /bin/sh appuser
 USER appuser
