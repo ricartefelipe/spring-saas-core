@@ -147,7 +147,7 @@ public class AiDocsService {
   private final PolicyService policyService;
   private final FeatureFlagService flagService;
 
-  @Value("${app.version:1.0.0-SNAPSHOT}")
+  @Value("${app.version}")
   private String appVersion;
 
   public AiDocsService(
