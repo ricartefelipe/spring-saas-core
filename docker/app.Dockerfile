@@ -1,4 +1,5 @@
-FROM eclipse-temurin:21-jdk-alpine@sha256:b78a1d385da875588e21207f07dddf9a1418849971ae857fb24c8f3a7d441a72 AS build
+# eclipse-temurin:21-jdk-alpine
+FROM eclipse-temurin@sha256:b78a1d385da875588e21207f07dddf9a1418849971ae857fb24c8f3a7d441a72 AS build
 ARG CACHE_BUST=1
 WORKDIR /build
 RUN apk add --no-cache maven
@@ -7,7 +8,8 @@ RUN mvn dependency:go-offline -q -B || true
 COPY src src
 RUN mvn -q -DskipTests package -B
 
-FROM eclipse-temurin:21-jre-alpine@sha256:82cf3d9ccbe1ed46252008d51b2f2329e6b9e8a2f4394c4bebefc3ea7f4b1372 AS runtime
+# eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin@sha256:82cf3d9ccbe1ed46252008d51b2f2329e6b9e8a2f4394c4bebefc3ea7f4b1372 AS runtime
 # Correções de segurança do Alpine publicadas depois da imagem base entram em cada build.
 RUN apk upgrade --no-cache && apk add --no-cache curl jq
 WORKDIR /app
