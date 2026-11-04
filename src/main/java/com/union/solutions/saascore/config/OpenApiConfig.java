@@ -7,6 +7,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,12 +15,12 @@ import org.springframework.context.annotation.Configuration;
 public class OpenApiConfig {
 
   @Bean
-  public OpenAPI openAPI() {
+  public OpenAPI openAPI(@Value("${app.version}") String appVersion) {
     return new OpenAPI()
         .info(
             new Info()
                 .title("Spring SaaS Core API")
-                .version("1.0.0")
+                .version(appVersion)
                 .description(
                     "Multi-tenant SaaS governance core: tenants, ABAC policies, feature flags, audit")
                 .contact(
