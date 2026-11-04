@@ -2,7 +2,7 @@ openapi: "3.0.3"
 info:
   title: spring-saas-core
   description: Control plane multi-tenant da plataforma B2B — tenants, governança ABAC/RBAC, feature flags, auditoria e JWT padronizado.
-  version: "1.4.1"
+  version: "1.4.2"
   contact:
     name: Union Solutions
 

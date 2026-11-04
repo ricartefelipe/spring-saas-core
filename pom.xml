@@ -13,7 +13,7 @@
 
     <groupId>com.union.solutions</groupId>
     <artifactId>spring-saas-core</artifactId>
-    <version>1.4.1</version>
+    <version>1.4.2</version>
     <name>spring-saas-core</name>
     <description>Multi-tenant SaaS governance core: tenants, RBAC/ABAC, feature flags, audit, outbox</description>
 
